@@ -1,0 +1,66 @@
+<div class="fixtures-container">
+  <div class="fixtures-header">
+    <h2>Fixtures</h2>
+    
+    <div class="gameweek-selector">
+      <label for="gameweek">Gameweek:</label>
+      <select id="gameweek" [(ngModel)]="gameweek" (change)="onGameweekChange(gameweek)">
+        <option *ngFor="let gw of gameweeks" [value]="gw">Gameweek {{ gw }}</option>      </select>
+    </div>
+    
+    <div class="admin-controls" *ngIf="isAdmin">
+      <button class="btn btn-primary" (click)="addFixture()">Add Fixture</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading fixtures...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div *ngIf="!loading && !error">
+    <div *ngIf="fixtures.length === 0" class="no-fixtures">
+      No fixtures found for Gameweek {{ gameweek }}.
+      <div *ngIf="isAdmin" style="margin-top: 1rem;">
+        <button class="btn btn-primary" (click)="addFixture()">Add First Fixture</button>
+      </div>
+    </div>
+    
+    <div class="fixtures-grid" *ngIf="fixtures.length > 0">
+      <div *ngFor="let fixture of fixtures" class="fixture-card" [class]="'status-' + fixture.status">
+        <div class="fixture-header">
+          <span class="match-date">{{ fixture.matchDate | date:'MMM d, HH:mm' }}</span>
+          <span class="status-badge" [class]="'status-' + fixture.status">{{ fixture.status }}</span>
+        </div>
+        
+        <div class="match-content">
+          <div class="team home-team">
+            <span class="team-name">{{ fixture.homeTeam }}</span>
+            <span *ngIf="fixture.status === 'finished' && fixture.homeScore !== null" class="team-score">
+              {{ fixture.homeScore }}
+            </span>
+          </div>
+          
+          <div class="vs-section">
+            <span class="vs-text">vs</span>
+            <div *ngIf="fixture.status === 'live'" class="live-indicator">LIVE</div>
+          </div>
+          
+          <div class="team away-team">
+            <span class="team-name">{{ fixture.awayTeam }}</span>
+            <span *ngIf="fixture.status === 'finished' && fixture.awayScore !== null" class="team-score">
+              {{ fixture.awayScore }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="fixture-footer" *ngIf="isAdmin">
+          <button class="btn btn-sm btn-secondary" (click)="editFixture(fixture)">
+            Edit
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="deleteFixture(fixture)">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

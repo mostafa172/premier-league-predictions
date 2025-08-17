@@ -1,0 +1,16 @@
+<nav class="navbar">
+  <div class="nav-container">
+    <h1 class="nav-title">{{ title }}</h1>
+    <div class="nav-links" *ngIf="isAuthenticated">
+      <a routerLink="/fixtures" routerLinkActive="active">Fixtures</a>
+      <a routerLink="/predictions" routerLinkActive="active">My Predictions</a>
+      <a routerLink="/leaderboard" routerLinkActive="active">Leaderboard</a>
+      <span class="user-info">Welcome, {{ currentUser?.username }}!</span>
+      <button class="logout-btn" (click)="logout()">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>

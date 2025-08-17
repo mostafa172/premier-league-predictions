@@ -1,0 +1,65 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <h2>{{ isLoginMode ? 'Login' : 'Register' }}</h2>
+    
+    <form [formGroup]="isLoginMode ? loginForm : registerForm" (ngSubmit)="onSubmit()">
+      <div class="form-group" *ngIf="!isLoginMode">
+        <label for="username">Username</label>
+        <input 
+          type="text" 
+          id="username" 
+          formControlName="username" 
+          class="form-control"
+          [class.is-invalid]="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">
+        <div class="invalid-feedback" *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">
+          Username is required (min 3 characters)
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          formControlName="email" 
+          class="form-control"
+          [class.is-invalid]="(isLoginMode ? loginForm : registerForm).get('email')?.invalid && (isLoginMode ? loginForm : registerForm).get('email')?.touched">
+        <div class="invalid-feedback" *ngIf="(isLoginMode ? loginForm : registerForm).get('email')?.invalid && (isLoginMode ? loginForm : registerForm).get('email')?.touched">
+          Valid email is required
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          formControlName="password" 
+          class="form-control"
+          [class.is-invalid]="(isLoginMode ? loginForm : registerForm).get('password')?.invalid && (isLoginMode ? loginForm : registerForm).get('password')?.touched">
+        <div class="invalid-feedback" *ngIf="(isLoginMode ? loginForm : registerForm).get('password')?.invalid && (isLoginMode ? loginForm : registerForm).get('password')?.touched">
+          Password is required (min 6 characters)
+        </div>
+      </div>
+
+      <div class="error-message" *ngIf="error">
+        {{ error }}
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary" 
+        [disabled]="loading || (isLoginMode ? loginForm.invalid : registerForm.invalid)">
+        <span *ngIf="loading" class="spinner"></span>
+        {{ isLoginMode ? 'Login' : 'Register' }}
+      </button>
+    </form>
+
+    <p class="toggle-mode">
+      {{ isLoginMode ? "Don't have an account?" : "Already have an account?" }}
+      <a href="#" (click)="toggleMode(); $event.preventDefault()">
+        {{ isLoginMode ? 'Register' : 'Login' }}
+      </a>
+    </p>
+  </div>
+</div>

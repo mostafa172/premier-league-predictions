@@ -1,0 +1,46 @@
+<div class="leaderboard-container">
+  <div class="leaderboard-header">
+    <h2>Leaderboard</h2>
+    <button class="btn btn-secondary" (click)="refreshLeaderboard()" [disabled]="loading">
+      Refresh
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading leaderboard...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div *ngIf="!loading && !error">
+    <div *ngIf="leaderboard.length === 0" class="no-data">
+      No leaderboard data available yet. Make some predictions to get started!
+    </div>
+
+    <div *ngIf="leaderboard.length > 0" class="leaderboard-table">
+      <div class="table-header">
+        <div class="rank-col">Rank</div>
+        <div class="username-col">Player</div>
+        <div class="points-col">Points</div>
+      </div>
+
+      <div 
+        *ngFor="let entry of leaderboard; let i = index" 
+        class="table-row"
+        [class.current-user]="entry.username === currentUsername"
+      >
+        <div class="rank">
+          <span class="rank-number">{{ entry.rank }}</span>
+          <span *ngIf="entry.rank === 1" class="crown">👑</span>
+        </div>
+        
+        <div class="username">
+          {{ entry.username }}
+          <span *ngIf="entry.username === currentUsername" class="you-label">(You)</span>
+        </div>
+        
+        <div class="points">
+          <span class="points-number">{{ entry.total_points }}</span>
+          <span class="points-label">pts</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
