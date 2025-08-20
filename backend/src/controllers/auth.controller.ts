@@ -45,7 +45,7 @@ export const register = async (req: Request, res: Response) => {
         is_admin: newUser.rows[0].is_admin 
       },
       process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
+      { expiresIn: '2h' }
     );
 
     res.status(201).json({

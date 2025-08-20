@@ -22,18 +22,46 @@ export class AppComponent implements OnInit {
       this.currentUser = user;
       this.isAuthenticated = !!user;
       
-      // Redirect logic
+      // Redirect logic - improved session handling
       const currentUrl = this.router.url;
-      if (user && (currentUrl === '/auth' || currentUrl === '/')) {
-        this.router.navigate(['/fixtures']);
-      } else if (!user && currentUrl !== '/auth') {
-        this.router.navigate(['/auth']);
+      
+      if (user) {
+        // User is authenticated
+        if (currentUrl === '/auth' || currentUrl === '/') {
+          this.router.navigate(['/fixtures']);
+        }
+      } else {
+        // User is not authenticated
+        if (currentUrl !== '/auth') {
+          this.router.navigate(['/auth']);
+        }
       }
     });
+
+    // Check token validity on app startup
+    this.checkTokenValidity();
+  }
+
+  private checkTokenValidity(): void {
+    // Force check if current token is still valid
+    if (!this.authService.isAuthenticated() && this.authService.getToken()) {
+      // Token exists but is invalid/expired
+      this.authService.logout();
+    }
   }
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/auth']);
+  }
+
+  // Get session time remaining for display (optional)
+  getSessionTimeRemaining(): number {
+    return this.authService.getTokenTimeRemaining();
+  }
+
+  // Check if session is about to expire (optional)
+  isSessionExpiringSoon(): boolean {
+    const timeRemaining = this.getSessionTimeRemaining();
+    return timeRemaining > 0 && timeRemaining <= 5; // 5 minutes or less
   }
 }

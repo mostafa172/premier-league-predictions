@@ -14,12 +14,19 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   canActivate(): Observable<boolean> | boolean {
+    // Check if token is valid before allowing access
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/auth']);
+      return false;
+    }
+
     return this.authService.currentUser$.pipe(
       take(1),
       map(user => {
-        if (user) {
+        if (user && this.authService.isAuthenticated()) {
           return true;
         } else {
+          this.authService.logout(); // Force logout if user exists but token is invalid
           this.router.navigate(['/auth']);
           return false;
         }

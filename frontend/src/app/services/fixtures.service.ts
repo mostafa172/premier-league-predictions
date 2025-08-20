@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import { Fixture, CreateFixtureRequest, UpdateFixtureRequest } from '../models/fixture.model';
 import { environment } from '../../environments/environment';
-import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,72 +11,75 @@ import { AuthService } from './auth.service';
 export class FixturesService {
   private apiUrl = `${environment.apiUrl}/fixtures`;
 
-  constructor(
-    private http: HttpClient,
-    private authService: AuthService
-  ) {}
+  constructor(private http: HttpClient) {}
 
   getFixtures(): Observable<Fixture[]> {
-    return this.http.get<any>(this.apiUrl, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => response.data || response)
+    return this.http.get<any>(this.apiUrl).pipe(
+      map(response => response.data || response),
+      catchError(error => {
+        console.error('Error fetching fixtures:', error);
+        throw error;
+      })
     );
   }
 
   getFixturesByGameweek(gameweek: number): Observable<Fixture[]> {
-    return this.http.get<any>(`${this.apiUrl}/gameweek/${gameweek}`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => response.data || response)
+    return this.http.get<any>(`${this.apiUrl}/gameweek/${gameweek}`).pipe(
+      map(response => response.data || response),
+      catchError(error => {
+        console.error('Error fetching fixtures by gameweek:', error);
+        throw error;
+      })
     );
   }
 
   getFixtureById(id: number): Observable<Fixture> {
-    return this.http.get<any>(`${this.apiUrl}/${id}`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => response.data || response)
+    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+      map(response => response.data || response),
+      catchError(error => {
+        console.error('Error fetching fixture by ID:', error);
+        throw error;
+      })
     );
   }
 
   createFixture(fixture: CreateFixtureRequest): Observable<Fixture> {
-    return this.http.post<any>(this.apiUrl, fixture, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => response.data || response)
+    return this.http.post<any>(this.apiUrl, fixture).pipe(
+      map(response => response.data || response),
+      catchError(error => {
+        console.error('Error creating fixture:', error);
+        throw error;
+      })
     );
   }
 
   updateFixture(id: number, fixture: UpdateFixtureRequest): Observable<Fixture> {
-    return this.http.put<any>(`${this.apiUrl}/${id}`, fixture, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => response.data || response)
+    return this.http.put<any>(`${this.apiUrl}/${id}`, fixture).pipe(
+      map(response => response.data || response),
+      catchError(error => {
+        console.error('Error updating fixture:', error);
+        throw error;
+      })
     );
   }
 
   deleteFixture(id: number): Observable<void> {
-    return this.http.delete<any>(`${this.apiUrl}/${id}`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(() => {})
+    return this.http.delete<any>(`${this.apiUrl}/${id}`).pipe(
+      map(() => {}),
+      catchError(error => {
+        console.error('Error deleting fixture:', error);
+        throw error;
+      })
     );
   }
 
   getUpcomingFixtures(): Observable<Fixture[]> {
-    return this.http.get<any>(`${this.apiUrl}/upcoming`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => response.data || response)
+    return this.http.get<any>(`${this.apiUrl}/upcoming`).pipe(
+      map(response => response.data || response),
+      catchError(error => {
+        console.error('Error fetching upcoming fixtures:', error);
+        throw error;
+      })
     );
-  }
-
-  private getAuthHeaders(): HttpHeaders {
-    const token = this.authService.getToken();
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
   }
 }

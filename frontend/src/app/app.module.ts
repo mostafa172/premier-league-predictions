@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AppRoutingModule } from './app-routing.module';
@@ -11,6 +11,7 @@ import { LeaderboardComponent } from './components/leaderboard/leaderboard.compo
 import { AuthComponent } from './components/auth/auth.component';
 import { FixtureFormComponent } from './components/fixture-form/fixture-form.component';
 import { AuthGuard } from './guards/auth.guard';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
 
 @NgModule({
   declarations: [
@@ -29,7 +30,14 @@ import { AuthGuard } from './guards/auth.guard';
     FormsModule,
     AppRoutingModule
   ],
-  providers: [AuthGuard],
+  providers: [
+    AuthGuard,
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

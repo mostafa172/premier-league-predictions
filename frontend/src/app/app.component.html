@@ -14,3 +14,13 @@
 <main class="main-content">
   <router-outlet></router-outlet>
 </main>
+
+<!-- Add the session status here -->
+<div class="session-status" *ngIf="isAuthenticated && getSessionTimeRemaining() > 0">
+  <div class="session-warning" [class.critical]="isSessionExpiringSoon()">
+    <span class="session-icon">⏰</span>
+    <span class="session-text">
+      Session expires in {{ getSessionTimeRemaining() }} min
+    </span>
+  </div>
+</div>
