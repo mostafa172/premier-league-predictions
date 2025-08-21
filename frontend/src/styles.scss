@@ -1,247 +1,137 @@
-/* filepath: frontend/src/styles.scss */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-// Premier League Colors
-:root {
-  --primary-color: #38003c;
-  --secondary-color: #00d960; /* Less shiny green */
-  --accent-color: #e90052;
-  --background-color: #f7f7f7;
-  --card-background: #ffffff;
-  --text-primary: #38003c;
-  --text-secondary: #6c757d;
-  --border-color: #e3e3e3;
-  --success-color: #00b84a; /* Less shiny success color */
-  --error-color: #e90052;
-  --warning-color: #ff6600;
+/* filepath: frontend/src/app/app.component.scss */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  background-color: var(--background-color);
-  color: var(--text-primary);
-  line-height: 1.6;
-  font-size: 14px;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
-
-// Typography
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-}
-
-// Buttons
-.btn {
-  display: inline-flex;
+.navbar {
+  background: #38003c;
+  color: white;
+  padding: 0 2rem;
+  height: 60px;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-height: 44px;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  .nav-brand {
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #00ff87 !important; /* Premier League green */
+    }
+  }
+  
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    flex: 1;
+    justify-content: center;
+    
+    a {
+      color: white;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: #00ff87 !important; /* Premier League green */
+        color: #38003c !important; /* Premier League purple */
+        transform: translateY(-1px);
+      }
+      
+      &.active {
+        background: #00ff87 !important; /* Premier League green */
+        color: #38003c !important; /* Premier League purple */
+        font-weight: 600;
+      }
+    }
+  }
+  
+  .nav-user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    
+    span {
+      font-size: 0.9rem;
+      color: #ddd;
+    }
+    
+    .logout-btn {
+      background: transparent;
+      border: 1px solid white;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      
+      &:hover {
+        background: white;
+        color: #38003c;
+      }
+    }
+    
+    .login-link {
+      color: white;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border: 1px solid white;
+      border-radius: 4px;
+      transition: all 0.2s;
+      
+      &:hover {
+        background: white;
+        color: #38003c;
+      }
+    }
   }
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary-color) 0%, #4a0e4e 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(56, 0, 60, 0.3);
-  
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(56, 0, 60, 0.4);
-  }
+.main-content {
+  flex: 1;
+  background: #f8f9fa;
+  overflow-y: auto;
 }
 
-.btn-secondary {
-  background: white;
-  color: var(--primary-color);
-  border: 2px solid var(--border-color);
-  
-  &:hover:not(:disabled) {
-    border-color: var(--primary-color);
-    background: #f8f9fa;
-  }
-}
-
-.btn-success {
-  background: linear-gradient(135deg, var(--success-color) 0%, #00cc6a 100%);
-  color: var(--primary-color);
-  font-weight: 700;
-}
-
-.btn-danger {
-  background: linear-gradient(135deg, var(--error-color) 0%, #c70039 100%);
-  color: white;
-}
-
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.75rem;
-  min-height: 36px;
-}
-
-// Form Controls
-.form-control {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 0.875rem;
-  background: white;
-  transition: all 0.2s ease;
-  
-  &:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(56, 0, 60, 0.1);
-  }
-  
-  &.is-invalid {
-    border-color: var(--error-color);
-  }
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-  
-  label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-  }
-}
-
-.invalid-feedback {
-  display: block;
-  color: var(--error-color);
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-}
-
-// Cards
-.card {
-  background: var(--card-background);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-}
-
-// Status Badges
-.status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  
-  &.status-upcoming {
-    background: rgba(0, 255, 135, 0.1);
-    color: #00a055;
-  }
-  
-  &.status-live {
-    background: rgba(255, 102, 0, 0.1);
-    color: #cc5200;
-    animation: pulse 2s infinite;
-  }
-  
-  &.status-finished {
-    background: rgba(108, 117, 125, 0.1);
-    color: #6c757d;
-  }
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
-}
-
-// Alert Messages
-.error {
-  background: rgba(233, 0, 82, 0.1);
-  color: #b91c3c;
-  border: 1px solid rgba(233, 0, 82, 0.3);
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-  font-weight: 500;
-}
-
-.success {
-  background: rgba(0, 255, 135, 0.1);
-  color: #00a055;
-  border: 1px solid rgba(0, 255, 135, 0.3);
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-  font-weight: 500;
-}
-
-// Loading States
-.loading {
-  text-align: center;
-  padding: 3rem;
-  color: var(--text-secondary);
-  
-  &::after {
-    content: '';
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    border: 3px solid var(--border-color);
-    border-top: 3px solid var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-left: 1rem;
-  }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-// Utility Classes
-.text-center { text-align: center; }
-.d-flex { display: flex; }
-.justify-content-between { justify-content: space-between; }
-.align-items-center { align-items: center; }
-
+// Responsive design
 @media (max-width: 768px) {
-  .container {
-    padding: 0 0.5rem;
+  .navbar {
+    flex-direction: column;
+    height: auto;
+    padding: 1rem;
+    gap: 1rem;
+    
+    .nav-links {
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .nav-user {
+      justify-content: center;
+    }
   }
-  
-  .btn {
-    width: 100%;
-    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    .nav-brand h1 {
+      font-size: 1.2rem;
+      text-align: center;
+    }
+    
+    .nav-links {
+      gap: 0.5rem;
+      
+      a {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+      }
+    }
   }
 }

@@ -20,6 +20,7 @@
       margin: 0;
       font-size: 1.5rem;
       font-weight: 600;
+      color: #00ff87 !important; /* Premier League green */
     }
   }
   
@@ -34,14 +35,17 @@
       text-decoration: none;
       padding: 0.5rem 1rem;
       border-radius: 4px;
-      transition: background-color 0.2s;
+      transition: all 0.2s ease;
       
       &:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: #00ff87 !important; /* Premier League green */
+        color: #38003c !important; /* Premier League purple */
+        transform: translateY(-1px);
       }
       
       &.active {
-        background: rgba(255, 255, 255, 0.2);
+        background: #00ff87 !important; /* Premier League green */
+        color: #38003c !important; /* Premier League purple */
         font-weight: 600;
       }
     }

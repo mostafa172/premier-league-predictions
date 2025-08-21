@@ -21,6 +21,7 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   saving = false;
   error = '';
   success = '';
+  selectedDoubleIndex = -1; // Track which prediction is selected for double points
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -92,16 +93,24 @@ export class PredictionsComponent implements OnInit, OnDestroy {
       this.predictionsArray.removeAt(0);
     }
 
-    this.fixtures.forEach((fixture) => {
+    // Reset double selection
+    this.selectedDoubleIndex = -1;
+
+    this.fixtures.forEach((fixture, index) => {
       const existingPrediction = this.predictions.find(
         p => p.fixtureId === fixture.id
       );
 
+      // Track which prediction has double points
+      if (existingPrediction?.isDouble) {
+        this.selectedDoubleIndex = index;
+      }
+
       const predictionGroup = this.fb.group({
         fixtureId: [fixture.id, Validators.required],
-        // Handle both field name variations
         homeScore: [existingPrediction?.predictedHomeScore ?? existingPrediction?.homeScore ?? 0, [Validators.required, Validators.min(0)]],
         awayScore: [existingPrediction?.predictedAwayScore ?? existingPrediction?.awayScore ?? 0, [Validators.required, Validators.min(0)]],
+        isDouble: [existingPrediction?.isDouble || false],
         predictionId: [existingPrediction?.id || null]
       });
 
@@ -123,13 +132,15 @@ export class PredictionsComponent implements OnInit, OnDestroy {
             return this.predictionService.updatePrediction(
               prediction.predictionId,
               prediction.homeScore,
-              prediction.awayScore
+              prediction.awayScore,
+              prediction.isDouble
             ).toPromise();
           } else {
             return this.predictionService.createPrediction({
               fixtureId: prediction.fixtureId,
               homeScore: prediction.homeScore,
-              awayScore: prediction.awayScore
+              awayScore: prediction.awayScore,
+              isDouble: prediction.isDouble
             }).toPromise();
           }
         });
@@ -150,6 +161,19 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     }
   }
 
+  onDoubleChange(index: number): void {
+    // Only allow one double per gameweek
+    if (this.selectedDoubleIndex !== -1 && this.selectedDoubleIndex !== index) {
+      // Uncheck the previous double
+      this.predictionsArray.at(this.selectedDoubleIndex)?.get('isDouble')?.setValue(false);
+    }
+    
+    const isDoubleSelected = this.predictionsArray.at(index)?.get('isDouble')?.value;
+    this.selectedDoubleIndex = isDoubleSelected ? index : -1;
+    
+    console.log('Double points selected for prediction:', index, 'Value:', isDoubleSelected);
+  }
+
   isFixtureDisabled(fixture: any): boolean {
     const deadline = new Date(fixture.deadline);
     const now = new Date();
@@ -168,38 +192,17 @@ export class PredictionsComponent implements OnInit, OnDestroy {
            homeScore >= 0 && awayScore >= 0;
   }
 
-  onDoubleChange(index: number): void {
-    const predictionGroup = this.predictionsArray.at(index);
-    if (predictionGroup) {
-      console.log('Double points selected for prediction:', index);
-    }
-  }
-
   clearAllPredictions(): void {
     if (confirm('Are you sure you want to clear all predictions for this gameweek?')) {
       this.predictionsArray.controls.forEach(control => {
         control.get('homeScore')?.setValue(0);
         control.get('awayScore')?.setValue(0);
+        control.get('isDouble')?.setValue(false);
       });
+      this.selectedDoubleIndex = -1;
       this.success = '';
       this.error = '';
     }
-  }
-
-  submitPrediction(predictionData: any): void {
-    const sub = this.predictionService.createPrediction(predictionData).subscribe({
-      next: (response: any) => {
-        if (response.success) {
-          this.success = 'Prediction submitted successfully!';
-          this.loadFixturesAndPredictions();
-        }
-      },
-      error: (error: any) => {
-        console.error('Error submitting prediction:', error);
-        this.error = 'Error submitting prediction';
-      }
-    });
-    this.subscriptions.push(sub);
   }
 
   canPredict(fixture: any): boolean {

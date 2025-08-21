@@ -1,9 +1,9 @@
 /* filepath: frontend/src/app/services/auth.service.ts */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 interface User {
   id: number;
@@ -14,11 +14,11 @@ interface User {
 
 interface AuthResponse {
   success: boolean;
-  message: string;
   data?: {
-    token: string;
     user: User;
+    token: string;
   };
+  message?: string;
 }
 
 @Injectable({
@@ -33,24 +33,37 @@ export class AuthService {
     private http: HttpClient,
     private router: Router
   ) {
-    // Initialize current user from localStorage
-    const token = this.getToken();
-    if (token) {
-      const user = this.getCurrentUser();
-      if (user) {
+    // Initialize from localStorage on service creation
+    this.initializeFromStorage();
+  }
+
+  private initializeFromStorage(): void {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
         this.currentUserSubject.next(user);
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        this.clearStorage();
       }
     }
   }
 
-  // Add missing isAuthenticated method
+  private clearStorage(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    this.currentUserSubject.next(null);
+  }
+
   isAuthenticated(): boolean {
     const token = this.getToken();
     const user = this.getCurrentUser();
     return !!(token && user);
   }
 
-  // Add missing currentUserValue getter
   get currentUserValue(): User | null {
     return this.currentUserSubject.value;
   }
@@ -79,9 +92,7 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    this.currentUserSubject.next(null);
+    this.clearStorage();
     this.router.navigate(['/auth']);
   }
 
@@ -94,7 +105,8 @@ export class AuthService {
     if (userStr) {
       try {
         return JSON.parse(userStr);
-      } catch {
+      } catch (error) {
+        console.error('Error parsing user data:', error);
         return null;
       }
     }
@@ -105,17 +117,8 @@ export class AuthService {
     return this.isAuthenticated();
   }
 
-  checkTokenValidity(): Observable<{success: boolean, user?: User}> {
-    const token = this.getToken();
-    if (!token) {
-      return new Observable(observer => {
-        observer.next({ success: false });
-        observer.complete();
-      });
-    }
-
-    return this.http.get<{success: boolean, user?: User}>(`${this.API_URL}/auth/verify`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+  // Add token validation method
+  checkTokenValidity(): Observable<any> {
+    return this.http.get(`${this.API_URL}/auth/profile`);
   }
 }

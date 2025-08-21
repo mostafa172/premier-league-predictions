@@ -8,8 +8,8 @@ interface Prediction {
   id: number;
   fixtureId: number;
   userId: number;
-  predictedHomeScore: number; // Changed from homeScore
-  predictedAwayScore: number;  // Changed from awayScore
+  predictedHomeScore: number;
+  predictedAwayScore: number;
   points?: number;
   isDouble?: boolean;
   createdAt: Date;
@@ -52,6 +52,29 @@ export class PredictionService {
     });
   }
 
+  // Create single prediction with double support
+  createPrediction(prediction: {fixtureId: number, homeScore: number, awayScore: number, isDouble?: boolean}): Observable<any> {
+    return this.http.post<any>(
+      `${this.API_URL}/predictions`,
+      { 
+        fixtureId: prediction.fixtureId, 
+        homeScore: prediction.homeScore, 
+        awayScore: prediction.awayScore,
+        isDouble: prediction.isDouble || false
+      },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Update prediction with double support
+  updatePrediction(predictionId: number, homeScore: number, awayScore: number, isDouble: boolean = false): Observable<any> {
+    return this.http.put<any>(
+      `${this.API_URL}/predictions/${predictionId}`,
+      { homeScore, awayScore, isDouble },
+      { headers: this.getHeaders() }
+    );
+  }
+
   // Get predictions for a specific gameweek
   getPredictionsByGameweek(gameweek: number): Observable<PredictionResponse> {
     return this.http.get<PredictionResponse>(
@@ -77,7 +100,7 @@ export class PredictionService {
   }
 
   // Submit predictions for multiple fixtures
-  submitPredictions(predictions: Array<{fixtureId: number, homeScore: number, awayScore: number}>): Observable<any> {
+  submitPredictions(predictions: Array<{fixtureId: number, homeScore: number, awayScore: number, isDouble?: boolean}>): Observable<any> {
     return this.http.post<any>(
       `${this.API_URL}/predictions/batch`,
       { predictions },
@@ -86,26 +109,8 @@ export class PredictionService {
   }
 
   // Submit single prediction
-  submitPrediction(fixtureId: number, homeScore: number, awayScore: number): Observable<any> {
-    return this.http.post<any>(
-      `${this.API_URL}/predictions`,
-      { fixtureId, homeScore, awayScore },
-      { headers: this.getHeaders() }
-    );
-  }
-
-  // CREATE prediction (alias for submitPrediction)
-  createPrediction(prediction: {fixtureId: number, homeScore: number, awayScore: number}): Observable<any> {
-    return this.submitPrediction(prediction.fixtureId, prediction.homeScore, prediction.awayScore);
-  }
-
-  // Update prediction
-  updatePrediction(predictionId: number, homeScore: number, awayScore: number): Observable<any> {
-    return this.http.put<any>(
-      `${this.API_URL}/predictions/${predictionId}`,
-      { homeScore, awayScore },
-      { headers: this.getHeaders() }
-    );
+  submitPrediction(fixtureId: number, homeScore: number, awayScore: number, isDouble: boolean = false): Observable<any> {
+    return this.createPrediction({ fixtureId, homeScore, awayScore, isDouble });
   }
 
   // Get leaderboard

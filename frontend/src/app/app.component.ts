@@ -22,8 +22,9 @@ export class AppComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Initialize auth state
-    this.checkAuthStatus();
+    // Initialize auth state from storage first
+    this.currentUser = this.authService.getCurrentUser();
+    this.isLoggedIn = this.authService.isAuthenticated();
     
     // Subscribe to loading state
     const loadingSub = this.loadingService.loading$.subscribe(
@@ -41,29 +42,28 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     );
     this.subscriptions.push(authSub);
+
+    // Only validate token if we think we're logged in
+    if (this.isLoggedIn) {
+      this.validateToken();
+    }
   }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  private checkAuthStatus(): void {
-    const token = this.authService.getToken();
-    if (token) {
-      this.authService.checkTokenValidity().subscribe({
-        next: (response: any) => {
-          if (response.success) {
-            this.currentUser = response.user;
-            this.isLoggedIn = true;
-          } else {
-            this.authService.logout();
-          }
-        },
-        error: () => {
+  private validateToken(): void {
+    this.authService.checkTokenValidity().subscribe({
+      next: (response: any) => {
+        if (!response.success) {
           this.authService.logout();
         }
-      });
-    }
+      },
+      error: () => {
+        this.authService.logout();
+      }
+    });
   }
 
   logout(): void {
