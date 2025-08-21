@@ -1,0 +1,204 @@
+/* filepath: frontend/src/app/components/fixtures/fixtures.component.scss */
+.fixtures-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.fixtures-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  h2 {
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin: 0;
+  }
+}
+
+.gameweek-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  label {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  
+  select {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: white;
+    color: var(--text-primary);
+    font-weight: 500;
+    
+    &:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+  }
+}
+
+.admin-controls {
+  .btn {
+    box-shadow: 0 2px 8px rgba(56, 0, 60, 0.2);
+  }
+}
+
+.fixtures-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+}
+
+.fixture-card {
+  background: var(--card-background);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: var(--border-color);
+  }
+  
+  &.status-live {
+    border-color: var(--warning-color);
+    box-shadow: 0 4px 12px rgba(255, 102, 0, 0.2);
+  }
+  
+  &.status-finished {
+    opacity: 0.9;
+  }
+}
+
+.fixture-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.match-date {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.match-content {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  
+  .team-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .team-score {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--success-color);
+    text-shadow: 0 2px 4px rgba(0, 255, 135, 0.3);
+  }
+}
+
+.vs-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 1rem;
+  
+  .vs-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--background-color);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: 2px solid var(--border-color);
+  }
+  
+  .live-indicator {
+    background: var(--warning-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+    animation: pulse 2s infinite;
+  }
+}
+
+.fixture-footer {
+  background: #f8f9fa;
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  
+  .btn {
+    flex: 1;
+  }
+}
+
+.no-fixtures {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--card-background);
+  border-radius: 12px;
+  border: 2px dashed var(--border-color);
+  
+  p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .fixtures-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .fixtures-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .match-content {
+    padding: 1rem;
+  }
+  
+  .fixture-footer {
+    flex-direction: column;
+    
+    .btn {
+      width: 100%;
+    }
+  }
+}

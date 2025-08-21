@@ -5,28 +5,28 @@ import { authenticateToken, requireAdmin } from '../middleware/auth.middleware';
 const router = Router();
 const predictionsController = new PredictionsController();
 
-// Route to get all predictions (admin only)
-router.get('/', authenticateToken, requireAdmin, predictionsController.getAllPredictions);
+// Admin routes
+router.get('/', authenticateToken, requireAdmin, predictionsController.getAllPredictions.bind(predictionsController));
 
-// Route to get current user's predictions
-router.get('/user', authenticateToken, predictionsController.getCurrentUserPredictions);
+// User routes
+router.get('/user', authenticateToken, predictionsController.getCurrentUserPredictions.bind(predictionsController));
 
-// Route to get current user's predictions by gameweek
-router.get('/user/gameweek/:gameweek', authenticateToken, predictionsController.getCurrentUserPredictionsByGameweek);
+// Get user predictions by gameweek
+router.get('/user/gameweek/:gameweek', authenticateToken, predictionsController.getCurrentUserPredictionsByGameweek.bind(predictionsController));
 
-// Route to create/update a prediction
-router.post('/', authenticateToken, predictionsController.createPrediction);
+// Create/submit prediction
+router.post('/', authenticateToken, predictionsController.createPrediction.bind(predictionsController));
 
-// Route to update a prediction
-router.put('/:id', authenticateToken, predictionsController.updatePrediction);
+// Update prediction
+router.put('/:id', authenticateToken, predictionsController.updatePrediction.bind(predictionsController));
 
-// Route to delete a prediction
-router.delete('/:id', authenticateToken, predictionsController.deletePrediction);
+// Delete prediction
+router.delete('/:id', authenticateToken, predictionsController.deletePrediction.bind(predictionsController));
 
-// Route to get leaderboard
-router.get('/leaderboard', authenticateToken, predictionsController.getLeaderboard);
+// Get leaderboard
+router.get('/leaderboard', predictionsController.getLeaderboard.bind(predictionsController));
 
-// Route to recalculate all points (admin only)
-router.post('/recalculate', authenticateToken, requireAdmin, predictionsController.recalculatePoints);
+// Admin: Recalculate points
+router.post('/recalculate', authenticateToken, requireAdmin, predictionsController.recalculatePoints.bind(predictionsController));
 
 export default router;

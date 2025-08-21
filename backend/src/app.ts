@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { connectDatabase } from './config/database';
+import { connectDatabase } from './config/sequelize'; // Make sure this path is correct
 import authRoutes from './routes/auth.routes';
 import predictionsRoutes from './routes/predictions.routes';
 import fixturesRoutes from './routes/fixtures.routes';
@@ -31,7 +31,7 @@ app.use('/api/admin', adminRoutes);
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'OK', 
-        message: 'Premier League Predictions API is running!',
+        message: 'Premier League Predictions API is running with Sequelize!',
         timestamp: new Date().toISOString() 
     });
 });

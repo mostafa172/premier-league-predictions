@@ -1,26 +1,31 @@
-<nav class="navbar">
-  <div class="nav-container">
-    <h1 class="nav-title">{{ title }}</h1>
-    <div class="nav-links" *ngIf="isAuthenticated">
-      <a routerLink="/fixtures" routerLinkActive="active">Fixtures</a>
-      <a routerLink="/predictions" routerLinkActive="active">My Predictions</a>
-      <a routerLink="/leaderboard" routerLinkActive="active">Leaderboard</a>
-      <span class="user-info">Welcome, {{ currentUser?.username }}!</span>
-      <button class="logout-btn" (click)="logout()">Logout</button>
+<div class="app-header">
+  <nav class="navbar">
+    <a routerLink="/fixtures" class="navbar-brand">
+      PL Predictions
+    </a>
+    
+    <ul class="navbar-nav" *ngIf="isAuthenticated">
+      <li><a routerLink="/fixtures" routerLinkActive="active" class="nav-link">Fixtures</a></li>
+      <li><a routerLink="/predictions" routerLinkActive="active" class="nav-link">My Predictions</a></li>
+      <li><a routerLink="/leaderboard" routerLinkActive="active" class="nav-link">Leaderboard</a></li>
+      <li *ngIf="isAdmin"><a routerLink="/admin/fixtures" routerLinkActive="active" class="nav-link">Admin</a></li>
+    </ul>
+
+    <div class="user-info" *ngIf="isAuthenticated">
+      <span class="username">{{ currentUser?.username }}</span>
+      <button class="btn-outline-danger" (click)="logout()">Logout</button>
     </div>
+  </nav>
+</div>
+
+<div class="session-status" *ngIf="isAuthenticated && getSessionTimeRemaining() > 0">
+  <div class="session-warning" [class.critical]="isSessionExpiringSoon()">
+    Session expires in {{ getSessionTimeRemaining() }} min
   </div>
-</nav>
+</div>
 
 <main class="main-content">
   <router-outlet></router-outlet>
 </main>
 
-<!-- Add the session status here -->
-<div class="session-status" *ngIf="isAuthenticated && getSessionTimeRemaining() > 0">
-  <div class="session-warning" [class.critical]="isSessionExpiringSoon()">
-    <span class="session-icon">⏰</span>
-    <span class="session-text">
-      Session expires in {{ getSessionTimeRemaining() }} min
-    </span>
-  </div>
-</div>
+<app-loading></app-loading>

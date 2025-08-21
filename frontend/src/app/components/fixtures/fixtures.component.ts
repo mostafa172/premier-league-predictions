@@ -1,80 +1,79 @@
 import { Component, OnInit } from '@angular/core';
-import { FixturesService } from '../../services/fixtures.service';
-import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
+import { FixtureService } from '../../services/fixture.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-fixtures',
   templateUrl: './fixtures.component.html',
-  styleUrls: ['./fixtures.component.css']
+  styleUrls: ['./fixtures.component.scss']
 })
 export class FixturesComponent implements OnInit {
   fixtures: any[] = [];
-  loading = true;
-  error = '';
   gameweek = 1;
-  gameweeks = Array.from({length: 38}, (_, i) => i + 1); // ADD THIS LINE
+  gameweeks = Array.from({ length: 38 }, (_, i) => i + 1);
+  loading = false;
+  error = '';
   isAdmin = false;
 
   constructor(
-    private fixturesService: FixturesService,
+    private fixtureService: FixtureService,
     private authService: AuthService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    if (!this.authService.isAuthenticated()) {
-      this.router.navigate(['/auth']);
-      return;
-    }
+    this.loadFixtures();
     
+    // Check if user is admin
     const currentUser = this.authService.currentUserValue;
-    this.isAdmin = currentUser?.is_admin || false;
-    
-    this.fetchFixtures();
+    this.isAdmin = currentUser?.isAdmin || false;
   }
 
-  fetchFixtures(): void {
+  loadFixtures(): void {
     this.loading = true;
     this.error = '';
-    
-    this.fixturesService.getFixturesByGameweek(this.gameweek).subscribe(
-      (data) => {
-        this.fixtures = data;
+    this.fixtureService.getFixturesByGameweek(this.gameweek).subscribe({
+      next: (response: any) => {
         this.loading = false;
+        if (response.success) {
+          this.fixtures = response.data;
+        }
       },
-      (err) => {
-        console.error('Error loading fixtures:', err);
-        this.error = 'Failed to load fixtures.';
+      error: (error: any) => {
         this.loading = false;
+        this.error = 'Error loading fixtures';
+        console.error('Error loading fixtures:', error);
       }
-    );
+    });
   }
 
-  onGameweekChange(newGameweek: number): void {
-    this.gameweek = newGameweek;
-    this.fetchFixtures();
+  onGameweekChange(gameweek: number): void {
+    this.gameweek = gameweek;
+    this.loadFixtures();
   }
 
   addFixture(): void {
-    this.router.navigate(['/admin/add-fixture']);
+    this.router.navigate(['/admin/fixtures']);
   }
 
   editFixture(fixture: any): void {
-    this.router.navigate(['/admin/edit-fixture', fixture.id]);
+    this.router.navigate(['/admin/fixtures', fixture.id]);
   }
 
   deleteFixture(fixture: any): void {
     if (confirm(`Are you sure you want to delete the fixture ${fixture.homeTeam} vs ${fixture.awayTeam}?`)) {
-      this.fixturesService.deleteFixture(fixture.id).subscribe(
-        () => {
-          this.fixtures = this.fixtures.filter(f => f.id !== fixture.id);
+      this.fixtureService.deleteFixture(fixture.id).subscribe({
+        next: (response: any) => {
+          if (response.success) {
+            this.loadFixtures(); // Reload the fixtures
+          }
         },
-        (err) => {
-          console.error('Error deleting fixture:', err);
-          this.error = 'Failed to delete fixture.';
+        error: (error: any) => {
+          this.error = error.error?.message || 'Error deleting fixture';
+          console.error('Delete fixture error:', error);
         }
-      );
+      });
     }
   }
 }

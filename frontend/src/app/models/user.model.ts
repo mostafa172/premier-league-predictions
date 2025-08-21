@@ -4,7 +4,7 @@ export interface User {
   email: string;
   createdAt?: Date;
   updatedAt?: Date;
-  is_admin: boolean;
+  isAdmin: boolean; // Changed from is_admin to isAdmin for consistency
 }
 
 export interface LoginRequest {

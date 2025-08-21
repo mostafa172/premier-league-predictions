@@ -1,270 +1,270 @@
-import { pool } from '../config/database';
+import {
+  Table,
+  Column,
+  Model,
+  DataType,
+  ForeignKey,
+  BelongsTo,
+  BeforeCreate,
+  BeforeUpdate,
+} from "sequelize-typescript";
+import { User } from "./User";
+import { Fixture } from "./Fixture";
+import { Op, fn, col, literal } from "sequelize";
+import { PredictionCreationAttributes } from "../interfaces/prediction.interface";
 
-export class Prediction {
-    id: number;
-    userId: number;
-    fixtureId: number;
-    predictedHomeScore: number;
-    predictedAwayScore: number;
-    points: number;
-    isDouble: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+interface PredictionInstance
+  extends Model<PredictionInstance, PredictionCreationAttributes> {
+  id: number;
+  userId: number;
+  fixtureId: number;
+  predictedHomeScore: number;
+  predictedAwayScore: number;
+  points: number;
+  isDouble: boolean;
+  user?: User;
+  fixture?: Fixture;
+}
 
-    constructor(data: any) {
-        this.id = data.id;
-        this.userId = data.user_id;
-        this.fixtureId = data.fixture_id;
-        this.predictedHomeScore = data.predicted_home_score;
-        this.predictedAwayScore = data.predicted_away_score;
-        this.points = data.points;
-        this.isDouble = data.is_double || false;
-        this.createdAt = data.created_at;
-        this.updatedAt = data.updated_at;
-    }
+@Table({
+  tableName: "predictions",
+  timestamps: true,
+  underscored: true,
+  indexes: [
+    {
+      unique: true,
+      fields: ["user_id", "fixture_id"],
+    },
+    {
+      fields: ["user_id"],
+    },
+    {
+      fields: ["fixture_id"],
+    },
+  ],
+})
+export class Prediction extends Model<
+  Prediction,
+  PredictionCreationAttributes
+> {
+  @Column({
+    type: DataType.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  })
+  id!: number;
 
-    static async createOrUpdate(data: any) {
-        const { userId, fixtureId, homeScore, awayScore, isDouble } = data;
-        
-        // Check if prediction already exists
-        const existingResult = await pool.query(
-            'SELECT id FROM predictions WHERE user_id = $1 AND fixture_id = $2',
-            [userId, fixtureId]
-        );
+  @ForeignKey(() => User)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+    field: "user_id",
+  })
+  userId!: number;
 
-        // If setting as double, remove any existing double for this gameweek
-        if (isDouble) {
-            await pool.query(`
-                UPDATE predictions SET is_double = FALSE 
-                WHERE user_id = $1 
-                AND fixture_id IN (
-                    SELECT id FROM fixtures 
-                    WHERE gameweek = (SELECT gameweek FROM fixtures WHERE id = $2)
-                )
-            `, [userId, fixtureId]);
-        }
+  @ForeignKey(() => Fixture)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+    field: "fixture_id",
+  })
+  fixtureId!: number;
 
-        if (existingResult.rows.length > 0) {
-            // Update existing prediction
-            const result = await pool.query(
-                'UPDATE predictions SET predicted_home_score = $1, predicted_away_score = $2, is_double = $3, updated_at = CURRENT_TIMESTAMP WHERE user_id = $4 AND fixture_id = $5 RETURNING *',
-                [homeScore, awayScore, isDouble || false, userId, fixtureId]
-            );
-            return new Prediction(result.rows[0]);
-        } else {
-            // Create new prediction
-            const result = await pool.query(
-                'INSERT INTO predictions (user_id, fixture_id, predicted_home_score, predicted_away_score, is_double) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-                [userId, fixtureId, homeScore, awayScore, isDouble || false]
-            );
-            return new Prediction(result.rows[0]);
-        }
-    }
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+    field: "predicted_home_score",
+  })
+  predictedHomeScore!: number;
 
-    static async findByUserIdAndGameweek(userId: number, gameweek: number) {
-        const result = await pool.query(
-            `SELECT 
-                p.*,
-                f.home_team,
-                f.away_team,
-                f.match_date,
-                f.deadline,
-                f.home_score,
-                f.away_score,
-                f.status,
-                f.gameweek
-             FROM predictions p 
-             JOIN fixtures f ON p.fixture_id = f.id 
-             WHERE p.user_id = $1 AND f.gameweek = $2
-             ORDER BY f.match_date ASC`,
-            [userId, gameweek]
-        );
-        
-        return result.rows.map(row => ({
-            id: row.id,
-            homeScore: row.predicted_home_score,
-            awayScore: row.predicted_away_score,
-            points: row.points,
-            isDouble: row.is_double,
-            fixture: {
-                id: row.fixture_id,
-                homeTeam: row.home_team,
-                awayTeam: row.away_team,
-                matchDate: row.match_date,
-                deadline: row.deadline,
-                homeScore: row.home_score,
-                awayScore: row.away_score,
-                status: row.status,
-                gameweek: row.gameweek
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+    field: "predicted_away_score",
+  })
+  predictedAwayScore!: number;
+
+  @Column({
+    type: DataType.INTEGER,
+    defaultValue: 0,
+  })
+  points!: number;
+
+  @Column({
+    type: DataType.BOOLEAN,
+    defaultValue: false,
+    field: "is_double",
+  })
+  isDouble!: boolean;
+
+  @BelongsTo(() => User)
+  user!: User;
+
+  @BelongsTo(() => Fixture)
+  fixture!: Fixture;
+
+  // Ensure only one double per gameweek per user
+  @BeforeCreate
+  @BeforeUpdate
+  static async validateDouble(instance: Prediction) {
+    if (instance.isDouble) {
+      // Remove any existing double for this user in the same gameweek
+      const fixture = await Fixture.findByPk(instance.fixtureId);
+      if (fixture) {
+        const gameweekFixtures = await Fixture.findAll({
+          where: { gameweek: fixture.gameweek },
+          attributes: ["id"],
+        });
+
+        const fixtureIds = gameweekFixtures.map((f) => f.id);
+
+        await Prediction.update(
+          { isDouble: false },
+          {
+            where: {
+              userId: instance.userId,
+              isDouble: true,
+              fixtureId: {
+                [Op.in]: fixtureIds,
+              },
             },
-            createdAt: row.created_at
-        }));
-    }
-
-    static async calculatePoints(predictionId: number) {
-        const result = await pool.query(
-            `SELECT 
-                p.predicted_home_score,
-                p.predicted_away_score,
-                p.is_double,
-                f.home_score,
-                f.away_score,
-                f.status
-             FROM predictions p 
-             JOIN fixtures f ON p.fixture_id = f.id 
-             WHERE p.id = $1`,
-            [predictionId]
+          }
         );
+      }
+    }
+  }
 
-        if (result.rows.length === 0 || result.rows[0].status !== 'finished' || 
-            result.rows[0].home_score === null || result.rows[0].away_score === null) {
-            return 0;
-        }
+  // Calculate points based on prediction accuracy
+  async calculatePoints(): Promise<number> {
+    // Get fixture using the association
+    const fixture = (await this.$get("fixture")) as Fixture;
 
-        const prediction = result.rows[0];
-        const actualHomeScore = prediction.home_score;
-        const actualAwayScore = prediction.away_score;
-        const predictedHomeScore = prediction.predicted_home_score;
-        const predictedAwayScore = prediction.predicted_away_score;
-        const isDouble = prediction.is_double;
-
-        let points = 0;
-
-        // Determine actual result
-        const actualResult = actualHomeScore > actualAwayScore ? 'home' : 
-                           actualHomeScore < actualAwayScore ? 'away' : 'draw';
-        
-        // Determine predicted result
-        const predictedResult = predictedHomeScore > predictedAwayScore ? 'home' : 
-                              predictedHomeScore < predictedAwayScore ? 'away' : 'draw';
-
-        // Points for correct result
-        if (actualResult === predictedResult) {
-            if (actualResult === 'draw') {
-                points += 2; // Draw prediction correct
-            } else {
-                points += 1; // Win prediction correct
-            }
-        }
-
-        // Points for correct goal difference
-        const actualDifference = Math.abs(actualHomeScore - actualAwayScore);
-        const predictedDifference = Math.abs(predictedHomeScore - predictedAwayScore);
-        
-        if (actualDifference === predictedDifference) {
-            points += 2;
-        }
-
-        // Points for exact score
-        if (actualHomeScore === predictedHomeScore && actualAwayScore === predictedAwayScore) {
-            points += 4;
-        }
-
-        // Double the points if this is a double prediction
-        if (isDouble) {
-            points *= 2;
-        }
-
-        // Update points in database
-        await pool.query(
-            'UPDATE predictions SET points = $1 WHERE id = $2',
-            [points, predictionId]
-        );
-
-        return points;
+    // Enhanced null/undefined checks for TypeScript strict mode
+    if (
+      !fixture ||
+      fixture.homeScore === null ||
+      fixture.homeScore === undefined ||
+      fixture.awayScore === null ||
+      fixture.awayScore === undefined
+    ) {
+      return 0;
     }
 
-    // Keep existing methods...
-    static async findByUserId(userId: number) {
-        const result = await pool.query(
-            `SELECT 
-                p.*,
-                f.home_team,
-                f.away_team,
-                f.match_date,
-                f.deadline,
-                f.home_score,
-                f.away_score,
-                f.status,
-                f.gameweek
-             FROM predictions p 
-             JOIN fixtures f ON p.fixture_id = f.id 
-             WHERE p.user_id = $1 
-             ORDER BY f.match_date DESC`,
-            [userId]
-        );
-        
-        return result.rows.map(row => ({
-            id: row.id,
-            homeScore: row.predicted_home_score,
-            awayScore: row.predicted_away_score,
-            points: row.points,
-            isDouble: row.is_double,
-            fixture: {
-                id: row.fixture_id,
-                homeTeam: row.home_team,
-                awayTeam: row.away_team,
-                matchDate: row.match_date,
-                deadline: row.deadline,
-                homeScore: row.home_score,
-                awayScore: row.away_score,
-                status: row.status,
-                gameweek: row.gameweek
-            },
-            createdAt: row.created_at
-        }));
+    let points = 0;
+    const actualResult = this.getResult(fixture.homeScore, fixture.awayScore);
+    const predictedResult = this.getResult(
+      this.predictedHomeScore,
+      this.predictedAwayScore
+    );
+
+    // Exact score: 6 points
+    if (
+      this.predictedHomeScore === fixture.homeScore &&
+      this.predictedAwayScore === fixture.awayScore
+    ) {
+      points = 6;
+    }
+    // Correct result and goal difference: 4 points
+    else if (
+      predictedResult === actualResult &&
+      this.predictedHomeScore - this.predictedAwayScore ===
+        fixture.homeScore - fixture.awayScore
+    ) {
+      points = 4;
+    }
+    // Correct result only: 2 points
+    else if (predictedResult === actualResult) {
+      points = 2;
     }
 
-    static async findAll() {
-        const result = await pool.query('SELECT * FROM predictions ORDER BY created_at DESC');
-        return result.rows.map(row => new Prediction(row));
+    // Apply double multiplier
+    if (this.isDouble) {
+      points *= 2;
     }
 
-    static async update(data: any, options: { where: { id: number } }) {
-        const { id } = options.where;
-        const { homeScore, awayScore } = data;
-        const result = await pool.query(
-            'UPDATE predictions SET predicted_home_score = $1, predicted_away_score = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *',
-            [homeScore, awayScore, id]
-        );
-        return result.rows.length > 0 ? new Prediction(result.rows[0]) : null;
+    this.points = points;
+    await this.save();
+    return points;
+  }
+
+  // Updated getResult method with proper type handling
+  private getResult(homeScore: number, awayScore: number): string {
+    if (homeScore > awayScore) return "H";
+    if (awayScore > homeScore) return "A";
+    return "D";
+  }
+
+  // Static methods for leaderboard and statistics
+  static async getLeaderboard() {
+    const results = await this.findAll({
+      attributes: [
+        "userId",
+        [fn("SUM", col("points")), "totalPoints"],
+        [
+          fn("COUNT", literal("CASE WHEN points > 0 THEN 1 END")),
+          "correctPredictions",
+        ],
+        [fn("COUNT", col("Prediction.id")), "totalPredictions"], // Fix: Specify table alias
+      ],
+      include: [
+        {
+          model: User,
+          attributes: ["username"],
+          where: { isAdmin: false },
+        },
+        {
+          model: Fixture,
+          attributes: [],
+          where: { status: "finished" },
+        },
+      ],
+      group: ["userId", "user.id", "user.username"],
+      order: [[fn("SUM", col("points")), "DESC"]],
+      raw: false,
+    });
+
+    return results.map((result: any, index: number) => ({
+      rank: index + 1,
+      userId: result.userId,
+      username: result.user.username,
+      totalPoints: parseInt(result.dataValues.totalPoints) || 0,
+      correctPredictions: parseInt(result.dataValues.correctPredictions) || 0,
+      totalPredictions: parseInt(result.dataValues.totalPredictions) || 0,
+    }));
+  }
+
+  static async findByUserAndGameweek(userId: number, gameweek: number) {
+    return this.findAll({
+      where: { userId },
+      include: [
+        {
+          model: Fixture,
+          where: { gameweek },
+          required: true,
+        },
+      ],
+      order: [[{ model: Fixture, as: "fixture" }, "matchDate", "ASC"]],
+    });
+  }
+
+  static async recalculateAllPoints() {
+    const predictions = await this.findAll({
+      include: [
+        {
+          model: Fixture,
+          where: {
+            status: "finished",
+            homeScore: { [Op.not]: null },
+            awayScore: { [Op.not]: null },
+          },
+        },
+      ],
+    });
+
+    for (const prediction of predictions) {
+      await prediction.calculatePoints();
     }
 
-    static async destroy(options: { where: { id: number } }) {
-        const { id } = options.where;
-        await pool.query('DELETE FROM predictions WHERE id = $1', [id]);
-        return true;
-    }
-
-    static async recalculateAllPoints() {
-        const predictions = await pool.query(
-            `SELECT p.id FROM predictions p 
-             JOIN fixtures f ON p.fixture_id = f.id 
-             WHERE f.status = 'finished' AND f.home_score IS NOT NULL AND f.away_score IS NOT NULL`
-        );
-
-        for (const prediction of predictions.rows) {
-            await this.calculatePoints(prediction.id);
-        }
-    }
-
-    static async getLeaderboard() {
-        console.log('Getting leaderboard...');
-        
-        const result = await pool.query(`
-            SELECT 
-                u.id as user_id,
-                u.username,
-                COALESCE(SUM(CASE WHEN f.status = 'finished' THEN p.points ELSE 0 END), 0) as total_points,
-                ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(CASE WHEN f.status = 'finished' THEN p.points ELSE 0 END), 0) DESC) as rank
-            FROM users u
-            LEFT JOIN predictions p ON u.id = p.user_id
-            LEFT JOIN fixtures f ON p.fixture_id = f.id
-            GROUP BY u.id, u.username
-            ORDER BY total_points DESC
-        `);
-        
-        console.log('Leaderboard query result:', result.rows);
-        return result.rows;
-    }
+    return predictions.length;
+  }
 }

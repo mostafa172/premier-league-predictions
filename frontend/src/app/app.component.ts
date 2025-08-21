@@ -5,63 +5,63 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
   title = 'Premier League Predictions';
   isAuthenticated = false;
-  currentUser: any = null;
 
   constructor(
     private authService: AuthService,
     private router: Router
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
       this.isAuthenticated = !!user;
-      
-      // Redirect logic - improved session handling
-      const currentUrl = this.router.url;
-      
-      if (user) {
-        // User is authenticated
-        if (currentUrl === '/auth' || currentUrl === '/') {
-          this.router.navigate(['/fixtures']);
-        }
-      } else {
-        // User is not authenticated
-        if (currentUrl !== '/auth') {
-          this.router.navigate(['/auth']);
-        }
-      }
     });
-
-    // Check token validity on app startup
-    this.checkTokenValidity();
   }
 
-  private checkTokenValidity(): void {
-    // Force check if current token is still valid
-    if (!this.authService.isAuthenticated() && this.authService.getToken()) {
-      // Token exists but is invalid/expired
-      this.authService.logout();
-    }
-  }
-
-  logout() {
+  logout(): void {
     this.authService.logout();
   }
 
-  // Get session time remaining for display (optional)
-  getSessionTimeRemaining(): number {
+  get currentUser() {
+    return this.authService.getCurrentUser();
+  }
+
+  get isAdmin(): boolean {
+    return this.currentUser?.isAdmin || false;
+  }
+
+  get tokenTimeRemaining(): string {
     return this.authService.getTokenTimeRemaining();
   }
 
-  // Check if session is about to expire (optional)
+  // Add missing methods for the template
+  getSessionTimeRemaining(): number {
+    const timeStr = this.authService.getTokenTimeRemaining();
+    if (timeStr === 'Not logged in' || timeStr === 'Expired' || timeStr === 'Invalid token') {
+      return 0;
+    }
+    
+    // Extract minutes from string like "30m" or "1h 30m"
+    const minutesMatch = timeStr.match(/(\d+)m/);
+    const hoursMatch = timeStr.match(/(\d+)h/);
+    
+    let totalMinutes = 0;
+    if (hoursMatch) {
+      totalMinutes += parseInt(hoursMatch[1]) * 60;
+    }
+    if (minutesMatch) {
+      totalMinutes += parseInt(minutesMatch[1]);
+    }
+    
+    return totalMinutes;
+  }
+
   isSessionExpiringSoon(): boolean {
-    const timeRemaining = this.getSessionTimeRemaining();
-    return timeRemaining > 0 && timeRemaining <= 5; // 5 minutes or less
+    const remaining = this.getSessionTimeRemaining();
+    return remaining > 0 && remaining <= 10; // Expiring within 10 minutes
   }
 }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -6,12 +6,12 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-auth',
   templateUrl: './auth.component.html',
-  styleUrls: ['./auth.component.css']
+  styleUrls: ['./auth.component.scss']
 })
-export class AuthComponent {
+export class AuthComponent implements OnInit {
+  isLoginMode = true;
   loginForm: FormGroup;
   registerForm: FormGroup;
-  isLoginMode = true;
   loading = false;
   error = '';
 
@@ -20,9 +20,10 @@ export class AuthComponent {
     private authService: AuthService,
     private router: Router
   ) {
+    // Fixed: Use 'email' for login instead of 'username'
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      email: ['', [Validators.required, Validators.email]], // Changed from username to email
+      password: ['', [Validators.required]]
     });
 
     this.registerForm = this.fb.group({
@@ -32,38 +33,52 @@ export class AuthComponent {
     });
   }
 
-  toggleMode(): void {
-    this.isLoginMode = !this.isLoginMode;
+  ngOnInit(): void {
+    // Redirect if already authenticated
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/fixtures']);
+    }
   }
-  
-  onSubmit(): void {
-    this.loading = true;
+
+  switchMode(): void {
+    this.isLoginMode = !this.isLoginMode;
     this.error = '';
-  
-    if (this.isLoginMode) {
-      const { email, password } = this.loginForm.value;
-      this.authService.login(email, password).subscribe(
-        () => {
+  }
+
+  toggleMode(): void {
+    this.switchMode();
+  }
+
+  onSubmit(): void {
+    const form = this.isLoginMode ? this.loginForm : this.registerForm;
+    
+    if (form.valid) {
+      this.loading = true;
+      this.error = '';
+
+      const formData = form.value;
+
+      const authObservable = this.isLoginMode
+        ? this.authService.login(formData.email, formData.password) // Fixed: use email for login
+        : this.authService.register(formData.username, formData.email, formData.password);
+
+      authObservable.subscribe({
+        next: (response: any) => {
           this.loading = false;
-          this.router.navigate(['/']);
+          if (response.success) {
+            this.router.navigate(['/fixtures']);
+          }
         },
-        (error) => {
+        error: (error: any) => {
           this.loading = false;
-          this.error = error;
+          this.error = error.error?.message || 'An error occurred';
         }
-      );
+      });
     } else {
-      const { username, email, password } = this.registerForm.value;
-      this.authService.register(username, email, password).subscribe(
-        () => {
-          this.loading = false;
-          this.router.navigate(['/']);
-        },
-        (error) => {
-          this.loading = false;
-          this.error = error;
-        }
-      );
+      // Mark all fields as touched to show validation errors
+      Object.keys(form.controls).forEach(key => {
+        form.get(key)?.markAsTouched();
+      });
     }
   }
 }
