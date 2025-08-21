@@ -121,8 +121,9 @@
   
   .actual-score {
     font-size: 0.875rem;
-    color: var(--success-color);
+    color: #00b84a !important; /* Less shiny green - FIXED HERE */
     font-weight: 600;
+    text-shadow: none; /* Remove any text shadow */
   }
 }
 
@@ -218,8 +219,9 @@
   
   .points-display {
     font-size: 0.875rem;
-    color: var(--success-color);
+    color: #00b84a !important; /* Less shiny green - FIXED HERE */
     font-weight: 600;
+    text-shadow: none; /* Remove any text shadow */
     
     .double-indicator {
       color: var(--accent-color);
@@ -277,5 +279,31 @@
     .btn {
       width: 100%;
     }
+  }
+}
+
+.actual-score {
+  font-size: 0.875rem;
+  color: #00b84a !important; /* Less shiny green - FIXED HERE */
+  font-weight: 600;
+  text-shadow: none; /* Remove any text shadow */
+}
+
+.match-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  
+  .teams {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1rem;
+  }
+  
+  .actual-score {
+    font-size: 0.875rem;
+    color: #00b84a !important; /* Less shiny green - FIXED HERE */
+    font-weight: 600;
+    text-shadow: none; /* Remove any text shadow */
   }
 }

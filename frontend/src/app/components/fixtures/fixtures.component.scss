@@ -120,8 +120,8 @@
   .team-score {
     font-size: 2rem;
     font-weight: 900;
-    color: var(--success-color);
-    text-shadow: 0 2px 4px rgba(0, 255, 135, 0.3);
+    color: #00b84a; /* Less shiny green - FIXED HERE */
+    text-shadow: none; /* Remove text shadow for less shiny effect */
   }
 }
 

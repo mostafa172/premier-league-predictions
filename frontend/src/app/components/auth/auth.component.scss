@@ -1,6 +1,7 @@
+/* filepath: frontend/src/app/components/auth/auth.component.scss */
 .auth-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--primary-color) 0%, #4a0e4e 100%);
+  background: #f7f7f7; /* Simple light gray instead of purple gradient */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,7 +14,7 @@
   padding: 3rem;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 8px 32px rgba(56, 0, 60, 0.3);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1); /* Softer shadow */
   
   h2 {
     text-align: center;

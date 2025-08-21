@@ -18,12 +18,6 @@
   </nav>
 </div>
 
-<div class="session-status" *ngIf="isAuthenticated && getSessionTimeRemaining() > 0">
-  <div class="session-warning" [class.critical]="isSessionExpiringSoon()">
-    Session expires in {{ getSessionTimeRemaining() }} min
-  </div>
-</div>
-
 <main class="main-content">
   <router-outlet></router-outlet>
 </main>

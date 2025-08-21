@@ -1,17 +1,31 @@
+/* filepath: backend/src/controllers/predictions.controller.ts */
 import { Request, Response } from 'express';
 import { Prediction } from '../models/Prediction';
 import { Fixture } from '../models/Fixture';
 import { User } from '../models/User';
-import { AuthRequest } from '../middleware/auth.middleware';
-import { PredictionCreationAttributes, PredictionUpdateAttributes } from '../interfaces/prediction.interface';
-import { Op } from 'sequelize';
+import { fn, col, literal } from 'sequelize';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: number;
+    username: string;
+    isAdmin: boolean;
+  };
+}
 
 export class PredictionsController {
-  // Create or update prediction
-  public async createPrediction(req: AuthRequest, res: Response): Promise<Response> {
+  // Create or update a prediction
+  async createPrediction(req: AuthenticatedRequest, res: Response) {
     try {
-      const userId = req.user.id;
-      const { fixtureId, homeScore, awayScore, isDouble } = req.body;
+      const { fixtureId, homeScore, awayScore, isDouble = false } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+      }
 
       // Validate input
       if (!fixtureId || homeScore === undefined || awayScore === undefined) {
@@ -21,7 +35,26 @@ export class PredictionsController {
         });
       }
 
-      // Check if fixture exists and is still open for predictions
+      // Convert to integers and validate
+      const predictedHomeScore = parseInt(homeScore);
+      const predictedAwayScore = parseInt(awayScore);
+
+      if (isNaN(predictedHomeScore) || isNaN(predictedAwayScore)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Scores must be valid numbers'
+        });
+      }
+
+      if (predictedHomeScore < 0 || predictedAwayScore < 0 || 
+          predictedHomeScore > 20 || predictedAwayScore > 20) {
+        return res.status(400).json({
+          success: false,
+          message: 'Scores must be between 0 and 20'
+        });
+      }
+
+      // Check if fixture exists and deadline hasn't passed
       const fixture = await Fixture.findByPk(fixtureId);
       if (!fixture) {
         return res.status(404).json({
@@ -30,166 +63,244 @@ export class PredictionsController {
         });
       }
 
-      if (new Date() > fixture.deadline) {
+      if (new Date() > new Date(fixture.deadline)) {
         return res.status(400).json({
           success: false,
           message: 'Prediction deadline has passed'
         });
       }
 
-      // Check if prediction already exists
-      let prediction = await Prediction.findOne({
-        where: {
-          userId,
-          fixtureId
-        }
+      // Check for existing prediction
+      const existingPrediction = await Prediction.findOne({
+        where: { userId, fixtureId }
       });
 
-      let created = false;
-      if (prediction) {
+      if (existingPrediction) {
         // Update existing prediction
-        const updateData: PredictionUpdateAttributes = {
-          predictedHomeScore: parseInt(homeScore),
-          predictedAwayScore: parseInt(awayScore),
-          isDouble: Boolean(isDouble)
-        };
-        
-        await prediction.update(updateData);
-      } else {
-        // Create new prediction with proper typing
-        const creationData: PredictionCreationAttributes = {
-          userId,
-          fixtureId: parseInt(fixtureId),
-          predictedHomeScore: parseInt(homeScore),
-          predictedAwayScore: parseInt(awayScore),
-          isDouble: Boolean(isDouble),
-          points: 0
-        };
-        
-        prediction = await Prediction.create(creationData);
-        created = true;
-      }
+        existingPrediction.predictedHomeScore = predictedHomeScore;
+        existingPrediction.predictedAwayScore = predictedAwayScore;
+        existingPrediction.isDouble = isDouble;
+        await existingPrediction.save();
 
-      return res.status(created ? 201 : 200).json({
-        success: true,
-        message: created ? 'Prediction created successfully' : 'Prediction updated successfully',
-        data: prediction
-      });
-    } catch (error) {
-      console.error('Prediction creation error:', error);
-      return res.status(500).json({
+        res.json({
+          success: true,
+          message: 'Prediction updated successfully',
+          data: existingPrediction
+        });
+      } else {
+        // Create new prediction
+        const prediction = await Prediction.create({
+          userId,
+          fixtureId,
+          predictedHomeScore,
+          predictedAwayScore,
+          isDouble,
+          points: 0
+        });
+
+        res.json({
+          success: true,
+          message: 'Prediction created successfully',
+          data: prediction
+        });
+      }
+    } catch (error: any) {
+      console.error('Create prediction error:', error);
+      res.status(500).json({
         success: false,
         message: 'Error saving prediction',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error.message
       });
     }
   }
 
   // Get all predictions (admin only)
-  public async getAllPredictions(req: Request, res: Response): Promise<Response> {
+  async getAllPredictions(req: AuthenticatedRequest, res: Response) {
     try {
       const predictions = await Prediction.findAll({
         include: [
           {
             model: User,
-            attributes: ['id', 'username']
+            attributes: ['id', 'username', 'email']
           },
           {
             model: Fixture,
-            attributes: ['id', 'homeTeam', 'awayTeam', 'matchDate', 'gameweek']
+            attributes: ['id', 'homeTeam', 'awayTeam', 'matchDate', 'gameweek', 'status']
           }
         ],
         order: [['createdAt', 'DESC']]
       });
 
-      return res.status(200).json({
+      res.json({
         success: true,
         data: predictions
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Get all predictions error:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
-        message: 'Error fetching all predictions',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error fetching predictions',
+        error: error.message
       });
     }
   }
 
-  // Get current user's predictions
-  public async getCurrentUserPredictions(req: AuthRequest, res: Response): Promise<Response> {
+  // Get user's predictions
+  async getUserPredictions(req: AuthenticatedRequest, res: Response) {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+      }
 
       const predictions = await Prediction.findAll({
         where: { userId },
-        include: [{
-          model: Fixture,
-          attributes: ['id', 'homeTeam', 'awayTeam', 'matchDate', 'gameweek', 'status', 'homeScore', 'awayScore']
-        }],
-        order: [[{ model: Fixture, as: 'fixture' }, 'matchDate', 'ASC']]
+        include: [
+          {
+            model: Fixture,
+            attributes: ['id', 'homeTeam', 'awayTeam', 'matchDate', 'gameweek', 'status']
+          }
+        ],
+        order: [['createdAt', 'DESC']]
       });
 
-      return res.status(200).json({
+      res.json({
         success: true,
         data: predictions
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Get user predictions error:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
-        message: 'Error fetching user predictions',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error fetching predictions',
+        error: error.message
       });
     }
   }
 
-  // Get current user's predictions by gameweek
-  public async getCurrentUserPredictionsByGameweek(req: AuthRequest, res: Response): Promise<Response> {
+  // Get current user's predictions (alias for getUserPredictions)
+  async getCurrentUserPredictions(req: AuthenticatedRequest, res: Response) {
+    return this.getUserPredictions(req, res);
+  }
+
+  // Get user's predictions by gameweek
+  async getUserPredictionsByGameweek(req: AuthenticatedRequest, res: Response) {
     try {
-      const userId = req.user.id;
       const { gameweek } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+      }
 
       const predictions = await Prediction.findAll({
         where: { userId },
-        include: [{
-          model: Fixture,
-          where: { gameweek: parseInt(gameweek) },
-          required: true
-        }],
-        order: [[{ model: Fixture, as: 'fixture' }, 'matchDate', 'ASC']]
+        include: [
+          {
+            model: Fixture,
+            where: { gameweek: parseInt(gameweek) },
+            attributes: ['id', 'homeTeam', 'awayTeam', 'matchDate', 'gameweek', 'status']
+          }
+        ],
+        order: [['createdAt', 'DESC']]
       });
 
-      return res.status(200).json({
+      res.json({
         success: true,
         data: predictions
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Get user predictions by gameweek error:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
-        message: 'Error fetching user predictions by gameweek',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error fetching predictions',
+        error: error.message
       });
     }
   }
 
-  // Alternative method name for compatibility
-  public async getUserPredictionsByGameweek(req: AuthRequest, res: Response): Promise<Response> {
-    return this.getCurrentUserPredictionsByGameweek(req, res);
+  // Get current user's predictions by gameweek (alias)
+  async getCurrentUserPredictionsByGameweek(req: AuthenticatedRequest, res: Response) {
+    return this.getUserPredictionsByGameweek(req, res);
+  }
+
+  // Get leaderboard
+  async getLeaderboard(req: AuthenticatedRequest, res: Response) {
+    try {
+      const results = await Prediction.findAll({
+        attributes: [
+          'userId',
+          [fn('SUM', col('points')), 'totalPoints'],
+          [
+            fn('COUNT', literal('CASE WHEN points > 0 THEN 1 END')),
+            'correctPredictions',
+          ],
+          [fn('COUNT', col('Prediction.id')), 'totalPredictions'],
+        ],
+        include: [
+          {
+            model: User,
+            attributes: ['username'],
+            where: { isAdmin: false },
+          },
+          {
+            model: Fixture,
+            attributes: [],
+            where: { status: 'finished' },
+          },
+        ],
+        group: ['userId', 'user.id', 'user.username'],
+        order: [[fn('SUM', col('points')), 'DESC']],
+        raw: false,
+      });
+
+      const leaderboard = results.map((result: any, index: number) => ({
+        rank: index + 1,
+        userId: result.userId,
+        username: result.user.username,
+        totalPoints: parseInt(result.dataValues.totalPoints) || 0,
+        correctPredictions: parseInt(result.dataValues.correctPredictions) || 0,
+        totalPredictions: parseInt(result.dataValues.totalPredictions) || 0,
+      }));
+
+      res.json({
+        success: true,
+        data: leaderboard
+      });
+    } catch (error: any) {
+      console.error('Get leaderboard error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching leaderboard',
+        error: error.message
+      });
+    }
   }
 
   // Update prediction
-  public async updatePrediction(req: AuthRequest, res: Response): Promise<Response> {
+  async updatePrediction(req: AuthenticatedRequest, res: Response) {
     try {
-      const userId = req.user.id;
       const { id } = req.params;
       const { homeScore, awayScore, isDouble } = req.body;
+      const userId = req.user?.id;
 
-      // Find the prediction
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+      }
+
       const prediction = await Prediction.findOne({
-        where: { id: parseInt(id), userId },
-        include: [{ model: Fixture }]
+        where: { id, userId },
+        include: [Fixture]
       });
 
       if (!prediction) {
@@ -200,46 +311,51 @@ export class PredictionsController {
       }
 
       // Check if deadline has passed
-      if (new Date() > prediction.fixture.deadline) {
+      const fixture = prediction.fixture;
+      if (new Date() > new Date(fixture.deadline)) {
         return res.status(400).json({
           success: false,
           message: 'Prediction deadline has passed'
         });
       }
 
-      // Update the prediction with proper typing
-      const updateData: PredictionUpdateAttributes = {};
-      if (homeScore !== undefined) updateData.predictedHomeScore = parseInt(homeScore);
-      if (awayScore !== undefined) updateData.predictedAwayScore = parseInt(awayScore);
-      if (isDouble !== undefined) updateData.isDouble = Boolean(isDouble);
+      // Update prediction
+      prediction.predictedHomeScore = parseInt(homeScore);
+      prediction.predictedAwayScore = parseInt(awayScore);
+      prediction.isDouble = isDouble || false;
+      await prediction.save();
 
-      await prediction.update(updateData);
-
-      return res.status(200).json({
+      res.json({
         success: true,
         message: 'Prediction updated successfully',
         data: prediction
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Update prediction error:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: 'Error updating prediction',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error.message
       });
     }
   }
 
   // Delete prediction
-  public async deletePrediction(req: AuthRequest, res: Response): Promise<Response> {
+  async deletePrediction(req: AuthenticatedRequest, res: Response) {
     try {
-      const userId = req.user.id;
       const { id } = req.params;
+      const userId = req.user?.id;
 
-      // Find the prediction
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+      }
+
       const prediction = await Prediction.findOne({
-        where: { id: parseInt(id), userId },
-        include: [{ model: Fixture }]
+        where: { id, userId },
+        include: [Fixture]
       });
 
       if (!prediction) {
@@ -250,63 +366,54 @@ export class PredictionsController {
       }
 
       // Check if deadline has passed
-      if (new Date() > prediction.fixture.deadline) {
+      const fixture = prediction.fixture;
+      if (new Date() > new Date(fixture.deadline)) {
         return res.status(400).json({
           success: false,
-          message: 'Cannot delete prediction after deadline'
+          message: 'Prediction deadline has passed'
         });
       }
 
-      // Delete the prediction
       await prediction.destroy();
 
-      return res.status(200).json({
+      res.json({
         success: true,
         message: 'Prediction deleted successfully'
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Delete prediction error:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: 'Error deleting prediction',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error.message
       });
     }
   }
 
-  // Get leaderboard
-  public async getLeaderboard(req: Request, res: Response): Promise<Response> {
-    try {
-      const leaderboard = await Prediction.getLeaderboard();
-      return res.status(200).json({
-        success: true,
-        data: leaderboard
-      });
-    } catch (error) {
-      console.error('Get leaderboard error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error fetching leaderboard',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-
-  // Recalculate points (admin only)
-  public async recalculatePoints(req: Request, res: Response): Promise<Response> {
+  // Recalculate all points (admin only)
+  async recalculateAllPoints(req: AuthenticatedRequest, res: Response) {
     try {
       const count = await Prediction.recalculateAllPoints();
-      return res.status(200).json({
+      
+      res.json({
         success: true,
-        message: `Points recalculated for ${count} predictions`
+        message: `Points recalculated for ${count} predictions`,
+        data: { count }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Recalculate points error:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: 'Error recalculating points',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error.message
       });
     }
   }
+
+  // Alias for recalculateAllPoints
+  async recalculatePoints(req: AuthenticatedRequest, res: Response) {
+    return this.recalculateAllPoints(req, res);
+  }
 }
+
+export const predictionsController = new PredictionsController();

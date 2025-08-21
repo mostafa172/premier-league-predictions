@@ -37,7 +37,7 @@
         </div>
         
         <div class="points">
-          <span class="points-number">{{ entry.total_points }}</span>
+          <span class="points-number">{{ entry.totalPoints || entry.total_points || 0 }}</span>
           <span class="points-label">pts</span>
         </div>
       </div>

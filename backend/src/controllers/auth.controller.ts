@@ -104,7 +104,7 @@ export const login = async (req: Request, res: Response) => {
         isAdmin: user.rows[0].is_admin,
       },
       process.env.JWT_SECRET || "your-secret-key",
-      { expiresIn: "7d" }
+      { expiresIn: "30d" } // 30 days instead of 7 days
     );
 
     // In login function

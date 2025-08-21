@@ -1,3 +1,4 @@
+/* filepath: backend/src/routes/predictions.routes.ts */
 import { Router } from 'express';
 import { PredictionsController } from '../controllers/predictions.controller';
 import { authenticateToken, requireAdmin } from '../middleware/auth.middleware';
@@ -5,14 +6,14 @@ import { authenticateToken, requireAdmin } from '../middleware/auth.middleware';
 const router = Router();
 const predictionsController = new PredictionsController();
 
-// Admin routes
-router.get('/', authenticateToken, requireAdmin, predictionsController.getAllPredictions.bind(predictionsController));
+// Admin routes - Fix method name
+router.get('/', authenticateToken, requireAdmin, predictionsController.getUserPredictions.bind(predictionsController));
 
-// User routes
-router.get('/user', authenticateToken, predictionsController.getCurrentUserPredictions.bind(predictionsController));
+// User routes - Fix method names
+router.get('/user', authenticateToken, predictionsController.getUserPredictions.bind(predictionsController));
 
-// Get user predictions by gameweek
-router.get('/user/gameweek/:gameweek', authenticateToken, predictionsController.getCurrentUserPredictionsByGameweek.bind(predictionsController));
+// Get user predictions by gameweek - Fix method name
+router.get('/user/gameweek/:gameweek', authenticateToken, predictionsController.getUserPredictionsByGameweek.bind(predictionsController));
 
 // Create/submit prediction
 router.post('/', authenticateToken, predictionsController.createPrediction.bind(predictionsController));
@@ -26,7 +27,7 @@ router.delete('/:id', authenticateToken, predictionsController.deletePrediction.
 // Get leaderboard
 router.get('/leaderboard', predictionsController.getLeaderboard.bind(predictionsController));
 
-// Admin: Recalculate points
-router.post('/recalculate', authenticateToken, requireAdmin, predictionsController.recalculatePoints.bind(predictionsController));
+// Admin: Recalculate points - Add missing method
+router.post('/recalculate', authenticateToken, requireAdmin, predictionsController.recalculateAllPoints.bind(predictionsController));
 
 export default router;
