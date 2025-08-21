@@ -1,13 +1,14 @@
 <div class="predictions-container">
   <div class="predictions-header">
     <h2>Make Your Predictions</h2>
-
+    
     <div class="gameweek-selector">
       <label for="gameweek">Gameweek:</label>
-      <select
-        id="gameweek"
-        [(ngModel)]="gameweek"
-        (change)="onGameweekChange(gameweek)"
+      <select 
+        id="gameweek" 
+        [(ngModel)]="gameweek" 
+        (change)="onGameweekChange()"
+        class="form-control"
       >
         <option *ngFor="let gw of gameweeks" [value]="gw">
           Gameweek {{ gw }}
@@ -16,168 +17,147 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="loading">Loading fixtures...</div>
-  <div *ngIf="error" class="error">{{ error }}</div>
-  <div *ngIf="success" class="success">{{ success }}</div>
+  <!-- Success Message -->
+  <div *ngIf="success" class="alert alert-success">{{ success }}</div>
 
-  <form
-    [formGroup]="predictionsForm"
-    (ngSubmit)="saveAllPredictions()"
-    *ngIf="!loading"
-  >
-    <div *ngIf="fixtures.length === 0" class="no-fixtures">
-      No fixtures found for Gameweek {{ gameweek }}.
-    </div>
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
 
-    <div *ngIf="fixtures.length > 0" class="predictions-sheet">
-      <div class="sheet-info">
-        <p>
-          <strong>Instructions:</strong> Enter your predictions and select ONE
-          as your double (worth 2x points).
-        </p>
-      </div>
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <p>Loading fixtures and predictions...</p>
+  </div>
 
-      <div class="sheet-header">
-        <div class="match-column">Match</div>
-        <div class="date-column">Date</div>
-        <div class="prediction-column">Your Prediction</div>
-        <div class="double-column">Double</div>
-        <div class="status-column">Status</div>
-      </div>
-
-      <div
-        *ngFor="let fixture of fixtures; let i = index"
-        class="fixture-row"
-        [class.disabled]="isFixtureDisabled(fixture)"
-        [class.has-prediction]="hasValidPrediction(i)"
-        [class.is-double]="predictionsArray.at(i).get('isDouble')?.value"
-      >
-        <!-- In the fixture row -->
-        <div class="match-info">
-          <div class="teams-display">
-            <div class="team">
-              <img
-                [src]="fixture.homeTeam.logoUrl"
-                [alt]="fixture.homeTeam.name"
-                class="team-logo-small"
-              />
-              <span class="team-abbr">{{ fixture.homeTeam.abbreviation }}</span>
-            </div>
-            <span class="vs">vs</span>
-            <div class="team">
-              <img
-                [src]="fixture.awayTeam.logoUrl"
-                [alt]="fixture.awayTeam.name"
-                class="team-logo-small"
-              />
-              <span class="team-abbr">{{ fixture.awayTeam.abbreviation }}</span>
-            </div>
-          </div>
-          <div
-            *ngIf="fixture.status === 'finished' && fixture.homeScore !== null"
-            class="actual-score"
-          >
-            Final: {{ fixture.homeScore }} - {{ fixture.awayScore }}
-          </div>
-        </div>
-
-        <div class="match-date">
-          {{ fixture.matchDate | date : "MMM d, HH:mm" }}
-        </div>
-
-        <!-- In the prediction inputs -->
-        <div class="prediction-inputs" formArrayName="predictions">
-          <div [formGroupName]="i" class="score-inputs">
-            <div class="team-score">
-              <img
-                [src]="fixture.homeTeam.logoUrl"
-                [alt]="fixture.homeTeam.name"
-                class="team-logo-tiny"
-              />
-              <label>{{ fixture.homeTeam.abbreviation }}</label>
-              <input
-                type="number"
-                formControlName="homeScore"
-                [disabled]="isFixtureDisabled(fixture)"
-                min="0"
-                max="20"
-                class="score-input"
-                placeholder="-"
-              />
+  <!-- Predictions Form -->
+  <div *ngIf="!loading && fixtures.length > 0">
+    <form [formGroup]="predictionsForm" (ngSubmit)="saveAllPredictions()">
+      <div formArrayName="predictions" class="predictions-list">
+        
+        <div 
+          *ngFor="let fixture of fixtures; let i = index; trackBy: trackByFixtureId"
+          class="fixture-prediction"
+          [class.disabled]="isFixtureDisabled(fixture)"
+          [class.has-prediction]="hasValidPrediction(i)"
+        >
+          <div [formGroupName]="i" class="prediction-card">
+            
+            <!-- Fixture Info -->
+            <div class="fixture-info">
+              <div class="teams">
+                <div class="team home-team">
+                  <img [src]="fixture.homeTeam?.logoUrl" [alt]="fixture.homeTeam?.name" class="team-logo">
+                  <span class="team-name">{{ fixture.homeTeam?.name }}</span>
+                </div>
+                
+                <div class="vs">VS</div>
+                
+                <div class="team away-team">
+                  <img [src]="fixture.awayTeam?.logoUrl" [alt]="fixture.awayTeam?.name" class="team-logo">
+                  <span class="team-name">{{ fixture.awayTeam?.name }}</span>
+                </div>
+              </div>
+              
+              <div class="fixture-details">
+                <div class="match-date">{{ getFormattedDate(fixture.matchDate) }}</div>
+                <div class="deadline" [class.expired]="isFixtureDisabled(fixture)">
+                  Deadline: {{ getFormattedDeadline(fixture.deadline) }}
+                </div>
+              </div>
             </div>
 
-            <div class="vs-separator">-</div>
+            <!-- Prediction Inputs -->
+            <div class="prediction-inputs" *ngIf="!isFixtureDisabled(fixture)">
+              <div class="score-inputs">
+                <div class="score-input">
+                  <label>{{ fixture.homeTeam?.abbreviation }}</label>
+                  <input 
+                    type="number" 
+                    formControlName="homeScore"
+                    min="0"
+                    max="20"
+                    [disabled]="isFixtureDisabled(fixture)"
+                    class="form-control"
+                  >
+                </div>
+                
+                <div class="score-separator">-</div>
+                
+                <div class="score-input">
+                  <label>{{ fixture.awayTeam?.abbreviation }}</label>
+                  <input 
+                    type="number" 
+                    formControlName="awayScore"
+                    min="0"
+                    max="20"
+                    [disabled]="isFixtureDisabled(fixture)"
+                    class="form-control"
+                  >
+                </div>
+              </div>
 
-            <div class="team-score">
-              <img
-                [src]="fixture.awayTeam.logoUrl"
-                [alt]="fixture.awayTeam.name"
-                class="team-logo-tiny"
-              />
-              <label>{{ fixture.awayTeam.abbreviation }}</label>
-              <input
-                type="number"
-                formControlName="awayScore"
-                [disabled]="isFixtureDisabled(fixture)"
-                min="0"
-                max="20"
-                class="score-input"
-                placeholder="-"
-              />
+              <!-- Double Points Option -->
+              <div class="double-points">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    [disabled]="isFixtureDisabled(fixture) || !hasValidPrediction(i)"
+                    (change)="onDoubleChange(i)"
+                  >
+                  Double Points
+                </label>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="double-selection" formArrayName="predictions">
-          <div [formGroupName]="i">
-            <input
-              type="checkbox"
-              formControlName="isDouble"
-              [disabled]="isFixtureDisabled(fixture) || !hasValidPrediction(i)"
-              (change)="onDoubleChange(i)"
-              class="double-checkbox"
-              id="double-{{ i }}"
-            />
-            <label for="double-{{ i }}" class="double-label">2x</label>
-          </div>
-        </div>
+            <!-- Finished Fixture Display -->
+            <div 
+              class="finished-fixture" 
+              *ngIf="isFixtureDisabled(fixture) && fixture.status === 'finished'"
+            >
+              <div class="actual-score">
+                Final: {{ fixture.homeScore }} - {{ fixture.awayScore }}
+              </div>
+              
+              <div class="user-predictions" *ngIf="existingPredictions.length > 0">
+                <ng-container *ngFor="let pred of existingPredictions">
+                  <div *ngIf="pred.fixtureId === fixture.id" class="user-prediction">
+                    Your prediction: {{ pred.homeScore }} - {{ pred.awayScore }}
+                    <span class="points">{{ pred.points || 0 }} pts</span>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
 
-        <div class="fixture-status">
-          <span class="status-badge" [class]="'status-' + fixture.status">
-            {{ fixture.status }}
-          </span>
-          <div
-            *ngIf="isFixtureDisabled(fixture) && fixture.status === 'upcoming'"
-            class="deadline-passed"
-          >
-            Deadline passed
-          </div>
-          <div *ngIf="fixture.status === 'finished'" class="points-display">
-            <ng-container *ngFor="let pred of existingPredictions">
-              <span *ngIf="pred.fixture.id === fixture.id" class="points">
-                {{ pred.points }} pts
-                <span *ngIf="pred.isDouble" class="double-indicator">(2x)</span>
-              </span>
-            </ng-container>
+            <!-- Upcoming but past deadline -->
+            <div class="deadline-passed" *ngIf="isFixtureDisabled(fixture) && fixture.status === 'upcoming'">
+              <p>Prediction deadline has passed</p>
+            </div>
+
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="form-actions" *ngIf="fixtures.length > 0">
-      <button
-        type="button"
-        class="btn btn-secondary"
-        (click)="clearAllPredictions()"
-        [disabled]="saving"
-      >
-        Clear All
-      </button>
+      <!-- Form Actions -->
+      <div class="form-actions" *ngIf="fixtures.length > 0">
+        <button 
+          type="button" 
+          class="btn btn-secondary"
+          (click)="clearAllPredictions()"
+          [disabled]="saving"
+        >
+          Clear All
+        </button>
+        
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          <span *ngIf="saving">Saving...</span>
+          <span *ngIf="!saving">Save All Predictions</span>
+        </button>
+      </div>
+    </form>
+  </div>
 
-      <button type="submit" class="btn btn-primary" [disabled]="saving">
-        <span *ngIf="saving">Saving...</span>
-        <span *ngIf="!saving">Save All Predictions</span>
-      </button>
-    </div>
-  </form>
+  <!-- No Fixtures -->
+  <div *ngIf="!loading && fixtures.length === 0" class="no-fixtures">
+    <h3>No fixtures available for Gameweek {{ gameweek }}</h3>
+    <p>Please select a different gameweek.</p>
+  </div>
 </div>

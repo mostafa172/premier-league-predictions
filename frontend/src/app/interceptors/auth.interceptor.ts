@@ -1,3 +1,4 @@
+/* filepath: frontend/src/app/interceptors/auth.interceptor.ts */
 import { Injectable } from "@angular/core";
 import {
   HttpInterceptor,
@@ -34,7 +35,7 @@ export class AuthInterceptor implements HttpInterceptor {
         if (error.status === 401 || error.status === 403) {
           this.authService.logout();
         }
-        return throwError(error);
+        return throwError(() => error);
       })
     );
   }

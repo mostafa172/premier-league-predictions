@@ -1,46 +1,59 @@
 <div class="leaderboard-container">
   <div class="leaderboard-header">
     <h2>Leaderboard</h2>
-    <button class="btn btn-secondary" (click)="refreshLeaderboard()" [disabled]="loading">
-      Refresh
+    <button (click)="refreshLeaderboard()" class="refresh-btn" [disabled]="loading">
+      🔄 Refresh
     </button>
   </div>
 
-  <div *ngIf="loading" class="loading">Loading leaderboard...</div>
-  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
 
-  <div *ngIf="!loading && !error">
-    <div *ngIf="leaderboard.length === 0" class="no-data">
-      No leaderboard data available yet. Make some predictions to get started!
-    </div>
+  <div *ngIf="loading" class="loading-message">
+    Loading leaderboard...
+  </div>
 
-    <div *ngIf="leaderboard.length > 0" class="leaderboard-table">
-      <div class="table-header">
-        <div class="rank-col">Rank</div>
-        <div class="username-col">Player</div>
-        <div class="points-col">Points</div>
-      </div>
+  <div *ngIf="currentUsername && currentUserRank > 0" class="current-user-rank">
+    <h3>Your Position: #{{ currentUserRank }}</h3>
+  </div>
 
-      <div 
-        *ngFor="let entry of leaderboard; let i = index" 
-        class="table-row"
-        [class.current-user]="entry.username === currentUsername"
-      >
-        <div class="rank">
-          <span class="rank-number">{{ entry.rank }}</span>
-          <span *ngIf="entry.rank === 1" class="crown">👑</span>
-        </div>
-        
-        <div class="username">
-          {{ entry.username }}
-          <span *ngIf="entry.username === currentUsername" class="you-label">(You)</span>
-        </div>
-        
-        <div class="points">
-          <span class="points-number">{{ entry.totalPoints || entry.total_points || 0 }}</span>
-          <span class="points-label">pts</span>
-        </div>
-      </div>
-    </div>
+  <div *ngIf="!loading && leaderboard.length > 0" class="leaderboard-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Username</th>
+          <th>Points</th>
+          <th>Predictions</th>
+          <th>Avg Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr 
+          *ngFor="let entry of leaderboard; trackBy: trackByUserId"
+          [class.current-user]="entry.username === currentUsername"
+        >
+          <td class="rank">
+            <span class="rank-number">{{ entry.rank }}</span>
+            <span *ngIf="entry.rank === 1" class="trophy">🥇</span>
+            <span *ngIf="entry.rank === 2" class="trophy">🥈</span>
+            <span *ngIf="entry.rank === 3" class="trophy">🥉</span>
+          </td>
+          <td class="username">{{ entry.username }}</td>
+          <td class="points">
+            <span class="points-number">{{ entry.totalPoints || 0 }}</span>
+          </td>
+          <td class="predictions">{{ entry.totalPredictions || 0 }}</td>
+          <td class="avg-points">
+            {{ entry.totalPredictions > 0 ? (entry.totalPoints / entry.totalPredictions).toFixed(2) : '0.00' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="!loading && leaderboard.length === 0" class="no-data">
+    No leaderboard data available yet.
   </div>
 </div>

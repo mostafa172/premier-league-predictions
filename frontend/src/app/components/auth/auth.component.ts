@@ -1,3 +1,4 @@
+/* filepath: frontend/src/app/components/auth/auth.component.ts */
 import { Component, OnInit } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
@@ -20,9 +21,9 @@ export class AuthComponent implements OnInit {
     private authService: AuthService,
     private router: Router
   ) {
-    // Fixed: Use 'email' for login instead of 'username'
+    // Use 'email' for login
     this.loginForm = this.fb.group({
-      email: ["", [Validators.required, Validators.email]], // Changed from username to email
+      email: ["", [Validators.required, Validators.email]],
       password: ["", [Validators.required]],
     });
 
@@ -49,7 +50,6 @@ export class AuthComponent implements OnInit {
     this.switchMode();
   }
 
-  /* filepath: frontend/src/app/components/auth/auth.component.ts */
   onSubmit(): void {
     const form = this.isLoginMode ? this.loginForm : this.registerForm;
 

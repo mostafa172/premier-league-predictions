@@ -1,356 +1,80 @@
-/* filepath: backend/src/controllers/fixtures.controller.ts */
-import { Request, Response } from 'express';
-import { Fixture, FixtureStatus } from '../models/Fixture';
-import { Team } from '../models/Team';
+/* filepath: frontend/src/app/components/fixtures/fixtures.component.ts */
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { FixtureService } from '../../services/fixture.service';
+import { AuthService } from '../../services/auth.service';
 
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: number;
-    username: string;
-    isAdmin: boolean;
-  };
-}
+@Component({
+  selector: 'app-fixtures',
+  templateUrl: './fixtures.component.html',
+  styleUrls: ['./fixtures.component.scss']
+})
+export class FixturesComponent implements OnInit {
+  fixtures: any[] = [];
+  gameweek = 1;
+  gameweeks = Array.from({ length: 38 }, (_, i) => i + 1);
+  loading = false;
+  error = '';
 
-export class FixturesController {
-  // Get all fixtures
-  public async getAllFixtures(req: Request, res: Response): Promise<Response> {
-    try {
-      const fixtures = await Fixture.findAll({
-        include: [
-          {
-            model: Team,
-            as: 'homeTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          },
-          {
-            model: Team,
-            as: 'awayTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          }
-        ],
-        order: [['matchDate', 'ASC']]
-      });
+  constructor(
+    private fixtureService: FixtureService,
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
-      return res.status(200).json({
-        success: true,
-        data: fixtures
-      });
-    } catch (error) {
-      console.error('Get all fixtures error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error fetching fixtures',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
+  ngOnInit(): void {
+    this.loadFixtures();
   }
 
-  // Get fixture by ID
-  public async getFixtureById(req: Request, res: Response): Promise<Response> {
-    try {
-      const { id } = req.params;
-      
-      const fixture = await Fixture.findByPk(id, {
-        include: [
-          {
-            model: Team,
-            as: 'homeTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          },
-          {
-            model: Team,
-            as: 'awayTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          }
-        ]
-      });
-
-      if (!fixture) {
-        return res.status(404).json({
-          success: false,
-          message: 'Fixture not found'
-        });
+  loadFixtures(): void {
+    this.loading = true;
+    this.error = '';
+    
+    this.fixtureService.getFixturesByGameweek(this.gameweek).subscribe({
+      next: (response: any) => {
+        this.loading = false;
+        if (response.success) {
+          this.fixtures = response.data;
+        }
+      },
+      error: (error: any) => {
+        this.loading = false;
+        this.error = 'Error loading fixtures';
+        console.error('Error loading fixtures:', error);
       }
-
-      return res.status(200).json({
-        success: true,
-        data: fixture
-      });
-    } catch (error) {
-      console.error('Get fixture by ID error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error fetching fixture',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
+    });
   }
 
-  // Get fixtures by gameweek
-  public async getFixturesByGameweek(req: Request, res: Response): Promise<Response> {
-    try {
-      const { gameweek } = req.params;
-      
-      const fixtures = await Fixture.findByGameweek(parseInt(gameweek));
-      
-      // Include team data
-      const fixturesWithTeams = await Fixture.findAll({
-        where: { gameweek: parseInt(gameweek) },
-        include: [
-          {
-            model: Team,
-            as: 'homeTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          },
-          {
-            model: Team,
-            as: 'awayTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          }
-        ],
-        order: [['matchDate', 'ASC']]
-      });
-
-      return res.status(200).json({
-        success: true,
-        data: fixturesWithTeams
-      });
-    } catch (error) {
-      console.error('Get fixtures by gameweek error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error fetching fixtures by gameweek',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
+  onGameweekChange(gameweek: number): void {
+    this.gameweek = gameweek;
+    this.loadFixtures();
   }
 
-  // Get upcoming fixtures
-  public async getUpcomingFixtures(req: Request, res: Response): Promise<Response> {
-    try {
-      const fixtures = await Fixture.findUpcoming();
-      
-      // Include team data
-      const fixturesWithTeams = await Fixture.findAll({
-        where: { 
-          status: FixtureStatus.UPCOMING,
-          matchDate: {
-            [require('sequelize').Op.gte]: new Date()
+  addFixture(): void {
+    this.router.navigate(['/admin/fixtures']);
+  }
+
+  editFixture(fixture: any): void {
+    this.router.navigate(['/admin/fixtures', fixture.id]);
+  }
+
+  deleteFixture(fixture: any): void {
+    if (confirm(`Are you sure you want to delete the fixture: ${fixture.homeTeam.name} vs ${fixture.awayTeam.name}?`)) {
+      this.fixtureService.deleteFixture(fixture.id).subscribe({
+        next: (response: any) => {
+          if (response.success) {
+            this.loadFixtures(); // Reload fixtures
           }
         },
-        include: [
-          {
-            model: Team,
-            as: 'homeTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          },
-          {
-            model: Team,
-            as: 'awayTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          }
-        ],
-        order: [['matchDate', 'ASC']]
-      });
-
-      return res.status(200).json({
-        success: true,
-        data: fixturesWithTeams
-      });
-    } catch (error) {
-      console.error('Get upcoming fixtures error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error fetching upcoming fixtures',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: (error: any) => {
+          console.error('Error deleting fixture:', error);
+          this.error = 'Error deleting fixture';
+        }
       });
     }
   }
 
-  // Create fixture
-  public async createFixture(req: AuthenticatedRequest, res: Response): Promise<Response> {
-    try {
-      const { homeTeamId, awayTeamId, matchDate, deadline, gameweek } = req.body;
-
-      // Validate required fields
-      if (!homeTeamId || !awayTeamId || !matchDate || !deadline || !gameweek) {
-        return res.status(400).json({
-          success: false,
-          message: 'Missing required fields: homeTeamId, awayTeamId, matchDate, deadline, gameweek'
-        });
-      }
-
-      // Validate teams exist
-      const homeTeam = await Team.findByPk(homeTeamId);
-      const awayTeam = await Team.findByPk(awayTeamId);
-
-      if (!homeTeam || !awayTeam) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid team IDs'
-        });
-      }
-
-      // Validate teams are different
-      if (homeTeamId === awayTeamId) {
-        return res.status(400).json({
-          success: false,
-          message: 'Home and away teams must be different'
-        });
-      }
-
-      // Validate gameweek range
-      if (gameweek < 1 || gameweek > 38) {
-        return res.status(400).json({
-          success: false,
-          message: 'Gameweek must be between 1 and 38'
-        });
-      }
-
-      const fixture = await Fixture.create({
-        homeTeamId,
-        awayTeamId,
-        matchDate: new Date(matchDate),
-        deadline: new Date(deadline),
-        gameweek,
-        status: FixtureStatus.UPCOMING
-      });
-
-      // Fetch the created fixture with team details
-      const createdFixture = await Fixture.findByPk(fixture.id, {
-        include: [
-          {
-            model: Team,
-            as: 'homeTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          },
-          {
-            model: Team,
-            as: 'awayTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          }
-        ]
-      });
-
-      return res.status(201).json({
-        success: true,
-        message: 'Fixture created successfully',
-        data: createdFixture
-      });
-    } catch (error) {
-      console.error('Create fixture error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error creating fixture',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-
-  // Update fixture
-  public async updateFixture(req: AuthenticatedRequest, res: Response): Promise<Response> {
-    try {
-      const { id } = req.params;
-      const { homeTeamId, awayTeamId, matchDate, deadline, gameweek, homeScore, awayScore, status } = req.body;
-
-      const fixture = await Fixture.findByPk(id);
-
-      if (!fixture) {
-        return res.status(404).json({
-          success: false,
-          message: 'Fixture not found'
-        });
-      }
-
-      // Validate teams are different if both provided
-      if (homeTeamId && awayTeamId && homeTeamId === awayTeamId) {
-        return res.status(400).json({
-          success: false,
-          message: 'Home and away teams must be different'
-        });
-      }
-
-      // Validate gameweek range if provided
-      if (gameweek && (gameweek < 1 || gameweek > 38)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Gameweek must be between 1 and 38'
-        });
-      }
-
-      // Update fixture
-      const updateData: any = {};
-      if (homeTeamId) updateData.homeTeamId = homeTeamId;
-      if (awayTeamId) updateData.awayTeamId = awayTeamId;
-      if (matchDate) updateData.matchDate = new Date(matchDate);
-      if (deadline) updateData.deadline = new Date(deadline);
-      if (gameweek) updateData.gameweek = gameweek;
-      if (homeScore !== undefined) updateData.homeScore = homeScore;
-      if (awayScore !== undefined) updateData.awayScore = awayScore;
-      if (status) updateData.status = status;
-
-      await fixture.update(updateData);
-
-      // Fetch updated fixture with team details
-      const updatedFixture = await Fixture.findByPk(id, {
-        include: [
-          {
-            model: Team,
-            as: 'homeTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          },
-          {
-            model: Team,
-            as: 'awayTeam',
-            attributes: ['id', 'name', 'abbreviation', 'logoUrl', 'colorPrimary']
-          }
-        ]
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: 'Fixture updated successfully',
-        data: updatedFixture
-      });
-    } catch (error) {
-      console.error('Update fixture error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error updating fixture',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-
-  // Delete fixture
-  public async deleteFixture(req: AuthenticatedRequest, res: Response): Promise<Response> {
-    try {
-      const { id } = req.params;
-
-      const fixture = await Fixture.findByPk(id);
-
-      if (!fixture) {
-        return res.status(404).json({
-          success: false,
-          message: 'Fixture not found'
-        });
-      }
-
-      await fixture.destroy();
-
-      return res.status(200).json({
-        success: true,
-        message: 'Fixture deleted successfully'
-      });
-    } catch (error) {
-      console.error('Delete fixture error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error deleting fixture',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
+  get isAdmin(): boolean {
+    return this.authService.getCurrentUser()?.isAdmin || false;
   }
 }
-
-export const fixturesController = new FixturesController();

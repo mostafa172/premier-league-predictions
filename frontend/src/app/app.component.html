@@ -1,25 +1,28 @@
-<div class="app-header">
-  <nav class="navbar">
-    <a routerLink="/fixtures" class="navbar-brand">
-      PL Predictions
-    </a>
+<div class="app-container">
+  <!-- Navigation Bar -->
+  <nav class="navbar" *ngIf="isLoggedIn">
+    <div class="nav-brand">
+      <h1>Premier League Predictions</h1>
+    </div>
     
-    <ul class="navbar-nav" *ngIf="isAuthenticated">
-      <li><a routerLink="/fixtures" routerLinkActive="active" class="nav-link">Fixtures</a></li>
-      <li><a routerLink="/predictions" routerLinkActive="active" class="nav-link">My Predictions</a></li>
-      <li><a routerLink="/leaderboard" routerLinkActive="active" class="nav-link">Leaderboard</a></li>
-      <li *ngIf="isAdmin"><a routerLink="/admin/fixtures" routerLinkActive="active" class="nav-link">Admin</a></li>
-    </ul>
-
-    <div class="user-info" *ngIf="isAuthenticated">
-      <span class="username">{{ currentUser?.username }}</span>
-      <button class="btn-outline-danger" (click)="logout()">Logout</button>
+    <div class="nav-links">
+      <a routerLink="/fixtures" routerLinkActive="active">Fixtures</a>
+      <a routerLink="/predictions" routerLinkActive="active">Predictions</a>
+      <a routerLink="/leaderboard" routerLinkActive="active">Leaderboard</a>
+      <a *ngIf="isAdmin" routerLink="/admin" routerLinkActive="active">Admin</a>
+    </div>
+    
+    <div class="nav-user">
+      <span *ngIf="currentUser">Welcome, {{ currentUser.username }}!</span>
+      <button (click)="logout()" class="logout-btn">Logout</button>
     </div>
   </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Loading Overlay -->
+  <app-loading></app-loading>
 </div>
-
-<main class="main-content">
-  <router-outlet></router-outlet>
-</main>
-
-<app-loading></app-loading>

@@ -1,67 +1,75 @@
-import { Component, OnInit } from '@angular/core';
+/* filepath: frontend/src/app/app.component.ts */
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AuthService } from './services/auth.service';
-import { Router } from '@angular/router';
+import { LoadingService } from './services/loading.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
-  title = 'Premier League Predictions';
-  isAuthenticated = false;
+export class AppComponent implements OnInit, OnDestroy {
+  title = 'premier-league-predictions';
+  isLoggedIn = false;
+  currentUser: any = null;
+  isLoading = false;
+  private subscriptions: Subscription[] = [];
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private loadingService: LoadingService
   ) {}
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
-      this.isAuthenticated = !!user;
-    });
+    // Initialize auth state
+    this.checkAuthStatus();
+    
+    // Subscribe to loading state
+    const loadingSub = this.loadingService.loading$.subscribe(
+      (loading) => this.isLoading = loading
+    );
+    this.subscriptions.push(loadingSub);
+
+    // Subscribe to auth changes
+    const authSub = this.authService.currentUser$.subscribe(
+      (user) => {
+        this.currentUser = user;
+        this.isLoggedIn = !!user;
+      }
+    );
+    this.subscriptions.push(authSub);
+  }
+
+  ngOnDestroy(): void {
+    // Clean up subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  private checkAuthStatus(): void {
+    const token = this.authService.getToken();
+    if (token) {
+      this.authService.checkTokenValidity().subscribe({
+        next: (response: any) => {
+          if (response.success) {
+            this.currentUser = response.user;
+            this.isLoggedIn = true;
+          } else {
+            this.authService.logout();
+          }
+        },
+        error: () => {
+          this.authService.logout();
+        }
+      });
+    }
   }
 
   logout(): void {
     this.authService.logout();
   }
 
-  get currentUser() {
-    return this.authService.getCurrentUser();
-  }
-
   get isAdmin(): boolean {
     return this.currentUser?.isAdmin || false;
-  }
-
-  get tokenTimeRemaining(): string {
-    return this.authService.getTokenTimeRemaining();
-  }
-
-  // Add missing methods for the template
-  getSessionTimeRemaining(): number {
-    const timeStr = this.authService.getTokenTimeRemaining();
-    if (timeStr === 'Not logged in' || timeStr === 'Expired' || timeStr === 'Invalid token') {
-      return 0;
-    }
-    
-    // Extract minutes from string like "30m" or "1h 30m"
-    const minutesMatch = timeStr.match(/(\d+)m/);
-    const hoursMatch = timeStr.match(/(\d+)h/);
-    
-    let totalMinutes = 0;
-    if (hoursMatch) {
-      totalMinutes += parseInt(hoursMatch[1]) * 60;
-    }
-    if (minutesMatch) {
-      totalMinutes += parseInt(minutesMatch[1]);
-    }
-    
-    return totalMinutes;
-  }
-
-  isSessionExpiringSoon(): boolean {
-    const remaining = this.getSessionTimeRemaining();
-    return remaining > 0 && remaining <= 10; // Expiring within 10 minutes
   }
 }

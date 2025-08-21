@@ -1,22 +1,31 @@
 /* filepath: frontend/src/app/services/team.service.ts */
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AuthService } from './auth.service';
 import { Team } from '../models/team.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TeamService {
-  private apiUrl = 'http://localhost:3000/api/teams';
+  private readonly API_URL = 'http://localhost:3000/api';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
+
+  private getHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  }
 
   getAllTeams(): Observable<{success: boolean, data: Team[]}> {
-    return this.http.get<{success: boolean, data: Team[]}>(`${this.apiUrl}`);
+    return this.http.get<{success: boolean, data: Team[]}>(`${this.API_URL}/teams`, { headers: this.getHeaders() });
   }
 
   getTeamById(id: number): Observable<{success: boolean, data: Team}> {
-    return this.http.get<{success: boolean, data: Team}>(`${this.apiUrl}/${id}`);
+    return this.http.get<{success: boolean, data: Team}>(`${this.API_URL}/teams/${id}`, { headers: this.getHeaders() });
   }
 }

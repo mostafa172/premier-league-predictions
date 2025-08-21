@@ -1,23 +1,27 @@
-import { Component, OnInit } from "@angular/core";
-import { FormBuilder, FormGroup, FormArray } from "@angular/forms";
-import { PredictionService } from "../../services/prediction.service";
-import { FixtureService } from "../../services/fixture.service";
+/* filepath: frontend/src/app/components/predictions/predictions.component.ts */
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { PredictionService } from '../../services/prediction.service';
+import { FixtureService } from '../../services/fixture.service';
+import { Subscription } from 'rxjs';
 
 @Component({
-  selector: "app-predictions",
-  templateUrl: "./predictions.component.html",
-  styleUrls: ["./predictions.component.scss"],
+  selector: 'app-predictions',
+  templateUrl: './predictions.component.html',
+  styleUrls: ['./predictions.component.scss']
 })
-export class PredictionsComponent implements OnInit {
-  predictionsForm: FormGroup;
-  fixtures: any[] = [];
+export class PredictionsComponent implements OnInit, OnDestroy {
   gameweek = 1;
   gameweeks = Array.from({ length: 38 }, (_, i) => i + 1);
+  fixtures: any[] = [];
+  predictions: any[] = [];
+  existingPredictions: any[] = [];
+  predictionsForm: FormGroup;
   loading = false;
   saving = false;
-  error = "";
-  success = "";
-  existingPredictions: any[] = [];
+  error = '';
+  success = '';
+  private subscriptions: Subscription[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -25,223 +29,221 @@ export class PredictionsComponent implements OnInit {
     private fixtureService: FixtureService
   ) {
     this.predictionsForm = this.fb.group({
-      predictions: this.fb.array([]),
+      predictions: this.fb.array([])
     });
   }
 
   ngOnInit(): void {
-    this.loadFixtures();
-    this.loadExistingPredictions();
+    this.loadFixturesAndPredictions();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   get predictionsArray(): FormArray {
-    return this.predictionsForm.get("predictions") as FormArray;
+    return this.predictionsForm.get('predictions') as FormArray;
   }
 
-  loadFixtures(): void {
+  onGameweekChange(): void {
+    this.loadFixturesAndPredictions();
+  }
+
+  loadFixturesAndPredictions(): void {
     this.loading = true;
-    this.error = "";
-    this.fixtureService.getFixturesByGameweek(this.gameweek).subscribe({
-      next: (response: any) => {
-        this.loading = false;
-        if (response.success) {
-          this.fixtures = response.data;
-          this.buildForm();
+    this.error = '';
+    this.success = '';
+
+    const fixturesSub = this.fixtureService.getFixturesByGameweek(this.gameweek).subscribe({
+      next: (fixturesResponse: any) => {
+        if (fixturesResponse.success) {
+          this.fixtures = fixturesResponse.data;
+          
+          const predictionsSub = this.predictionService.getUserPredictionsByGameweek(this.gameweek).subscribe({
+            next: (predictionsResponse: any) => {
+              this.loading = false;
+              if (predictionsResponse.success) {
+                this.predictions = predictionsResponse.data;
+                this.existingPredictions = [...this.predictions];
+                this.buildPredictionsForm();
+              }
+            },
+            error: (error: any) => {
+              this.loading = false;
+              this.error = 'Error loading predictions';
+              console.error('Error loading predictions:', error);
+            }
+          });
+          this.subscriptions.push(predictionsSub);
         }
       },
       error: (error: any) => {
         this.loading = false;
-        this.error = "Error loading fixtures";
-        console.error("Error loading fixtures:", error);
-      },
-    });
-  }
-
-  loadExistingPredictions(): void {
-    this.predictionService
-      .getUserPredictionsByGameweek(this.gameweek)
-      .subscribe({
-        next: (response: any) => {
-          if (response.success) {
-            this.existingPredictions = response.data;
-            this.populateExistingPredictions();
-          }
-        },
-        error: (error: any) => {
-          console.error("Error loading existing predictions:", error);
-        },
-      });
-  }
-
-  buildForm(): void {
-    // Create a new FormArray with FormGroups for each fixture
-    const newPredictionsArray = this.fb.array(
-      this.fixtures.map(() =>
-        this.fb.group({
-          homeScore: [""],
-          awayScore: [""],
-          isDouble: [false],
-        })
-      )
-    );
-
-    // Replace the predictions FormArray in the main form
-    this.predictionsForm.setControl("predictions", newPredictionsArray);
-  }
-
-  populateExistingPredictions(): void {
-    this.existingPredictions.forEach((pred) => {
-      const fixtureIndex = this.fixtures.findIndex(
-        (f) => f.id === pred.fixtureId
-      );
-      if (fixtureIndex >= 0) {
-        const formGroup = this.predictionsArray.at(fixtureIndex);
-        formGroup.patchValue({
-          homeScore: pred.predictedHomeScore,
-          awayScore: pred.predictedAwayScore,
-          isDouble: pred.isDouble,
-        });
+        this.error = 'Error loading fixtures';
+        console.error('Error loading fixtures:', error);
       }
     });
+    this.subscriptions.push(fixturesSub);
   }
 
-  onGameweekChange(gameweek: number): void {
-    this.gameweek = gameweek;
-    this.loadFixtures();
-    this.loadExistingPredictions();
+  // Fix: Correct FormArray implementation
+  buildPredictionsForm(): void {
+    // Clear existing form array
+    while (this.predictionsArray.length !== 0) {
+      this.predictionsArray.removeAt(0);
+    }
+
+    this.fixtures.forEach((fixture) => {
+      const existingPrediction = this.predictions.find(
+        p => p.fixtureId === fixture.id
+      );
+
+      const predictionGroup = this.fb.group({
+        fixtureId: [fixture.id, Validators.required],
+        homeScore: [existingPrediction?.homeScore ?? 0, [Validators.required, Validators.min(0)]],
+        awayScore: [existingPrediction?.awayScore ?? 0, [Validators.required, Validators.min(0)]],
+        predictionId: [existingPrediction?.id || null]
+      });
+
+      // Fix: Direct push without casting
+      this.predictionsArray.push(predictionGroup);
+    });
+  }
+
+  async saveAllPredictions(): Promise<void> {
+    if (this.predictionsForm.valid) {
+      this.saving = true;
+      this.error = '';
+      this.success = '';
+
+      const formData = this.predictionsForm.value.predictions;
+      
+      try {
+        const promises = formData.map(async (prediction: any) => {
+          if (prediction.predictionId) {
+            return this.predictionService.updatePrediction(
+              prediction.predictionId,
+              prediction.homeScore,
+              prediction.awayScore
+            ).toPromise();
+          } else {
+            return this.predictionService.createPrediction({
+              fixtureId: prediction.fixtureId,
+              homeScore: prediction.homeScore,
+              awayScore: prediction.awayScore
+            }).toPromise();
+          }
+        });
+
+        await Promise.all(promises);
+        
+        this.saving = false;
+        this.success = 'Predictions saved successfully!';
+        this.loadFixturesAndPredictions();
+        
+      } catch (error) {
+        this.saving = false;
+        this.error = 'Error saving predictions';
+        console.error('Error saving predictions:', error);
+      }
+    } else {
+      this.error = 'Please fill in all prediction fields correctly';
+    }
   }
 
   isFixtureDisabled(fixture: any): boolean {
-    return (
-      new Date() > new Date(fixture.deadline) || fixture.status !== "upcoming"
-    );
+    const deadline = new Date(fixture.deadline);
+    const now = new Date();
+    return now >= deadline || fixture.status === 'finished' || fixture.status === 'live';
   }
 
   hasValidPrediction(index: number): boolean {
-    const prediction = this.predictionsArray.at(index);
-    const homeScore = prediction.get("homeScore")?.value;
-    const awayScore = prediction.get("awayScore")?.value;
-    return (
-      homeScore !== "" &&
-      awayScore !== "" &&
-      homeScore !== null &&
-      awayScore !== null
-    );
+    const predictionGroup = this.predictionsArray.at(index);
+    if (!predictionGroup) return false;
+    
+    const homeScore = predictionGroup.get('homeScore')?.value;
+    const awayScore = predictionGroup.get('awayScore')?.value;
+    
+    return homeScore !== null && homeScore !== undefined && 
+           awayScore !== null && awayScore !== undefined &&
+           homeScore >= 0 && awayScore >= 0;
   }
 
   onDoubleChange(index: number): void {
-    // Ensure only one double per gameweek
-    const currentValue = this.predictionsArray.at(index).get("isDouble")?.value;
-
-    if (currentValue) {
-      // Uncheck all other doubles
-      this.predictionsArray.controls.forEach((control, i) => {
-        if (i !== index) {
-          control.get("isDouble")?.setValue(false);
-        }
-      });
+    const predictionGroup = this.predictionsArray.at(index);
+    if (predictionGroup) {
+      console.log('Double points selected for prediction:', index);
     }
-  }
-
-  saveAllPredictions(): void {
-    this.saving = true;
-    this.error = "";
-    this.success = "";
-
-    const predictions = this.fixtures
-      .map((fixture, index) => {
-        const formValue = this.predictionsArray.at(index).value;
-        return {
-          fixtureId: fixture.id,
-          homeScore: parseInt(formValue.homeScore),
-          awayScore: parseInt(formValue.awayScore),
-          isDouble: formValue.isDouble,
-        };
-      })
-      .filter(
-        (pred) =>
-          pred.homeScore !== null &&
-          pred.awayScore !== null &&
-          !isNaN(pred.homeScore) &&
-          !isNaN(pred.awayScore)
-      );
-
-    if (predictions.length === 0) {
-      this.saving = false;
-      this.error = "Please make at least one prediction";
-      return;
-    }
-
-    // Save each prediction individually
-    const promises = predictions.map((prediction) =>
-      this.predictionService.createPrediction(prediction).toPromise()
-    );
-
-    Promise.all(promises)
-      .then(() => {
-        this.saving = false;
-        this.success = "All predictions saved successfully!";
-        this.loadExistingPredictions(); // Reload to show updated predictions
-      })
-      .catch((error) => {
-        this.saving = false;
-        this.error = "Error saving predictions";
-        console.error("Error saving predictions:", error);
-      });
   }
 
   clearAllPredictions(): void {
-    if (
-      confirm(
-        "Are you sure you want to clear all predictions for this gameweek?"
-      )
-    ) {
-      this.predictionsArray.controls.forEach((control) => {
-        control.reset();
+    if (confirm('Are you sure you want to clear all predictions for this gameweek?')) {
+      this.predictionsArray.controls.forEach(control => {
+        control.get('homeScore')?.setValue(0);
+        control.get('awayScore')?.setValue(0);
       });
-      this.success = "";
-      this.error = "";
+      this.success = '';
+      this.error = '';
     }
   }
 
-  submitPrediction(
-    fixtureId: number,
-    homeScore: number,
-    awayScore: number,
-    isDouble?: boolean
-  ) {
-    const predictionData = {
-      fixtureId,
-      homeScore,
-      awayScore,
-      isDouble: isDouble !== undefined ? isDouble : false,
-    };
-
-    // Fix: Use predictionService instead of predictionsService
-    this.predictionService.createPrediction(predictionData).subscribe({
+  submitPrediction(predictionData: any): void {
+    const sub = this.predictionService.createPrediction(predictionData).subscribe({
       next: (response: any) => {
-        console.log("Prediction saved successfully");
-        // Fix: Call the correct method name
-        this.loadUserPredictions();
+        if (response.success) {
+          this.success = 'Prediction submitted successfully!';
+          this.loadFixturesAndPredictions();
+        }
       },
       error: (error: any) => {
-        console.error("Error saving prediction:", error);
-      },
+        console.error('Error submitting prediction:', error);
+        this.error = 'Error submitting prediction';
+      }
+    });
+    this.subscriptions.push(sub);
+  }
+
+  canPredict(fixture: any): boolean {
+    return !this.isFixtureDisabled(fixture);
+  }
+
+  isFixtureFinished(fixture: any): boolean {
+    return fixture.status === 'finished';
+  }
+
+  getPredictionPoints(fixture: any): number {
+    const prediction = this.predictions.find(p => p.fixtureId === fixture.id);
+    return prediction?.points || 0;
+  }
+
+  trackByFixtureId(index: number, fixture: any): number {
+    return fixture.id;
+  }
+
+  getFormattedDate(date: string): string {
+    return new Date(date).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   }
 
-  // Add the missing loadUserPredictions method (or rename to loadPredictions)
-  loadUserPredictions() {
-    // Add your prediction loading logic here
-    // This should call your prediction service to get user predictions
-    this.predictionService.getUserPredictions().subscribe({
-      next: (response: any) => {
-        // Handle the response
-        console.log("Predictions loaded:", response);
-      },
-      error: (error: any) => {
-        console.error("Error loading predictions:", error);
-      },
-    });
+  getFormattedDeadline(deadline: string): string {
+    const deadlineDate = new Date(deadline);
+    const now = new Date();
+    const diffInMinutes = Math.floor((deadlineDate.getTime() - now.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 0) {
+      return 'Deadline passed';
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes} minutes left`;
+    } else if (diffInMinutes < 1440) {
+      const hours = Math.floor(diffInMinutes / 60);
+      return `${hours} hour${hours > 1 ? 's' : ''} left`;
+    } else {
+      const days = Math.floor(diffInMinutes / 1440);
+      return `${days} day${days > 1 ? 's' : ''} left`;
+    }
   }
 }

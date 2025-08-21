@@ -1,9 +1,11 @@
+/* filepath: frontend/src/app/app.module.ts */
 import { NgModule } from "@angular/core";
 import { BrowserModule } from "@angular/platform-browser";
 import { HttpClientModule, HTTP_INTERCEPTORS } from "@angular/common/http";
 import { ReactiveFormsModule, FormsModule } from "@angular/forms";
 import { RouterModule } from '@angular/router';
 import { CommonModule } from "@angular/common";
+
 import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from "./app.component";
 import { FixturesComponent } from "./components/fixtures/fixtures.component";
@@ -11,9 +13,10 @@ import { PredictionsComponent } from "./components/predictions/predictions.compo
 import { LeaderboardComponent } from "./components/leaderboard/leaderboard.component";
 import { AuthComponent } from "./components/auth/auth.component";
 import { FixtureFormComponent } from "./components/fixture-form/fixture-form.component";
+import { LoadingComponent } from './components/loading/loading.component';
+
 import { AuthGuard } from "./guards/auth.guard";
 import { AuthInterceptor } from "./interceptors/auth.interceptor";
-import { LoadingComponent } from './components/loading/loading.component';
 import { LoadingInterceptor } from './interceptors/loading.interceptor';
 
 @NgModule({

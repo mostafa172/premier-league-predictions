@@ -1,3 +1,4 @@
+/* filepath: frontend/src/app/app-routing.module.ts */
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthComponent } from './components/auth/auth.component';
@@ -8,14 +9,14 @@ import { FixtureFormComponent } from './components/fixture-form/fixture-form.com
 import { AuthGuard } from './guards/auth.guard';
 
 const routes: Routes = [
-  { path: '', redirectTo: '/fixtures', pathMatch: 'full' },
+  { path: '', redirectTo: '/auth', pathMatch: 'full' },
   { path: 'auth', component: AuthComponent },
   { path: 'fixtures', component: FixturesComponent, canActivate: [AuthGuard] },
   { path: 'predictions', component: PredictionsComponent, canActivate: [AuthGuard] },
   { path: 'leaderboard', component: LeaderboardComponent, canActivate: [AuthGuard] },
   { path: 'admin/fixtures', component: FixtureFormComponent, canActivate: [AuthGuard] },
-  { path: 'admin/fixtures/:id', component: FixtureFormComponent, canActivate: [AuthGuard] }, // Add edit route
-  { path: '**', redirectTo: '/fixtures' }
+  { path: 'admin/fixtures/:id', component: FixtureFormComponent, canActivate: [AuthGuard] },
+  { path: '**', redirectTo: '/auth' }
 ];
 
 @NgModule({

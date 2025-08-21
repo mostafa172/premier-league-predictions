@@ -1,3 +1,4 @@
+-- Active: 1750319878836@@127.0.0.1@5432@premier_league_predictions
 /* filepath: backend/database/migrations/000_drop_all_tables.sql */
 -- Drop all tables and types
 DROP TABLE IF EXISTS predictions CASCADE;
