@@ -10,6 +10,8 @@ import authRoutes from './routes/auth.routes';
 import predictionsRoutes from './routes/predictions.routes';
 import fixturesRoutes from './routes/fixtures.routes';
 import adminRoutes from './routes/admin.routes';
+import teamsRoutes from './routes/teams.routes';
+
 
 dotenv.config();
 
@@ -28,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/predictions', predictionsRoutes);
 app.use('/api/fixtures', fixturesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/teams', teamsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

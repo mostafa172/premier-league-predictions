@@ -1,6 +1,7 @@
 /* filepath: backend/src/models/Fixture.ts */
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/sequelize';
+import { Op } from 'sequelize';
 
 // Export the FixtureStatus enum
 export enum FixtureStatus {
@@ -11,8 +12,8 @@ export enum FixtureStatus {
 
 interface FixtureAttributes {
   id: number;
-  homeTeam: string;
-  awayTeam: string;
+  homeTeamId: number;
+  awayTeamId: number;
   matchDate: Date;
   gameweek: number;
   status: FixtureStatus;
@@ -27,8 +28,8 @@ interface FixtureCreationAttributes extends Optional<FixtureAttributes, 'id' | '
 
 export class Fixture extends Model<FixtureAttributes, FixtureCreationAttributes> implements FixtureAttributes {
   public id!: number;
-  public homeTeam!: string;
-  public awayTeam!: string;
+  public homeTeamId!: number;
+  public awayTeamId!: number;
   public matchDate!: Date;
   public gameweek!: number;
   public status!: FixtureStatus;
@@ -39,6 +40,8 @@ export class Fixture extends Model<FixtureAttributes, FixtureCreationAttributes>
   public readonly updatedAt!: Date;
 
   // Association properties
+  public homeTeam?: any;
+  public awayTeam?: any;
   public predictions?: any[];
 
   // Static method to find fixtures by gameweek
@@ -55,7 +58,7 @@ export class Fixture extends Model<FixtureAttributes, FixtureCreationAttributes>
       where: { 
         status: FixtureStatus.UPCOMING,
         matchDate: {
-          [require('sequelize').Op.gte]: new Date()
+          [Op.gte]: new Date()
         }
       },
       order: [['matchDate', 'ASC']]
@@ -86,15 +89,23 @@ Fixture.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    homeTeam: {
-      type: DataTypes.STRING,
+    homeTeamId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'home_team',
+      field: 'home_team_id',
+      references: {
+        model: 'teams',
+        key: 'id',
+      },
     },
-    awayTeam: {
-      type: DataTypes.STRING,
+    awayTeamId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'away_team',
+      field: 'away_team_id',
+      references: {
+        model: 'teams',
+        key: 'id',
+      },
     },
     matchDate: {
       type: DataTypes.DATE,

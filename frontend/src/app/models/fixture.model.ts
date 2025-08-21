@@ -1,7 +1,12 @@
+/* filepath: frontend/src/app/models/fixture.model.ts */
+import { Team } from './team.model';
+
 export interface Fixture {
   id: number;
-  homeTeam: string;
-  awayTeam: string;
+  homeTeamId: number;
+  awayTeamId: number;
+  homeTeam: Team;
+  awayTeam: Team;
   matchDate: Date;
   deadline: Date;
   homeScore?: number;
@@ -13,20 +18,9 @@ export interface Fixture {
 }
 
 export interface CreateFixtureRequest {
-  homeTeam: string;
-  awayTeam: string;
+  homeTeamId: number;
+  awayTeamId: number;
   matchDate: string;
   deadline: string;
   gameweek: number;
-}
-
-export interface UpdateFixtureRequest {
-  homeTeam?: string;
-  awayTeam?: string;
-  matchDate?: string;
-  deadline?: string;
-  gameweek?: number;
-  homeScore?: number;
-  awayScore?: number;
-  status?: string;
 }

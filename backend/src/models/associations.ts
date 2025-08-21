@@ -2,21 +2,42 @@
 import { User } from './User';
 import { Fixture } from './Fixture';
 import { Prediction } from './Prediction';
+import { Team } from './Team';
 
 export function setupAssociations() {
-  // User associations
+  // Team associations
+  Team.hasMany(Fixture, { 
+    foreignKey: 'homeTeamId',
+    as: 'homeFixtures'
+  });
+  
+  Team.hasMany(Fixture, { 
+    foreignKey: 'awayTeamId',
+    as: 'awayFixtures'
+  });
+
+  // Fixture associations
+  Fixture.belongsTo(Team, { 
+    foreignKey: 'homeTeamId',
+    as: 'homeTeam'
+  });
+  
+  Fixture.belongsTo(Team, { 
+    foreignKey: 'awayTeamId',
+    as: 'awayTeam'
+  });
+
+  // Existing associations...
   User.hasMany(Prediction, { 
     foreignKey: 'userId',
     as: 'predictions'
   });
   
-  // Fixture associations
   Fixture.hasMany(Prediction, { 
     foreignKey: 'fixtureId',
     as: 'predictions'
   });
   
-  // Prediction associations
   Prediction.belongsTo(User, { 
     foreignKey: 'userId',
     as: 'user'

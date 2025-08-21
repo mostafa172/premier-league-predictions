@@ -1,134 +1,151 @@
-import { Component, OnInit } from "@angular/core";
-import { FormBuilder, FormGroup, Validators } from "@angular/forms";
-import { Router, ActivatedRoute } from "@angular/router";
-import { AuthService } from "../../services/auth.service";
-import { FixtureService } from "../../services/fixture.service";
+/* filepath: frontend/src/app/components/fixture-form/fixture-form.component.ts */
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+import { TeamService } from '../../services/team.service';
+import { FixtureService } from '../../services/fixture.service';
+import { Team } from '../../models/team.model';
 
 @Component({
-  selector: "app-fixture-form",
-  templateUrl: "./fixture-form.component.html",
-  styleUrls: ["./fixture-form.component.scss"],
+  selector: 'app-fixture-form',
+  templateUrl: './fixture-form.component.html',
+  styleUrls: ['./fixture-form.component.scss']
 })
 export class FixtureFormComponent implements OnInit {
   fixtureForm: FormGroup;
-  loading = false;
-  error = "";
-  success = "";
-  isEditMode = false;
-  fixtureId: number | null = null;
+  teams: Team[] = [];
   gameweeks = Array.from({ length: 38 }, (_, i) => i + 1);
+  loading = false;
+  isEdit = false;
+  fixtureId?: number;
 
   constructor(
     private fb: FormBuilder,
+    private teamService: TeamService,
     private fixtureService: FixtureService,
-    private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
   ) {
     this.fixtureForm = this.fb.group({
-      homeTeam: ["", [Validators.required]],
-      awayTeam: ["", [Validators.required]],
-      matchDate: ["", [Validators.required]],
-      deadline: ["", [Validators.required]],
-      gameweek: [
-        "",
-        [Validators.required, Validators.min(1), Validators.max(38)],
-      ],
-      homeScore: [""],
-      awayScore: [""],
-      status: ["upcoming"],
+      homeTeamId: ['', [Validators.required]],
+      awayTeamId: ['', [Validators.required]],
+      matchDate: ['', [Validators.required]],
+      deadline: ['', [Validators.required]],
+      gameweek: ['', [Validators.required, Validators.min(1), Validators.max(38)]],
+      homeScore: [''],
+      awayScore: [''],
+      status: ['upcoming']
     });
   }
 
   ngOnInit(): void {
-    // Check if user is admin
-    const currentUser = this.authService.currentUserValue;
-    if (!currentUser || !currentUser.isAdmin) {
-      this.router.navigate(["/fixtures"]);
-      return;
-    }
-
-    // Check if we're editing an existing fixture
-    const id = this.route.snapshot.paramMap.get("id");
+    this.loadTeams();
+    
+    // Check if we're editing
+    const id = this.route.snapshot.params['id'];
     if (id) {
-      this.isEditMode = true;
+      this.isEdit = true;
       this.fixtureId = parseInt(id);
-      this.loadFixture();
+      this.loadFixture(this.fixtureId);
     }
   }
 
-  loadFixture(): void {
-    if (!this.fixtureId) return;
-
-    this.loading = true;
-    this.fixtureService.getFixtureById(this.fixtureId).subscribe({
-      next: (response: any) => {
-        this.loading = false;
+  loadTeams(): void {
+    this.teamService.getAllTeams().subscribe({
+      next: (response) => {
         if (response.success) {
-          const fixture = response.data;
-          this.fixtureForm.patchValue({
-            homeTeam: fixture.homeTeam,
-            awayTeam: fixture.awayTeam,
-            matchDate: this.formatDateForInput(fixture.matchDate),
-            deadline: this.formatDateForInput(fixture.deadline),
-            gameweek: fixture.gameweek,
-            homeScore: fixture.homeScore,
-            awayScore: fixture.awayScore,
-            status: fixture.status,
-          });
+          this.teams = response.data;
         }
       },
-      error: (error: any) => {
-        this.loading = false;
-        this.error = "Error loading fixture";
-        console.error("Load fixture error:", error);
-      },
+      error: (error) => {
+        console.error('Error loading teams:', error);
+      }
     });
   }
 
-  formatDateForInput(dateString: string): string {
-    const date = new Date(dateString);
-    // Adjust for timezone offset to display correct local time
-    const localDate = new Date(
-      date.getTime() - date.getTimezoneOffset() * 60000
-    );
-    return localDate.toISOString().slice(0, 16); // Format for datetime-local input
+  loadFixture(id: number): void {
+    this.fixtureService.getFixtureById(id).subscribe({
+      next: (response) => {
+        if (response.success) {
+          const fixture = response.data;
+          this.fixtureForm.patchValue({
+            homeTeamId: fixture.homeTeamId,
+            awayTeamId: fixture.awayTeamId,
+            matchDate: this.formatDateTimeLocal(fixture.matchDate),
+            deadline: this.formatDateTimeLocal(fixture.deadline),
+            gameweek: fixture.gameweek,
+            homeScore: fixture.homeScore,
+            awayScore: fixture.awayScore,
+            status: fixture.status
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error loading fixture:', error);
+      }
+    });
+  }
+
+  formatDateTimeLocal(date: Date | string): string {
+    const d = new Date(date);
+    return d.toISOString().slice(0, 16);
+  }
+
+  getTeamById(id: number): Team | undefined {
+    return this.teams.find(team => team.id === id);
   }
 
   onSubmit(): void {
     if (this.fixtureForm.valid) {
-      this.loading = true;
-      this.error = "";
-      this.success = "";
-
       const formData = this.fixtureForm.value;
-      const request = this.isEditMode
+      
+      // Validate different teams
+      if (formData.homeTeamId === formData.awayTeamId) {
+        alert('Home and away teams must be different');
+        return;
+      }
+
+      this.loading = true;
+
+      const operation = this.isEdit 
         ? this.fixtureService.updateFixture(this.fixtureId!, formData)
         : this.fixtureService.createFixture(formData);
 
-      request.subscribe({
-        next: (response: any) => {
-          this.loading = false;
-          if (response.success) {
-            this.success = this.isEditMode
-              ? "Fixture updated successfully!"
-              : "Fixture created successfully!";
-
-            // Add redirect after success
-            setTimeout(() => {
-              this.router.navigate(["/fixtures"]);
-            }, 1500); // Show success message for 1.5 seconds before redirect
-          }
+      operation.subscribe({
+        next: (response) => {
+          console.log(`Fixture ${this.isEdit ? 'updated' : 'created'} successfully`);
+          this.router.navigate(['/fixtures']);
         },
-        error: (error: any) => {
+        error: (error) => {
+          console.error(`Error ${this.isEdit ? 'updating' : 'creating'} fixture:`, error);
           this.loading = false;
-          this.error = error.error?.message || "Error saving fixture";
-        },
+        }
+      });
+    } else {
+      // Mark all fields as touched to show validation errors
+      Object.keys(this.fixtureForm.controls).forEach(key => {
+        this.fixtureForm.get(key)?.markAsTouched();
       });
     }
   }
 
   cancel(): void {
-    this.router.navigate(["/fixtures"]);
+    this.router.navigate(['/fixtures']);
+  }
+
+  // Validation helper methods
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.fixtureForm.get(fieldName);
+    return field ? field.invalid && (field.dirty || field.touched) : false;
+  }
+
+  getFieldError(fieldName: string): string {
+    const field = this.fixtureForm.get(fieldName);
+    if (field?.errors) {
+      if (field.errors['required']) return `${fieldName} is required`;
+      if (field.errors['min']) return `${fieldName} must be at least ${field.errors['min'].min}`;
+      if (field.errors['max']) return `${fieldName} must be at most ${field.errors['max'].max}`;
+    }
+    return '';
   }
 }

@@ -1,107 +1,176 @@
 <div class="fixture-form-container">
-  <h2>{{ isEditMode ? 'Edit Fixture' : 'Add New Fixture' }}</h2>
+  <div class="form-header">
+    <h2>{{ isEdit ? 'Edit' : 'Create' }} Fixture</h2>
+  </div>
 
-  <div *ngIf="loading" class="loading">{{ isEditMode ? 'Updating fixture...' : 'Creating fixture...' }}</div>
-  <div *ngIf="error" class="error">{{ error }}</div>
-  <div *ngIf="success" class="success">{{ success }}</div>
+  <form [formGroup]="fixtureForm" (ngSubmit)="onSubmit()" class="fixture-form">
+    <div class="teams-section">
+      <div class="form-group">
+        <label for="homeTeam">Home Team *</label>
+        <select 
+          id="homeTeam" 
+          formControlName="homeTeamId" 
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('homeTeamId')"
+        >
+          <option value="">Select Home Team</option>
+          <option *ngFor="let team of teams" [value]="team.id">
+            {{ team.name }} ({{ team.abbreviation }})
+          </option>
+        </select>
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('homeTeamId')">
+          {{ getFieldError('homeTeamId') }}
+        </div>
+        
+        <!-- Team preview -->
+        <div *ngIf="fixtureForm.get('homeTeamId')?.value" class="team-preview">
+          <ng-container *ngIf="getTeamById(fixtureForm.get('homeTeamId')?.value) as homeTeam">
+            <img [src]="homeTeam.logoUrl" [alt]="homeTeam.name" class="team-logo">
+            <span class="team-info">{{ homeTeam.name }} - {{ homeTeam.stadium }}</span>
+          </ng-container>
+        </div>
+      </div>
 
-  <form [formGroup]="fixtureForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
-    <div class="form-group">
-      <label for="homeTeam">Home Team</label>
-      <input 
-        type="text" 
-        id="homeTeam"
-        formControlName="homeTeam" 
-        class="form-control"
-        placeholder="e.g., Arsenal"
-      >
+      <div class="vs-divider">VS</div>
+
+      <div class="form-group">
+        <label for="awayTeam">Away Team *</label>
+        <select 
+          id="awayTeam" 
+          formControlName="awayTeamId" 
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('awayTeamId')"
+        >
+          <option value="">Select Away Team</option>
+          <option *ngFor="let team of teams" [value]="team.id">
+            {{ team.name }} ({{ team.abbreviation }})
+          </option>
+        </select>
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('awayTeamId')">
+          {{ getFieldError('awayTeamId') }}
+        </div>
+        
+        <!-- Team preview -->
+        <div *ngIf="fixtureForm.get('awayTeamId')?.value" class="team-preview">
+          <ng-container *ngIf="getTeamById(fixtureForm.get('awayTeamId')?.value) as awayTeam">
+            <img [src]="awayTeam.logoUrl" [alt]="awayTeam.name" class="team-logo">
+            <span class="team-info">{{ awayTeam.name }} - {{ awayTeam.stadium }}</span>
+          </ng-container>
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="awayTeam">Away Team</label>
-      <input 
-        type="text" 
-        id="awayTeam"
-        formControlName="awayTeam" 
-        class="form-control"
-        placeholder="e.g., Chelsea"
-      >
+    <div class="form-row">
+      <div class="form-group">
+        <label for="matchDate">Match Date & Time *</label>
+        <input 
+          type="datetime-local" 
+          id="matchDate"
+          formControlName="matchDate" 
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('matchDate')"
+        >
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('matchDate')">
+          {{ getFieldError('matchDate') }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="deadline">Prediction Deadline *</label>
+        <input 
+          type="datetime-local" 
+          id="deadline"
+          formControlName="deadline" 
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('deadline')"
+        >
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('deadline')">
+          {{ getFieldError('deadline') }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="gameweek">Gameweek *</label>
+        <select 
+          id="gameweek" 
+          formControlName="gameweek" 
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('gameweek')"
+        >
+          <option value="">Select Gameweek</option>
+          <option *ngFor="let gw of gameweeks" [value]="gw">
+            Gameweek {{ gw }}
+          </option>
+        </select>
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('gameweek')">
+          {{ getFieldError('gameweek') }}
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="matchDate">Match Date & Time</label>
-      <input 
-        type="datetime-local" 
-        id="matchDate"
-        formControlName="matchDate" 
-        class="form-control"
-      >
-    </div>
-
-    <div class="form-group">
-      <label for="deadline">Prediction Deadline</label>
-      <input 
-        type="datetime-local" 
-        id="deadline"
-        formControlName="deadline" 
-        class="form-control"
-      >
-      <small class="form-text">Usually 1 hour before match time</small>
-    </div>
-
-    <div class="form-group">
-      <label for="gameweek">Gameweek</label>
-      <select id="gameweek" formControlName="gameweek" class="form-control">
-        <option *ngFor="let gw of gameweeks" [value]="gw">
-          Gameweek {{ gw }}
-        </option>
-      </select>
-    </div>
-
-    <!-- Match Results Section (Edit Mode Only) -->
-    <div *ngIf="isEditMode" class="match-results-section">
-      <h3>Match Results</h3>
-      
-      <div class="score-inputs">
+    <!-- Score section (for editing finished fixtures) -->
+    <div *ngIf="isEdit" class="score-section">
+      <h3>Match Result</h3>
+      <div class="form-row">
         <div class="form-group">
-          <label for="homeScore">{{ fixtureForm.value.homeTeam || 'Home Team' }} Score</label>
+          <label for="homeScore">Home Score</label>
           <input 
             type="number" 
             id="homeScore"
             formControlName="homeScore" 
             class="form-control"
             min="0"
-            placeholder="Goals scored"
+            max="20"
           >
         </div>
 
         <div class="form-group">
-          <label for="awayScore">{{ fixtureForm.value.awayTeam || 'Away Team' }} Score</label>
+          <label for="awayScore">Away Score</label>
           <input 
             type="number" 
             id="awayScore"
             formControlName="awayScore" 
             class="form-control"
             min="0"
-            placeholder="Goals scored"
+            max="20"
           >
         </div>
-      </div>
 
-      <div class="form-group">
-        <label for="status">Match Status</label>
-        <select id="status" formControlName="status" class="form-control">
-          <option value="upcoming">Upcoming</option>
-          <option value="live">Live</option>
-          <option value="finished">Finished</option>
-        </select>
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status" formControlName="status" class="form-control">
+            <option value="upcoming">Upcoming</option>
+            <option value="live">Live</option>
+            <option value="finished">Finished</option>
+          </select>
+        </div>
       </div>
     </div>
 
+    <!-- Match preview -->
+    <div *ngIf="fixtureForm.get('homeTeamId')?.value && fixtureForm.get('awayTeamId')?.value" 
+         class="match-preview">
+      <h3>Match Preview</h3>
+      <div class="match-display">
+        <div class="team">
+          <img [src]="getTeamById(fixtureForm.get('homeTeamId')?.value)?.logoUrl" class="logo">
+          <span>{{ getTeamById(fixtureForm.get('homeTeamId')?.value)?.abbreviation }}</span>
+        </div>
+        <span class="vs">VS</span>
+        <div class="team">
+          <img [src]="getTeamById(fixtureForm.get('awayTeamId')?.value)?.logoUrl" class="logo">
+          <span>{{ getTeamById(fixtureForm.get('awayTeamId')?.value)?.abbreviation }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form actions -->
     <div class="form-actions">
-      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
-      <button type="submit" class="btn btn-primary" [disabled]="!fixtureForm.valid">
-        {{ isEditMode ? 'Update Fixture' : 'Create Fixture' }}
+      <button type="button" class="btn btn-secondary" (click)="cancel()">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="!fixtureForm.valid || loading">
+        {{ loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create') }} Fixture
       </button>
     </div>
   </form>
