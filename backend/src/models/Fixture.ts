@@ -1,137 +1,133 @@
-import { Table, Column, Model, DataType, HasMany, BeforeUpdate, BeforeCreate } from 'sequelize-typescript';
-import { Prediction } from './Prediction';
-import { FixtureCreationAttributes } from '../interfaces/fixture.interface';
+/* filepath: backend/src/models/Fixture.ts */
+import { DataTypes, Model, Optional } from 'sequelize';
+import { sequelize } from '../config/sequelize';
 
+// Export the FixtureStatus enum
 export enum FixtureStatus {
   UPCOMING = 'upcoming',
   LIVE = 'live',
   FINISHED = 'finished'
 }
 
-@Table({
-  tableName: 'fixtures',
-  timestamps: true,
-  underscored: true,
-  indexes: [
-    {
-      fields: ['home_team']
-    },
-    {
-      fields: ['away_team']
-    },
-    {
-      fields: ['match_date']
-    },
-    {
-      fields: ['status']
-    },
-    {
-      fields: ['gameweek']
-    }
-  ]
-})
-export class Fixture extends Model<Fixture, FixtureCreationAttributes> {
-  @Column({
-    type: DataType.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  })
-  id!: number;
-
-  @Column({
-    type: DataType.STRING(100),
-    allowNull: false,
-    field: 'home_team'
-  })
-  homeTeam!: string;
-
-  @Column({
-    type: DataType.STRING(100),
-    allowNull: false,
-    field: 'away_team'
-  })
-  awayTeam!: string;
-
-  @Column({
-    type: DataType.DATE,
-    allowNull: false,
-    field: 'match_date'
-  })
-  matchDate!: Date;
-
-  @Column({
-    type: DataType.DATE,
-    allowNull: false
-  })
-  deadline!: Date;
-
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: true,
-    field: 'home_score'
-  })
+interface FixtureAttributes {
+  id: number;
+  homeTeam: string;
+  awayTeam: string;
+  matchDate: Date;
+  gameweek: number;
+  status: FixtureStatus;
   homeScore?: number;
-
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: true,
-    field: 'away_score'
-  })
   awayScore?: number;
+  deadline: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
-  @Column({
-    type: DataType.ENUM(...Object.values(FixtureStatus)),
-    defaultValue: FixtureStatus.UPCOMING
-  })
-  status!: FixtureStatus;
+interface FixtureCreationAttributes extends Optional<FixtureAttributes, 'id' | 'homeScore' | 'awayScore' | 'createdAt' | 'updatedAt'> {}
 
-  @Column({
-    type: DataType.INTEGER,
-    defaultValue: 1
-  })
-  gameweek!: number;
+export class Fixture extends Model<FixtureAttributes, FixtureCreationAttributes> implements FixtureAttributes {
+  public id!: number;
+  public homeTeam!: string;
+  public awayTeam!: string;
+  public matchDate!: Date;
+  public gameweek!: number;
+  public status!: FixtureStatus;
+  public homeScore?: number;
+  public awayScore?: number;
+  public deadline!: Date;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 
-  @HasMany(() => Prediction)
-  predictions!: Prediction[];
+  // Association properties
+  public predictions?: any[];
 
-  // Auto-update status based on scores and time
-  @BeforeUpdate
-  @BeforeCreate
-  static async updateStatus(instance: Fixture) {
-    const now = new Date();
-    
-    if (instance.homeScore !== null && instance.awayScore !== null) {
-      instance.status = FixtureStatus.FINISHED;
-    } else if (instance.matchDate <= now && instance.status === FixtureStatus.UPCOMING) {
-      instance.status = FixtureStatus.LIVE;
-    }
-  }
-
-  // Static methods for common queries
-  static async findByGameweek(gameweek: number) {
+  // Static method to find fixtures by gameweek
+  public static async findByGameweek(gameweek: number): Promise<Fixture[]> {
     return this.findAll({
       where: { gameweek },
-      order: [['matchDate', 'ASC']],
-      include: [{
-        model: Prediction,
-        required: false
-      }]
+      order: [['matchDate', 'ASC']]
     });
   }
 
-  static async findUpcoming() {
+  // Static method to find upcoming fixtures
+  public static async findUpcoming(): Promise<Fixture[]> {
     return this.findAll({
-      where: {
-        status: [FixtureStatus.UPCOMING, FixtureStatus.LIVE]
+      where: { 
+        status: FixtureStatus.UPCOMING,
+        matchDate: {
+          [require('sequelize').Op.gte]: new Date()
+        }
       },
       order: [['matchDate', 'ASC']]
     });
   }
 
-  static async findFinished() {
+  // Static method to find live fixtures
+  public static async findLive(): Promise<Fixture[]> {
+    return this.findAll({
+      where: { status: FixtureStatus.LIVE },
+      order: [['matchDate', 'ASC']]
+    });
+  }
+
+  // Static method to find finished fixtures
+  public static async findFinished(): Promise<Fixture[]> {
     return this.findAll({
       where: { status: FixtureStatus.FINISHED },
       order: [['matchDate', 'DESC']]
     });
   }
 }
+
+Fixture.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    homeTeam: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: 'home_team',
+    },
+    awayTeam: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: 'away_team',
+    },
+    matchDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: 'match_date',
+    },
+    gameweek: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    status: {
+      type: DataTypes.ENUM(FixtureStatus.UPCOMING, FixtureStatus.LIVE, FixtureStatus.FINISHED),
+      defaultValue: FixtureStatus.UPCOMING,
+    },
+    homeScore: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'home_score',
+    },
+    awayScore: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'away_score',
+    },
+    deadline: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'Fixture',
+    tableName: 'fixtures',
+    underscored: true,
+  }
+);

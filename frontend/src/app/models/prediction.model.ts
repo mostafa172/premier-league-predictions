@@ -17,11 +17,10 @@ export interface PredictionRequest {
   isDouble?: boolean;
 }
 
-export interface LeaderboardEntry {
+interface LeaderboardEntry {
+  rank: number;
   userId: number;
   username: string;
   totalPoints: number;
-  correctPredictions: number;
   totalPredictions: number;
-  rank: number;
 }

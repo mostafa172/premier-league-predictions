@@ -1,14 +1,13 @@
+/* filepath: backend/src/routes/admin.routes.ts */
 import { Router } from 'express';
-import { AdminController } from '../controllers/admin.controller';
-import { authenticateToken, requireAdmin } from '../middleware/auth.middleware'; // Import from auth.middleware
+import { adminController } from '../controllers/admin.controller';
+import { authenticateToken } from '../middleware/auth.middleware';
 
 const router = Router();
-const adminController = new AdminController();
 
-// Route to recalculate all points
-router.post('/recalculate-points', authenticateToken, requireAdmin, adminController.recalculateAllPoints.bind(adminController));
-
-// Route to update all fixture statuses
-router.post('/update-statuses', authenticateToken, requireAdmin, adminController.updateAllFixtureStatuses.bind(adminController));
+// Admin routes - require authentication, admin check is in controller
+router.get('/fixtures', authenticateToken, adminController.getAllFixtures.bind(adminController));
+router.post('/recalculate-points', authenticateToken, adminController.recalculatePoints.bind(adminController));
+router.put('/fixtures/statuses', authenticateToken, adminController.updateAllFixtureStatuses.bind(adminController));
 
 export default router;

@@ -1,61 +1,66 @@
-import { Table, Column, Model, DataType, HasMany } from 'sequelize-typescript';
-import { Prediction } from './Prediction';
+/* filepath: backend/src/models/User.ts */
+import { DataTypes, Model, Optional } from 'sequelize';
+import { sequelize } from '../config/sequelize';
 
-@Table({
-  tableName: 'users',
-  timestamps: true,
-  underscored: true,
-  indexes: [
-    {
-      fields: ['username']
-    },
-    {
-      fields: ['email']
-    }
-  ]
-})
-export class User extends Model<User> {
-  @Column({
-    type: DataType.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  })
-  id!: number;
-
-  @Column({
-    type: DataType.STRING(50),
-    allowNull: false,
-    unique: true
-  })
-  username!: string;
-
-  @Column({
-    type: DataType.STRING(100),
-    allowNull: false,
-    unique: true
-  })
-  email!: string;
-
-  @Column({
-    type: DataType.STRING(255),
-    allowNull: false
-  })
-  password!: string;
-
-  @Column({
-    type: DataType.BOOLEAN,
-    defaultValue: false,
-    field: 'is_admin'
-  })
-  isAdmin!: boolean;
-
-  @HasMany(() => Prediction)
-  predictions!: Prediction[];
-
-  // Instance methods
-  toJSON() {
-    const values = Object.assign({}, this.get());
-    const { password, ...userWithoutPassword } = values;
-    return userWithoutPassword;
-  }
+interface UserAttributes {
+  id: number;
+  username: string;
+  email: string;
+  password: string;
+  isAdmin: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
+
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'isAdmin' | 'createdAt' | 'updatedAt'> {}
+
+export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
+  public id!: number;
+  public username!: string;
+  public email!: string;
+  public password!: string;
+  public isAdmin!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+
+  // Association properties
+  public predictions?: any[];
+}
+
+User.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    username: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true,
+      },
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    isAdmin: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: 'is_admin',
+    },
+  },
+  {
+    sequelize,
+    modelName: 'User',
+    tableName: 'users',
+    underscored: true,
+  }
+);

@@ -1,3 +1,4 @@
+/* filepath: backend/src/middleware/auth.middleware.ts */
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -40,7 +41,10 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
     return;
   }
 
-  if (!req.user.is_admin) { // Note: should be is_admin not isAdmin
+  // Check both isAdmin and is_admin for compatibility
+  const isAdmin = req.user.isAdmin || req.user.is_admin;
+  
+  if (!isAdmin) {
     res.status(403).json({
       success: false,
       message: 'Admin access required'

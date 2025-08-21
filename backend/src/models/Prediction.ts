@@ -1,20 +1,8 @@
-import {
-  Table,
-  Column,
-  Model,
-  DataType,
-  ForeignKey,
-  BelongsTo,
-  BeforeCreate,
-  BeforeUpdate,
-} from "sequelize-typescript";
-import { User } from "./User";
-import { Fixture } from "./Fixture";
-import { Op, fn, col, literal } from "sequelize";
-import { PredictionCreationAttributes } from "../interfaces/prediction.interface";
+/* filepath: backend/src/models/Prediction.ts */
+import { DataTypes, Model, Optional } from 'sequelize';
+import { sequelize } from '../config/sequelize';
 
-interface PredictionInstance
-  extends Model<PredictionInstance, PredictionCreationAttributes> {
+interface PredictionAttributes {
   id: number;
   userId: number;
   fixtureId: number;
@@ -22,249 +10,137 @@ interface PredictionInstance
   predictedAwayScore: number;
   points: number;
   isDouble: boolean;
-  user?: User;
-  fixture?: Fixture;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-@Table({
-  tableName: "predictions",
-  timestamps: true,
-  underscored: true,
-  indexes: [
-    {
-      unique: true,
-      fields: ["user_id", "fixture_id"],
-    },
-    {
-      fields: ["user_id"],
-    },
-    {
-      fields: ["fixture_id"],
-    },
-  ],
-})
-export class Prediction extends Model<
-  Prediction,
-  PredictionCreationAttributes
-> {
-  @Column({
-    type: DataType.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  })
-  id!: number;
+interface PredictionCreationAttributes extends Optional<PredictionAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
 
-  @ForeignKey(() => User)
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: false,
-    field: "user_id",
-  })
-  userId!: number;
+export class Prediction extends Model<PredictionAttributes, PredictionCreationAttributes> implements PredictionAttributes {
+  public id!: number;
+  public userId!: number;
+  public fixtureId!: number;
+  public predictedHomeScore!: number;
+  public predictedAwayScore!: number;
+  public points!: number;
+  public isDouble!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 
-  @ForeignKey(() => Fixture)
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: false,
-    field: "fixture_id",
-  })
-  fixtureId!: number;
+  // Association properties
+  public fixture?: any;
+  public user?: any;
 
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: false,
-    field: "predicted_home_score",
-  })
-  predictedHomeScore!: number;
-
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: false,
-    field: "predicted_away_score",
-  })
-  predictedAwayScore!: number;
-
-  @Column({
-    type: DataType.INTEGER,
-    defaultValue: 0,
-  })
-  points!: number;
-
-  @Column({
-    type: DataType.BOOLEAN,
-    defaultValue: false,
-    field: "is_double",
-  })
-  isDouble!: boolean;
-
-  @BelongsTo(() => User)
-  user!: User;
-
-  @BelongsTo(() => Fixture)
-  fixture!: Fixture;
-
-  // Ensure only one double per gameweek per user
-  @BeforeCreate
-  @BeforeUpdate
-  static async validateDouble(instance: Prediction) {
-    if (instance.isDouble) {
-      // Remove any existing double for this user in the same gameweek
-      const fixture = await Fixture.findByPk(instance.fixtureId);
-      if (fixture) {
-        const gameweekFixtures = await Fixture.findAll({
-          where: { gameweek: fixture.gameweek },
-          attributes: ["id"],
-        });
-
-        const fixtureIds = gameweekFixtures.map((f) => f.id);
-
-        await Prediction.update(
-          { isDouble: false },
-          {
-            where: {
-              userId: instance.userId,
-              isDouble: true,
-              fixtureId: {
-                [Op.in]: fixtureIds,
-              },
-            },
-          }
-        );
-      }
-    }
-  }
-
-  // Calculate points based on prediction accuracy
-  async calculatePoints(): Promise<number> {
-    // Get fixture using the association
-    const fixture = (await this.$get("fixture")) as Fixture;
-
-    // Enhanced null/undefined checks for TypeScript strict mode
-    if (
-      !fixture ||
-      fixture.homeScore === null ||
-      fixture.homeScore === undefined ||
-      fixture.awayScore === null ||
-      fixture.awayScore === undefined
-    ) {
-      return 0;
-    }
-
+  // Static method for points calculation
+  public static calculatePoints(
+    predictedHome: number,
+    predictedAway: number,
+    actualHome: number,
+    actualAway: number,
+    isDouble: boolean = false
+  ): number {
     let points = 0;
-    const actualResult = this.getResult(fixture.homeScore, fixture.awayScore);
-    const predictedResult = this.getResult(
-      this.predictedHomeScore,
-      this.predictedAwayScore
-    );
 
-    // Exact score: 6 points
-    if (
-      this.predictedHomeScore === fixture.homeScore &&
-      this.predictedAwayScore === fixture.awayScore
-    ) {
-      points = 6;
+    // Exact score = 3 points
+    if (predictedHome === actualHome && predictedAway === actualAway) {
+      points = 3;
     }
-    // Correct result and goal difference: 4 points
+    // Correct result (win/draw/loss) = 1 point
     else if (
-      predictedResult === actualResult &&
-      this.predictedHomeScore - this.predictedAwayScore ===
-        fixture.homeScore - fixture.awayScore
+      (predictedHome > predictedAway && actualHome > actualAway) || // Both predict home win
+      (predictedHome < predictedAway && actualHome < actualAway) || // Both predict away win
+      (predictedHome === predictedAway && actualHome === actualAway) // Both predict draw
     ) {
-      points = 4;
-    }
-    // Correct result only: 2 points
-    else if (predictedResult === actualResult) {
-      points = 2;
+      points = 1;
     }
 
-    // Apply double multiplier
-    if (this.isDouble) {
-      points *= 2;
-    }
-
-    this.points = points;
-    await this.save();
-    return points;
+    // Double the points if it's a double prediction
+    return isDouble ? points * 2 : points;
   }
 
-  // Updated getResult method with proper type handling
-  private getResult(homeScore: number, awayScore: number): string {
-    if (homeScore > awayScore) return "H";
-    if (awayScore > homeScore) return "A";
-    return "D";
-  }
-
-  // Static methods for leaderboard and statistics
-  static async getLeaderboard() {
-    const results = await this.findAll({
-      attributes: [
-        "userId",
-        [fn("SUM", col("points")), "totalPoints"],
-        [
-          fn("COUNT", literal("CASE WHEN points > 0 THEN 1 END")),
-          "correctPredictions",
-        ],
-        [fn("COUNT", col("Prediction.id")), "totalPredictions"], // Fix: Specify table alias
-      ],
-      include: [
-        {
-          model: User,
-          attributes: ["username"],
-          where: { isAdmin: false },
-        },
-        {
+  // Static method to recalculate all points (for admin use)
+  public static async recalculateAllPoints(): Promise<number> {
+    try {
+      const { Fixture } = require('./Fixture');
+      
+      // Get all finished fixtures with their predictions
+      const predictions = await Prediction.findAll({
+        include: [{
           model: Fixture,
-          attributes: [],
-          where: { status: "finished" },
-        },
-      ],
-      group: ["userId", "user.id", "user.username"],
-      order: [[fn("SUM", col("points")), "DESC"]],
-      raw: false,
-    });
+          where: { status: 'finished' },
+          required: true
+        }]
+      });
 
-    return results.map((result: any, index: number) => ({
-      rank: index + 1,
-      userId: result.userId,
-      username: result.user.username,
-      totalPoints: parseInt(result.dataValues.totalPoints) || 0,
-      correctPredictions: parseInt(result.dataValues.correctPredictions) || 0,
-      totalPredictions: parseInt(result.dataValues.totalPredictions) || 0,
-    }));
-  }
+      let count = 0;
+      for (const prediction of predictions) {
+        const fixture = prediction.fixture;
+        if (fixture.homeScore !== null && fixture.awayScore !== null) {
+          const newPoints = Prediction.calculatePoints(
+            prediction.predictedHomeScore,
+            prediction.predictedAwayScore,
+            fixture.homeScore,
+            fixture.awayScore,
+            prediction.isDouble
+          );
+          
+          if (prediction.points !== newPoints) {
+            prediction.points = newPoints;
+            await prediction.save();
+            count++;
+          }
+        }
+      }
 
-  static async findByUserAndGameweek(userId: number, gameweek: number) {
-    return this.findAll({
-      where: { userId },
-      include: [
-        {
-          model: Fixture,
-          where: { gameweek },
-          required: true,
-        },
-      ],
-      order: [[{ model: Fixture, as: "fixture" }, "matchDate", "ASC"]],
-    });
-  }
-
-  static async recalculateAllPoints() {
-    const predictions = await this.findAll({
-      include: [
-        {
-          model: Fixture,
-          where: {
-            status: "finished",
-            homeScore: { [Op.not]: null },
-            awayScore: { [Op.not]: null },
-          },
-        },
-      ],
-    });
-
-    for (const prediction of predictions) {
-      await prediction.calculatePoints();
+      return count;
+    } catch (error) {
+      console.error('Error recalculating points:', error);
+      throw error;
     }
-
-    return predictions.length;
   }
 }
+
+Prediction.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: 'user_id', // Maps to snake_case in database
+    },
+    fixtureId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: 'fixture_id', // Maps to snake_case in database
+    },
+    predictedHomeScore: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: 'predicted_home_score',
+    },
+    predictedAwayScore: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: 'predicted_away_score',
+    },
+    points: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    isDouble: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: 'is_double',
+    },
+  },
+  {
+    sequelize,
+    modelName: 'Prediction',
+    tableName: 'predictions',
+    underscored: true, // This converts camelCase to snake_case automatically
+  }
+);

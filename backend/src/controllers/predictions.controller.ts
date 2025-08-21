@@ -1,9 +1,9 @@
 /* filepath: backend/src/controllers/predictions.controller.ts */
-import { Request, Response } from 'express';
-import { Prediction } from '../models/Prediction';
-import { Fixture } from '../models/Fixture';
-import { User } from '../models/User';
-import { fn, col, literal } from 'sequelize';
+import { Request, Response } from "express";
+import { Prediction } from "../models/Prediction";
+import { Fixture } from "../models/Fixture";
+import { User } from "../models/User";
+import { fn, col, literal } from "sequelize";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -11,6 +11,14 @@ interface AuthenticatedRequest extends Request {
     username: string;
     isAdmin: boolean;
   };
+}
+
+interface LeaderboardUser {
+  userId: number;
+  username: string;
+  totalPoints: number;
+  totalPredictions: number;
+  rank?: number;
 }
 
 export class PredictionsController {
@@ -23,7 +31,7 @@ export class PredictionsController {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          message: 'User not authenticated'
+          message: "User not authenticated",
         });
       }
 
@@ -31,7 +39,7 @@ export class PredictionsController {
       if (!fixtureId || homeScore === undefined || awayScore === undefined) {
         return res.status(400).json({
           success: false,
-          message: 'Missing required fields: fixtureId, homeScore, awayScore'
+          message: "Missing required fields: fixtureId, homeScore, awayScore",
         });
       }
 
@@ -42,50 +50,69 @@ export class PredictionsController {
       if (isNaN(predictedHomeScore) || isNaN(predictedAwayScore)) {
         return res.status(400).json({
           success: false,
-          message: 'Scores must be valid numbers'
+          message: "Scores must be valid numbers",
         });
       }
 
-      if (predictedHomeScore < 0 || predictedAwayScore < 0 || 
-          predictedHomeScore > 20 || predictedAwayScore > 20) {
+      if (
+        predictedHomeScore < 0 ||
+        predictedAwayScore < 0 ||
+        predictedHomeScore > 20 ||
+        predictedAwayScore > 20
+      ) {
         return res.status(400).json({
           success: false,
-          message: 'Scores must be between 0 and 20'
+          message: "Scores must be between 0 and 20",
         });
       }
 
-      // Check if fixture exists and deadline hasn't passed
+      // Check if fixture exists and get its status
       const fixture = await Fixture.findByPk(fixtureId);
       if (!fixture) {
         return res.status(404).json({
           success: false,
-          message: 'Fixture not found'
+          message: "Fixture not found",
         });
       }
 
+      // Check if match has finished or is live
+      if (fixture.status === "finished" || fixture.status === "live") {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Cannot update prediction after match has started or finished",
+        });
+      }
+
+      // Check if deadline has passed
       if (new Date() > new Date(fixture.deadline)) {
         return res.status(400).json({
           success: false,
-          message: 'Prediction deadline has passed'
+          message: "Prediction deadline has passed",
         });
       }
 
       // Check for existing prediction
       const existingPrediction = await Prediction.findOne({
-        where: { userId, fixtureId }
+        where: { userId, fixtureId },
       });
 
       if (existingPrediction) {
-        // Update existing prediction
+        // Update existing prediction - preserve isDouble if not specified
         existingPrediction.predictedHomeScore = predictedHomeScore;
         existingPrediction.predictedAwayScore = predictedAwayScore;
-        existingPrediction.isDouble = isDouble;
+
+        // Only update isDouble if explicitly provided, otherwise keep existing value
+        if (req.body.hasOwnProperty("isDouble")) {
+          existingPrediction.isDouble = isDouble;
+        }
+
         await existingPrediction.save();
 
         res.json({
           success: true,
-          message: 'Prediction updated successfully',
-          data: existingPrediction
+          message: "Prediction updated successfully",
+          data: existingPrediction,
         });
       } else {
         // Create new prediction
@@ -95,52 +122,21 @@ export class PredictionsController {
           predictedHomeScore,
           predictedAwayScore,
           isDouble,
-          points: 0
+          points: 0,
         });
 
         res.json({
           success: true,
-          message: 'Prediction created successfully',
-          data: prediction
+          message: "Prediction created successfully",
+          data: prediction,
         });
       }
     } catch (error: any) {
-      console.error('Create prediction error:', error);
+      console.error("Create prediction error:", error);
       res.status(500).json({
         success: false,
-        message: 'Error saving prediction',
-        error: error.message
-      });
-    }
-  }
-
-  // Get all predictions (admin only)
-  async getAllPredictions(req: AuthenticatedRequest, res: Response) {
-    try {
-      const predictions = await Prediction.findAll({
-        include: [
-          {
-            model: User,
-            attributes: ['id', 'username', 'email']
-          },
-          {
-            model: Fixture,
-            attributes: ['id', 'homeTeam', 'awayTeam', 'matchDate', 'gameweek', 'status']
-          }
-        ],
-        order: [['createdAt', 'DESC']]
-      });
-
-      res.json({
-        success: true,
-        data: predictions
-      });
-    } catch (error: any) {
-      console.error('Get all predictions error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error fetching predictions',
-        error: error.message
+        message: "Error saving prediction",
+        error: error.message,
       });
     }
   }
@@ -153,38 +149,44 @@ export class PredictionsController {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          message: 'User not authenticated'
+          message: "User not authenticated",
         });
       }
 
+      // Fix: Use the alias 'fixture' as defined in associations
       const predictions = await Prediction.findAll({
         where: { userId },
         include: [
           {
             model: Fixture,
-            attributes: ['id', 'homeTeam', 'awayTeam', 'matchDate', 'gameweek', 'status']
-          }
+            as: "fixture", // Use the alias defined in associations
+            attributes: [
+              "id",
+              "homeTeam",
+              "awayTeam",
+              "matchDate",
+              "gameweek",
+              "status",
+              "homeScore",
+              "awayScore",
+            ],
+          },
         ],
-        order: [['createdAt', 'DESC']]
+        order: [["createdAt", "DESC"]],
       });
 
       res.json({
         success: true,
-        data: predictions
+        data: predictions,
       });
     } catch (error: any) {
-      console.error('Get user predictions error:', error);
+      console.error("Get user predictions error:", error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching predictions',
-        error: error.message
+        message: "Error fetching predictions",
+        error: error.message,
       });
     }
-  }
-
-  // Get current user's predictions (alias for getUserPredictions)
-  async getCurrentUserPredictions(req: AuthenticatedRequest, res: Response) {
-    return this.getUserPredictions(req, res);
   }
 
   // Get user's predictions by gameweek
@@ -196,90 +198,86 @@ export class PredictionsController {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          message: 'User not authenticated'
+          message: "User not authenticated",
         });
       }
 
+      // Fix: Use the alias 'fixture' as defined in associations
       const predictions = await Prediction.findAll({
         where: { userId },
         include: [
           {
             model: Fixture,
+            as: "fixture", // Use the alias defined in associations
             where: { gameweek: parseInt(gameweek) },
-            attributes: ['id', 'homeTeam', 'awayTeam', 'matchDate', 'gameweek', 'status']
-          }
+            attributes: [
+              "id",
+              "homeTeam",
+              "awayTeam",
+              "matchDate",
+              "gameweek",
+              "status",
+              "homeScore",
+              "awayScore",
+            ],
+          },
         ],
-        order: [['createdAt', 'DESC']]
+        order: [["createdAt", "DESC"]],
       });
 
       res.json({
         success: true,
-        data: predictions
+        data: predictions,
       });
     } catch (error: any) {
-      console.error('Get user predictions by gameweek error:', error);
+      console.error("Get user predictions by gameweek error:", error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching predictions',
-        error: error.message
+        message: "Error fetching predictions",
+        error: error.message,
       });
     }
   }
 
-  // Get current user's predictions by gameweek (alias)
-  async getCurrentUserPredictionsByGameweek(req: AuthenticatedRequest, res: Response) {
-    return this.getUserPredictionsByGameweek(req, res);
-  }
-
-  // Get leaderboard
   async getLeaderboard(req: AuthenticatedRequest, res: Response) {
     try {
-      const results = await Prediction.findAll({
-        attributes: [
-          'userId',
-          [fn('SUM', col('points')), 'totalPoints'],
-          [
-            fn('COUNT', literal('CASE WHEN points > 0 THEN 1 END')),
-            'correctPredictions',
-          ],
-          [fn('COUNT', col('Prediction.id')), 'totalPredictions'],
-        ],
-        include: [
-          {
-            model: User,
-            attributes: ['username'],
-            where: { isAdmin: false },
-          },
-          {
-            model: Fixture,
-            attributes: [],
-            where: { status: 'finished' },
-          },
-        ],
-        group: ['userId', 'user.id', 'user.username'],
-        order: [[fn('SUM', col('points')), 'DESC']],
-        raw: false,
-      });
+      const { pool } = require("../config/database");
 
-      const leaderboard = results.map((result: any, index: number) => ({
+      const query = `
+        SELECT 
+          u.id as "userId",
+          u.username,
+          COALESCE(SUM(p.points), 0) as "totalPoints",
+          COUNT(p.id) as "totalPredictions"
+        FROM users u
+        JOIN predictions p ON u.id = p.user_id
+        GROUP BY u.id, u.username
+        HAVING COUNT(p.id) > 0
+        ORDER BY "totalPoints" DESC, "totalPredictions" DESC
+      `;
+
+      console.log("Executing leaderboard query...");
+      const result = await pool.query(query);
+      console.log("Leaderboard result:", result.rows);
+
+      const leaderboard = result.rows.map((row: any, index: number) => ({
         rank: index + 1,
-        userId: result.userId,
-        username: result.user.username,
-        totalPoints: parseInt(result.dataValues.totalPoints) || 0,
-        correctPredictions: parseInt(result.dataValues.correctPredictions) || 0,
-        totalPredictions: parseInt(result.dataValues.totalPredictions) || 0,
+        userId: row.userId,
+        username: row.username,
+        totalPoints: parseInt(row.totalPoints) || 0,
+        totalPredictions: parseInt(row.totalPredictions) || 0,
       }));
 
       res.json({
         success: true,
-        data: leaderboard
+        data: leaderboard,
       });
     } catch (error: any) {
-      console.error('Get leaderboard error:', error);
+      console.error("Get leaderboard error:", error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching leaderboard',
-        error: error.message
+        message: "Error fetching leaderboard",
+        error: error.message,
       });
     }
   }
@@ -294,19 +292,19 @@ export class PredictionsController {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          message: 'User not authenticated'
+          message: "User not authenticated",
         });
       }
 
       const prediction = await Prediction.findOne({
         where: { id, userId },
-        include: [Fixture]
+        include: [Fixture],
       });
 
       if (!prediction) {
         return res.status(404).json({
           success: false,
-          message: 'Prediction not found'
+          message: "Prediction not found",
         });
       }
 
@@ -315,7 +313,7 @@ export class PredictionsController {
       if (new Date() > new Date(fixture.deadline)) {
         return res.status(400).json({
           success: false,
-          message: 'Prediction deadline has passed'
+          message: "Prediction deadline has passed",
         });
       }
 
@@ -327,15 +325,15 @@ export class PredictionsController {
 
       res.json({
         success: true,
-        message: 'Prediction updated successfully',
-        data: prediction
+        message: "Prediction updated successfully",
+        data: prediction,
       });
     } catch (error: any) {
-      console.error('Update prediction error:', error);
+      console.error("Update prediction error:", error);
       res.status(500).json({
         success: false,
-        message: 'Error updating prediction',
-        error: error.message
+        message: "Error updating prediction",
+        error: error.message,
       });
     }
   }
@@ -349,19 +347,19 @@ export class PredictionsController {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          message: 'User not authenticated'
+          message: "User not authenticated",
         });
       }
 
       const prediction = await Prediction.findOne({
         where: { id, userId },
-        include: [Fixture]
+        include: [Fixture],
       });
 
       if (!prediction) {
         return res.status(404).json({
           success: false,
-          message: 'Prediction not found'
+          message: "Prediction not found",
         });
       }
 
@@ -370,7 +368,7 @@ export class PredictionsController {
       if (new Date() > new Date(fixture.deadline)) {
         return res.status(400).json({
           success: false,
-          message: 'Prediction deadline has passed'
+          message: "Prediction deadline has passed",
         });
       }
 
@@ -378,41 +376,37 @@ export class PredictionsController {
 
       res.json({
         success: true,
-        message: 'Prediction deleted successfully'
+        message: "Prediction deleted successfully",
       });
     } catch (error: any) {
-      console.error('Delete prediction error:', error);
+      console.error("Delete prediction error:", error);
       res.status(500).json({
         success: false,
-        message: 'Error deleting prediction',
-        error: error.message
+        message: "Error deleting prediction",
+        error: error.message,
       });
     }
   }
 
-  // Recalculate all points (admin only)
+  /* filepath: backend/src/controllers/predictions.controller.ts */
+  // Add this method to the PredictionsController class:
   async recalculateAllPoints(req: AuthenticatedRequest, res: Response) {
     try {
       const count = await Prediction.recalculateAllPoints();
-      
+
       res.json({
         success: true,
         message: `Points recalculated for ${count} predictions`,
-        data: { count }
+        data: { count },
       });
     } catch (error: any) {
-      console.error('Recalculate points error:', error);
+      console.error("Recalculate points error:", error);
       res.status(500).json({
         success: false,
-        message: 'Error recalculating points',
-        error: error.message
+        message: "Error recalculating points",
+        error: error.message,
       });
     }
-  }
-
-  // Alias for recalculateAllPoints
-  async recalculatePoints(req: AuthenticatedRequest, res: Response) {
-    return this.recalculateAllPoints(req, res);
   }
 }
 

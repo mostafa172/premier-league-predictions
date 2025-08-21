@@ -1,64 +1,85 @@
-import { Request, Response } from "express";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { pool } from "../config/database";
-import { AuthRequest } from "../middleware/auth.middleware";
+/* filepath: backend/src/controllers/auth.controller.ts */
+import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs'; // Changed from 'bcrypt' to 'bcryptjs'
+import jwt from 'jsonwebtoken';
+import { pool } from '../config/database';
 
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: number;
+    username: string;
+    isAdmin: boolean;
+    is_admin: boolean;
+  };
+}
+
+// Export individual functions
 export const register = async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body;
 
+    // Validate input
     if (!username || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required",
+        message: 'All fields are required'
       });
     }
 
-    // Check if user exists
+    // Check if user already exists
     const existingUser = await pool.query(
-      "SELECT * FROM users WHERE email = $1 OR username = $2",
+      'SELECT id FROM users WHERE email = $1 OR username = $2',
       [email, username]
     );
 
     if (existingUser.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "User already exists",
+        message: 'User with this email or username already exists'
       });
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Create user
     const newUser = await pool.query(
-      "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email, is_admin",
-      [username, email, hashedPassword]
+      'INSERT INTO users (username, email, password, is_admin) VALUES ($1, $2, $3, $4) RETURNING id, username, email, is_admin',
+      [username, email, hashedPassword, false]
     );
 
-    // Generate token
-    const token = jwt.sign(
+    // Generate JWT token for the new user
+    const registerToken = jwt.sign(
       {
         id: newUser.rows[0].id,
         username: newUser.rows[0].username,
+        isAdmin: newUser.rows[0].is_admin,
         is_admin: newUser.rows[0].is_admin,
       },
       process.env.JWT_SECRET || "your-secret-key",
-      { expiresIn: "2h" }
+      { expiresIn: "30d" }
     );
 
     res.status(201).json({
       success: true,
-      message: "User created successfully",
-      user: newUser.rows[0],
-      token,
+      message: 'User registered successfully',
+      data: {
+        user: {
+          id: newUser.rows[0].id,
+          username: newUser.rows[0].username,
+          email: newUser.rows[0].email,
+          isAdmin: newUser.rows[0].is_admin
+        },
+        token: registerToken
+      }
     });
   } catch (error: any) {
-    console.error("Registration error:", error);
+    console.error('Registration error:', error);
     res.status(500).json({
       success: false,
-      message: "Server error",
+      message: 'Server error',
+      error: error.message
     });
   }
 };
@@ -67,47 +88,48 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
+    // Validate input
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message: 'Email and password are required'
       });
     }
 
     // Find user
-    const user = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
+    const user = await pool.query(
+      'SELECT id, username, email, password, is_admin FROM users WHERE email = $1',
+      [email]
+    );
 
     if (user.rows.length === 0) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        message: "Invalid credentials",
+        message: 'Invalid credentials'
       });
     }
 
-    // Check password
+    // Verify password
     const validPassword = await bcrypt.compare(password, user.rows[0].password);
-
     if (!validPassword) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        message: "Invalid credentials",
+        message: 'Invalid credentials'
       });
     }
 
-    // Generate token
-    const token = jwt.sign(
+    // Generate JWT token for login
+    const loginToken = jwt.sign(
       {
         id: user.rows[0].id,
         username: user.rows[0].username,
         isAdmin: user.rows[0].is_admin,
+        is_admin: user.rows[0].is_admin,
       },
       process.env.JWT_SECRET || "your-secret-key",
-      { expiresIn: "30d" } // 30 days instead of 7 days
+      { expiresIn: "30d" }
     );
 
-    // In login function
     res.json({
       success: true,
       message: "Login successful",
@@ -116,9 +138,9 @@ export const login = async (req: Request, res: Response) => {
           id: user.rows[0].id,
           username: user.rows[0].username,
           email: user.rows[0].email,
-          isAdmin: user.rows[0].is_admin, // Map is_admin to isAdmin
+          isAdmin: user.rows[0].is_admin,
         },
-        token,
+        token: loginToken,
       },
     });
   } catch (error: any) {
@@ -126,33 +148,62 @@ export const login = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Server error",
+      error: error.message
     });
   }
 };
 
-export const getProfile = async (req: AuthRequest, res: Response) => {
+export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
+    // Get user profile from database
     const user = await pool.query(
-      "SELECT id, username, email, is_admin, created_at FROM users WHERE id = $1",
-      [req.user.id]
+      'SELECT id, username, email, is_admin, created_at FROM users WHERE id = $1',
+      [userId]
     );
 
     if (user.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message: 'User not found'
       });
     }
 
     res.json({
       success: true,
-      user: user.rows[0],
+      data: {
+        user: {
+          id: user.rows[0].id,
+          username: user.rows[0].username,
+          email: user.rows[0].email,
+          isAdmin: user.rows[0].is_admin,
+          createdAt: user.rows[0].created_at
+        }
+      }
     });
   } catch (error: any) {
-    console.error("Get profile error:", error);
+    console.error('Get profile error:', error);
     res.status(500).json({
       success: false,
-      message: "Server error",
+      message: 'Server error',
+      error: error.message
     });
   }
 };
+
+// Also export the class version for consistency
+export class AuthController {
+  register = register;
+  login = login;
+  getProfile = getProfile;
+}
+
+export const authController = new AuthController();

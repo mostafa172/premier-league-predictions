@@ -1,3 +1,4 @@
+/* filepath: backend/src/interfaces/fixture.interface.ts */
 import { FixtureStatus } from '../models/Fixture';
 
 export interface FixtureCreationAttributes {

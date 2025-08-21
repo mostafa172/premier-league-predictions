@@ -1,9 +1,11 @@
+/* filepath: backend/src/app.ts */
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { connectDatabase } from './config/sequelize'; // Make sure this path is correct
+import { connectDatabase } from './config/sequelize';
+// Remove setupAssociations import if it exists
 import authRoutes from './routes/auth.routes';
 import predictionsRoutes from './routes/predictions.routes';
 import fixturesRoutes from './routes/fixtures.routes';
@@ -36,10 +38,11 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Start server
+// Initialize database and start server
 const startServer = async () => {
     try {
         await connectDatabase();
+        
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
         });
