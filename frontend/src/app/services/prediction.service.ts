@@ -8,9 +8,10 @@ interface Prediction {
   id: number;
   fixtureId: number;
   userId: number;
-  homeScore: number;
-  awayScore: number;
+  predictedHomeScore: number; // Changed from homeScore
+  predictedAwayScore: number;  // Changed from awayScore
   points?: number;
+  isDouble?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,7 +60,7 @@ export class PredictionService {
     );
   }
 
-  // Get USER'S predictions for a specific gameweek (this was missing)
+  // Get USER'S predictions for a specific gameweek
   getUserPredictionsByGameweek(gameweek: number): Observable<PredictionResponse> {
     return this.http.get<PredictionResponse>(
       `${this.API_URL}/predictions/user/gameweek/${gameweek}`,
@@ -84,7 +85,7 @@ export class PredictionService {
     );
   }
 
-  // Submit single prediction (this was missing - createPrediction)
+  // Submit single prediction
   submitPrediction(fixtureId: number, homeScore: number, awayScore: number): Observable<any> {
     return this.http.post<any>(
       `${this.API_URL}/predictions`,

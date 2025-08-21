@@ -1,6 +1,7 @@
 /* filepath: backend/src/models/Prediction.ts */
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/sequelize';
+import { FixtureStatus } from './Fixture'; // Import enum
 
 interface PredictionAttributes {
   id: number;
@@ -10,11 +11,11 @@ interface PredictionAttributes {
   predictedAwayScore: number;
   points: number;
   isDouble: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-interface PredictionCreationAttributes extends Optional<PredictionAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+interface PredictionCreationAttributes extends Optional<PredictionAttributes, 'id' | 'points' | 'isDouble' | 'createdAt' | 'updatedAt'> {}
 
 export class Prediction extends Model<PredictionAttributes, PredictionCreationAttributes> implements PredictionAttributes {
   public id!: number;
@@ -31,7 +32,7 @@ export class Prediction extends Model<PredictionAttributes, PredictionCreationAt
   public fixture?: any;
   public user?: any;
 
-  // Static method for points calculation
+  // Static method to calculate points for a single prediction
   public static calculatePoints(
     predictedHome: number,
     predictedAway: number,
@@ -41,60 +42,126 @@ export class Prediction extends Model<PredictionAttributes, PredictionCreationAt
   ): number {
     let points = 0;
 
-    // Exact score = 3 points
+    // Exact score prediction (5 points)
     if (predictedHome === actualHome && predictedAway === actualAway) {
+      points = 5;
+    }
+    // Correct goal difference (3 points)
+    else if ((predictedHome - predictedAway) === (actualHome - actualAway)) {
       points = 3;
     }
-    // Correct result (win/draw/loss) = 1 point
+    // Correct result (win/draw/loss) (1 point)
     else if (
-      (predictedHome > predictedAway && actualHome > actualAway) || // Both predict home win
-      (predictedHome < predictedAway && actualHome < actualAway) || // Both predict away win
-      (predictedHome === predictedAway && actualHome === actualAway) // Both predict draw
+      (predictedHome > predictedAway && actualHome > actualAway) || // Both home wins
+      (predictedHome < predictedAway && actualHome < actualAway) || // Both away wins
+      (predictedHome === predictedAway && actualHome === actualAway) // Both draws
     ) {
       points = 1;
     }
 
-    // Double the points if it's a double prediction
-    return isDouble ? points * 2 : points;
+    // Double points if selected
+    if (isDouble) {
+      points *= 2;
+    }
+
+    return points;
   }
 
-  // Static method to recalculate all points (for admin use)
+  // Static method to recalculate all prediction points
   public static async recalculateAllPoints(): Promise<number> {
     try {
-      const { Fixture } = require('./Fixture');
-      
-      // Get all finished fixtures with their predictions
+      console.log('🔄 Starting to recalculate all prediction points...');
+
+      // Get all predictions with their fixture results (using proper enum)
       const predictions = await Prediction.findAll({
-        include: [{
-          model: Fixture,
-          where: { status: 'finished' },
-          required: true
-        }]
+        include: [
+          {
+            model: sequelize.models.Fixture,
+            as: 'fixture',
+            where: {
+              status: FixtureStatus.FINISHED // Use enum instead of string
+            },
+            attributes: ['id', 'homeScore', 'awayScore', 'status']
+          }
+        ]
       });
 
-      let count = 0;
-      for (const prediction of predictions) {
-        const fixture = prediction.fixture;
-        if (fixture.homeScore !== null && fixture.awayScore !== null) {
-          const newPoints = Prediction.calculatePoints(
-            prediction.predictedHomeScore,
-            prediction.predictedAwayScore,
-            fixture.homeScore,
-            fixture.awayScore,
-            prediction.isDouble
-          );
+      console.log(`📊 Found ${predictions.length} predictions to recalculate`);
+
+      let updatedCount = 0;
+
+      // Process predictions in batches to avoid overwhelming the database
+      const batchSize = 100;
+      for (let i = 0; i < predictions.length; i += batchSize) {
+        const batch = predictions.slice(i, i + batchSize);
+        
+        const updatePromises = batch.map(async (prediction: any) => {
+          const fixture = prediction.fixture;
           
-          if (prediction.points !== newPoints) {
-            prediction.points = newPoints;
-            await prediction.save();
-            count++;
+          if (fixture && fixture.homeScore !== null && fixture.awayScore !== null) {
+            const calculatedPoints = Prediction.calculatePoints(
+              prediction.predictedHomeScore,
+              prediction.predictedAwayScore,
+              fixture.homeScore,
+              fixture.awayScore,
+              prediction.isDouble
+            );
+
+            // Only update if points have changed
+            if (prediction.points !== calculatedPoints) {
+              await prediction.update({ points: calculatedPoints });
+              updatedCount++;
+            }
           }
-        }
+        });
+
+        await Promise.all(updatePromises);
+        console.log(`✅ Processed batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(predictions.length / batchSize)}`);
       }
 
-      return count;
+      console.log(`🎯 Recalculation complete! Updated ${updatedCount} predictions`);
+      return updatedCount;
+
     } catch (error) {
-      console.error('Error recalculating points:', error);
+      console.error('❌ Error recalculating prediction points:', error);
+      throw error;
+    }
+  }
+
+  // Instance method to calculate and update points for this prediction
+  public async calculateAndUpdatePoints(): Promise<void> {
+    try {
+      // Load the fixture if not already loaded
+      if (!this.fixture) {
+        await this.reload({
+          include: [
+            {
+              model: sequelize.models.Fixture,
+              as: 'fixture'
+            }
+          ]
+        });
+      }
+
+      const fixture = this.fixture;
+      
+      if (fixture && fixture.status === FixtureStatus.FINISHED && // Use enum
+          fixture.homeScore !== null && fixture.awayScore !== null) {
+        
+        const calculatedPoints = Prediction.calculatePoints(
+          this.predictedHomeScore,
+          this.predictedAwayScore,
+          fixture.homeScore,
+          fixture.awayScore,
+          this.isDouble
+        );
+
+        if (this.points !== calculatedPoints) {
+          await this.update({ points: calculatedPoints });
+        }
+      }
+    } catch (error) {
+      console.error('Error calculating points for prediction:', error);
       throw error;
     }
   }
@@ -110,12 +177,20 @@ Prediction.init(
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'user_id', // Maps to snake_case in database
+      field: 'user_id',
+      references: {
+        model: 'users',
+        key: 'id',
+      },
     },
     fixtureId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'fixture_id', // Maps to snake_case in database
+      field: 'fixture_id',
+      references: {
+        model: 'fixtures',
+        key: 'id',
+      },
     },
     predictedHomeScore: {
       type: DataTypes.INTEGER,
@@ -136,11 +211,22 @@ Prediction.init(
       defaultValue: false,
       field: 'is_double',
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: 'created_at',
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: 'updated_at',
+    },
   },
   {
     sequelize,
     modelName: 'Prediction',
     tableName: 'predictions',
-    underscored: true, // This converts camelCase to snake_case automatically
+    underscored: true,
+    timestamps: true,
   }
 );

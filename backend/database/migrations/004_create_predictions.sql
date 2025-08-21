@@ -11,8 +11,8 @@ CREATE TABLE predictions (
     predicted_away_score INTEGER NOT NULL CHECK (predicted_away_score >= 0 AND predicted_away_score <= 20),
     points INTEGER DEFAULT 0 CHECK (points >= 0),
     is_double BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     UNIQUE(user_id, fixture_id) -- One prediction per user per fixture
 );
 
@@ -23,11 +23,19 @@ CREATE INDEX idx_predictions_points ON predictions(points);
 CREATE INDEX idx_predictions_is_double ON predictions(is_double);
 CREATE INDEX idx_predictions_created_at ON predictions(created_at);
 
--- Create composite indexes for common queries
-CREATE INDEX idx_predictions_user_fixture ON predictions(user_id, fixture_id);
-CREATE INDEX idx_predictions_user_points ON predictions(user_id, points);
+-- Function to update the updated_at column
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Trigger to automatically update updated_at
+CREATE TRIGGER update_predictions_updated_at 
+    BEFORE UPDATE ON predictions 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 COMMENT ON TABLE predictions IS 'User predictions for Premier League fixtures';
-COMMENT ON COLUMN predictions.points IS 'Points earned: 3 for exact score, 1 for correct result';
-COMMENT ON COLUMN predictions.is_double IS 'Double points multiplier applied';
-COMMENT ON CONSTRAINT predictions_user_id_fixture_id_key ON predictions IS 'One prediction per user per fixture';

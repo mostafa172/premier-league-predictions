@@ -2,16 +2,19 @@
 import { Request, Response } from 'express';
 import { Fixture, FixtureStatus } from '../models/Fixture';
 import { Team } from '../models/Team';
+import { Op } from 'sequelize';
 
 interface AuthenticatedRequest extends Request {
   user?: {
     id: number;
     username: string;
+    email: string;
     isAdmin: boolean;
   };
 }
 
 export class FixturesController {
+  
   // Get all fixtures
   public async getAllFixtures(req: Request, res: Response): Promise<Response> {
     try {
@@ -125,11 +128,9 @@ export class FixturesController {
   // Get upcoming fixtures
   public async getUpcomingFixtures(req: Request, res: Response): Promise<Response> {
     try {
-      const { Op } = require('sequelize');
-      
       const fixturesWithTeams = await Fixture.findAll({
         where: { 
-          status: FixtureStatus.UPCOMING,
+          status: FixtureStatus.UPCOMING, // Use enum instead of string
           matchDate: {
             [Op.gte]: new Date()
           }
@@ -198,7 +199,7 @@ export class FixturesController {
         matchDate: new Date(matchDate),
         deadline: new Date(deadline),
         gameweek,
-        status: FixtureStatus.UPCOMING
+        status: FixtureStatus.UPCOMING // Use enum instead of string
       });
 
       const createdFixture = await Fixture.findByPk(fixture.id, {
@@ -254,7 +255,18 @@ export class FixturesController {
       if (gameweek) updateData.gameweek = gameweek;
       if (homeScore !== undefined) updateData.homeScore = homeScore;
       if (awayScore !== undefined) updateData.awayScore = awayScore;
-      if (status) updateData.status = status;
+      
+      // Validate and use proper enum value for status
+      if (status) {
+        if (Object.values(FixtureStatus).includes(status)) {
+          updateData.status = status;
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid fixture status'
+          });
+        }
+      }
 
       await fixture.update(updateData);
 

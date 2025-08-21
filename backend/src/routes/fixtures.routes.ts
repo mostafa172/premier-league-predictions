@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { fixturesController } from '../controllers/fixtures.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
-import { requireAdmin } from '../middleware/admin.middleware'; // Add this import
+import { requireAdmin } from '../middleware/admin.middleware';
 
 const router = Router();
 

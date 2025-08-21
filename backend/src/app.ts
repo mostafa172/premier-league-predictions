@@ -5,13 +5,12 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { connectDatabase } from './config/sequelize';
-// Remove setupAssociations import if it exists
+
 import authRoutes from './routes/auth.routes';
 import predictionsRoutes from './routes/predictions.routes';
 import fixturesRoutes from './routes/fixtures.routes';
 import adminRoutes from './routes/admin.routes';
 import teamsRoutes from './routes/teams.routes';
-
 
 dotenv.config();
 
@@ -44,13 +43,16 @@ app.get('/api/health', (req, res) => {
 // Initialize database and start server
 const startServer = async () => {
     try {
+        // Connect to database (this will set up associations automatically)
         await connectDatabase();
         
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
+            console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+            console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
         });
     } catch (error) {
-        console.error('Failed to start server:', error);
+        console.error('❌ Failed to start server:', error);
         process.exit(1);
     }
 };

@@ -1,20 +1,35 @@
 <div class="app-container">
-  <!-- Navigation Bar -->
-  <nav class="navbar" *ngIf="isLoggedIn">
+  <!-- Navigation Bar - Always show, but content changes based on login state -->
+  <nav class="navbar">
     <div class="nav-brand">
       <h1>Premier League Predictions</h1>
     </div>
     
-    <div class="nav-links">
+    <!-- Show navigation links only when logged in -->
+    <div class="nav-links" *ngIf="isLoggedIn">
       <a routerLink="/fixtures" routerLinkActive="active">Fixtures</a>
       <a routerLink="/predictions" routerLinkActive="active">Predictions</a>
       <a routerLink="/leaderboard" routerLinkActive="active">Leaderboard</a>
       <a *ngIf="isAdmin" routerLink="/admin" routerLinkActive="active">Admin</a>
     </div>
     
+    <!-- Show empty div to maintain layout when not logged in -->
+    <div class="nav-links" *ngIf="!isLoggedIn">
+      <!-- Could add public links here if needed -->
+    </div>
+    
+    <!-- User section - changes based on login state -->
     <div class="nav-user">
-      <span *ngIf="currentUser">Welcome, {{ currentUser.username }}!</span>
-      <button (click)="logout()" class="logout-btn">Logout</button>
+      <!-- When logged in -->
+      <ng-container *ngIf="isLoggedIn">
+        <span *ngIf="currentUser">Welcome, {{ currentUser.username }}!</span>
+        <button (click)="logout()" class="logout-btn">Logout</button>
+      </ng-container>
+      
+      <!-- When not logged in -->
+      <ng-container *ngIf="!isLoggedIn">
+        <a routerLink="/auth" class="login-link">Login</a>
+      </ng-container>
     </div>
   </nav>
 
@@ -23,6 +38,6 @@
     <router-outlet></router-outlet>
   </main>
 
-  <!-- Loading Component - Only show when LoadingService.loading$ is true -->
+  <!-- Loading Component -->
   <app-loading *ngIf="isLoading"></app-loading>
 </div>

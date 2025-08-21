@@ -13,7 +13,7 @@ export class AppComponent implements OnInit, OnDestroy {
   title = 'premier-league-predictions';
   isLoggedIn = false;
   currentUser: any = null;
-  isLoading = false; // This should control the loading component
+  isLoading = false;
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -25,11 +25,10 @@ export class AppComponent implements OnInit, OnDestroy {
     // Initialize auth state
     this.checkAuthStatus();
     
-    // Subscribe to loading state - THIS WAS MISSING OR WRONG
+    // Subscribe to loading state
     const loadingSub = this.loadingService.loading$.subscribe(
       (loading: boolean) => {
         this.isLoading = loading;
-        console.log('🔄 Loading state changed to:', loading); // Debug log
       }
     );
     this.subscriptions.push(loadingSub);
@@ -45,7 +44,6 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Clean up subscriptions
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 

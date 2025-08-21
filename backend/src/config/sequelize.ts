@@ -5,12 +5,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const sequelize = new Sequelize({
-  dialect: 'postgres',
+  database: process.env.DB_NAME || 'premier_league_predictions',
+  username: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'password',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'premier_league_predictions',
+  dialect: 'postgres',
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   pool: {
     max: 5,
@@ -18,29 +18,32 @@ export const sequelize = new Sequelize({
     acquire: 30000,
     idle: 10000,
   },
-  define: {
-    timestamps: true,
-    underscored: true,
-  },
 });
 
-export const connectDatabase = async () => {
+export const connectDatabase = async (): Promise<void> => {
   try {
+    // Test the connection
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully');
-    
-    // Import models to register them
+
+    // Import all models to register them
     require('../models/User');
-    require('../models/Fixture'); 
+    require('../models/Team');
+    require('../models/Fixture');
     require('../models/Prediction');
-    
+    console.log('📦 Models imported successfully');
+
     // Set up associations
     const { setupAssociations } = require('../models/associations');
     setupAssociations();
     
-    // Sync models (don't alter in production)
-    await sequelize.sync({ alter: false });
+    // Sync models (don't force in production)
+    await sequelize.sync({ 
+      force: false, // Never drop tables in production
+      alter: process.env.NODE_ENV === 'development' // Only alter in development
+    });
     console.log('✅ Database models synchronized');
+    
   } catch (error) {
     console.error('❌ Unable to connect to database:', error);
     throw error;

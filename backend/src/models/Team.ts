@@ -29,9 +29,12 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
-  // Association properties
+  // Association properties - clear any existing ones
   public homeFixtures?: any[];
   public awayFixtures?: any[];
+
+  // Static property to ensure we don't duplicate associations
+  static associationsSetup = false;
 }
 
 Team.init(
@@ -42,17 +45,17 @@ Team.init(
       primaryKey: true,
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
     },
     abbreviation: {
-      type: DataTypes.STRING(3),
+      type: DataTypes.STRING(5),
       allowNull: false,
       unique: true,
     },
     logoUrl: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: true,
       field: 'logo_url',
     },
@@ -72,8 +75,18 @@ Team.init(
       field: 'founded_year',
     },
     stadium: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: 'created_at',
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: 'updated_at',
     },
   },
   {
@@ -81,5 +94,6 @@ Team.init(
     modelName: 'Team',
     tableName: 'teams',
     underscored: true,
+    timestamps: true,
   }
 );

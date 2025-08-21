@@ -86,7 +86,6 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     this.subscriptions.push(fixturesSub);
   }
 
-  // Fix: Correct FormArray implementation
   buildPredictionsForm(): void {
     // Clear existing form array
     while (this.predictionsArray.length !== 0) {
@@ -100,12 +99,12 @@ export class PredictionsComponent implements OnInit, OnDestroy {
 
       const predictionGroup = this.fb.group({
         fixtureId: [fixture.id, Validators.required],
-        homeScore: [existingPrediction?.homeScore ?? 0, [Validators.required, Validators.min(0)]],
-        awayScore: [existingPrediction?.awayScore ?? 0, [Validators.required, Validators.min(0)]],
+        // Handle both field name variations
+        homeScore: [existingPrediction?.predictedHomeScore ?? existingPrediction?.homeScore ?? 0, [Validators.required, Validators.min(0)]],
+        awayScore: [existingPrediction?.predictedAwayScore ?? existingPrediction?.awayScore ?? 0, [Validators.required, Validators.min(0)]],
         predictionId: [existingPrediction?.id || null]
       });
 
-      // Fix: Direct push without casting
       this.predictionsArray.push(predictionGroup);
     });
   }

@@ -8,8 +8,8 @@ interface UserAttributes {
   email: string;
   password: string;
   isAdmin: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'isAdmin' | 'createdAt' | 'updatedAt'> {}
@@ -35,20 +35,17 @@ User.init(
       primaryKey: true,
     },
     username: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(50),
       allowNull: false,
       unique: true,
     },
     email: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
-      validate: {
-        isEmail: true,
-      },
     },
     password: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     isAdmin: {
@@ -56,11 +53,22 @@ User.init(
       defaultValue: false,
       field: 'is_admin',
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: 'created_at',
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: 'updated_at',
+    },
   },
   {
     sequelize,
     modelName: 'User',
     tableName: 'users',
     underscored: true,
+    timestamps: true,
   }
 );
