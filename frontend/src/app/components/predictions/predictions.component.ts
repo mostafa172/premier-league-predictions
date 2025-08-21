@@ -21,7 +21,7 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   saving = false;
   error = '';
   success = '';
-  selectedDoubleIndex = -1; // Track which prediction is selected for double points
+  selectedDoubleIndex = -1;
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -101,21 +101,36 @@ export class PredictionsComponent implements OnInit, OnDestroy {
         p => p.fixtureId === fixture.id
       );
 
-      // Track which prediction has double points
-      if (existingPrediction?.isDouble) {
+      // Track which prediction has double points - FIXED
+      if (existingPrediction && (existingPrediction.isDouble === true || existingPrediction.is_double === true)) {
         this.selectedDoubleIndex = index;
       }
 
       const predictionGroup = this.fb.group({
         fixtureId: [fixture.id, Validators.required],
-        homeScore: [existingPrediction?.predictedHomeScore ?? existingPrediction?.homeScore ?? 0, [Validators.required, Validators.min(0)]],
-        awayScore: [existingPrediction?.predictedAwayScore ?? existingPrediction?.awayScore ?? 0, [Validators.required, Validators.min(0)]],
-        isDouble: [existingPrediction?.isDouble || false],
+        homeScore: [
+          existingPrediction?.predictedHomeScore ?? 
+          existingPrediction?.predicted_home_score ?? 
+          existingPrediction?.homeScore ?? 0, 
+          [Validators.required, Validators.min(0)]
+        ],
+        awayScore: [
+          existingPrediction?.predictedAwayScore ?? 
+          existingPrediction?.predicted_away_score ?? 
+          existingPrediction?.awayScore ?? 0, 
+          [Validators.required, Validators.min(0)]
+        ],
+        // FIXED: Check both field names for isDouble
+        isDouble: [existingPrediction?.isDouble === true || existingPrediction?.is_double === true || false],
         predictionId: [existingPrediction?.id || null]
       });
 
+      // FIXED: Use push instead of addControl
       this.predictionsArray.push(predictionGroup);
     });
+
+    console.log('Built form with selectedDoubleIndex:', this.selectedDoubleIndex);
+    console.log('Form values:', this.predictionsForm.value);
   }
 
   async saveAllPredictions(): Promise<void> {
@@ -126,30 +141,35 @@ export class PredictionsComponent implements OnInit, OnDestroy {
 
       const formData = this.predictionsForm.value.predictions;
       
+      console.log('Saving predictions with data:', formData);
+      
       try {
         const promises = formData.map(async (prediction: any) => {
+          console.log('Saving prediction:', prediction);
+          
           if (prediction.predictionId) {
             return this.predictionService.updatePrediction(
               prediction.predictionId,
               prediction.homeScore,
               prediction.awayScore,
-              prediction.isDouble
+              prediction.isDouble // Make sure this boolean is passed correctly
             ).toPromise();
           } else {
             return this.predictionService.createPrediction({
               fixtureId: prediction.fixtureId,
               homeScore: prediction.homeScore,
               awayScore: prediction.awayScore,
-              isDouble: prediction.isDouble
+              isDouble: prediction.isDouble // Make sure this boolean is passed correctly
             }).toPromise();
           }
         });
 
-        await Promise.all(promises);
+        const results = await Promise.all(promises);
+        console.log('Save results:', results);
         
         this.saving = false;
         this.success = 'Predictions saved successfully!';
-        this.loadFixturesAndPredictions();
+        this.loadFixturesAndPredictions(); // Reload to see updated data
         
       } catch (error) {
         this.saving = false;
@@ -162,16 +182,30 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   }
 
   onDoubleChange(index: number): void {
-    // Only allow one double per gameweek
-    if (this.selectedDoubleIndex !== -1 && this.selectedDoubleIndex !== index) {
-      // Uncheck the previous double
-      this.predictionsArray.at(this.selectedDoubleIndex)?.get('isDouble')?.setValue(false);
+    console.log('Double change called for index:', index);
+    
+    const currentGroup = this.predictionsArray.at(index);
+    if (!currentGroup) return;
+    
+    const isDoubleControl = currentGroup.get('isDouble');
+    const currentValue = isDoubleControl?.value;
+    
+    console.log('Current double value:', currentValue);
+    
+    // If this prediction is being checked
+    if (currentValue) {
+      // Only allow one double per gameweek - uncheck previous
+      if (this.selectedDoubleIndex !== -1 && this.selectedDoubleIndex !== index) {
+        this.predictionsArray.at(this.selectedDoubleIndex)?.get('isDouble')?.setValue(false);
+      }
+      this.selectedDoubleIndex = index;
+    } else {
+      // Being unchecked
+      this.selectedDoubleIndex = -1;
     }
     
-    const isDoubleSelected = this.predictionsArray.at(index)?.get('isDouble')?.value;
-    this.selectedDoubleIndex = isDoubleSelected ? index : -1;
-    
-    console.log('Double points selected for prediction:', index, 'Value:', isDoubleSelected);
+    console.log('Updated selectedDoubleIndex:', this.selectedDoubleIndex);
+    console.log('Form values after change:', this.predictionsForm.value);
   }
 
   isFixtureDisabled(fixture: any): boolean {

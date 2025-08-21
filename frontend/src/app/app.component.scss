@@ -3,6 +3,9 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 .navbar {
@@ -14,19 +17,23 @@
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  margin: 0;
   
   .nav-brand {
     h1 {
       margin: 0;
       font-size: 1.5rem;
-      font-weight: 600;
-      color: #00ff87 !important; /* Premier League green */
+      font-weight: 500; /* Softer weight */
+      color: #00b949 !important;
+      font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      letter-spacing: -0.025em; /* Tighter letter spacing for modern look */
     }
   }
   
   .nav-links {
     display: flex;
-    gap: 2rem;
+    gap: 1.5rem;
     flex: 1;
     justify-content: center;
     
@@ -34,19 +41,22 @@
       color: white;
       text-decoration: none;
       padding: 0.5rem 1rem;
-      border-radius: 4px;
+      border-radius: 6px;
       transition: all 0.2s ease;
+      font-weight: 400; /* Softer weight */
+      font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      letter-spacing: -0.01em;
       
       &:hover {
-        background: #00ff87 !important; /* Premier League green */
-        color: #38003c !important; /* Premier League purple */
+        background: #00b949;
+        color: #38003c;
         transform: translateY(-1px);
       }
       
       &.active {
-        background: #00ff87 !important; /* Premier League green */
-        color: #38003c !important; /* Premier League purple */
-        font-weight: 600;
+        background: #00b949;
+        color: #38003c;
+        font-weight: 500; /* Slightly bolder for active */
       }
     }
   }
@@ -55,20 +65,24 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     
     span {
       font-size: 0.9rem;
-      color: #ddd;
+      color: #e9ecef;
+      font-weight: 400; /* Softer weight */
     }
     
     .logout-btn {
       background: transparent;
-      border: 1px solid white;
+      border: 1px solid #e9ecef;
       color: white;
       padding: 0.5rem 1rem;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s;
+      font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-weight: 400;
       
       &:hover {
         background: white;
@@ -80,9 +94,10 @@
       color: white;
       text-decoration: none;
       padding: 0.5rem 1rem;
-      border: 1px solid white;
-      border-radius: 4px;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
       transition: all 0.2s;
+      font-weight: 400;
       
       &:hover {
         background: white;
@@ -96,6 +111,9 @@
   flex: 1;
   background: #f8f9fa;
   overflow-y: auto;
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 // Responsive design

@@ -1,137 +1,37 @@
-/* filepath: frontend/src/app/app.component.scss */
-.app-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+/* filepath: frontend/src/styles.scss */
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-.navbar {
-  background: #38003c;
-  color: white;
-  padding: 0 2rem;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  
-  .nav-brand {
-    h1 {
-      margin: 0;
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #00ff87 !important; /* Premier League green */
-    }
-  }
-  
-  .nav-links {
-    display: flex;
-    gap: 2rem;
-    flex: 1;
-    justify-content: center;
-    
-    a {
-      color: white;
-      text-decoration: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      transition: all 0.2s ease;
-      
-      &:hover {
-        background: #00ff87 !important; /* Premier League green */
-        color: #38003c !important; /* Premier League purple */
-        transform: translateY(-1px);
-      }
-      
-      &.active {
-        background: #00ff87 !important; /* Premier League green */
-        color: #38003c !important; /* Premier League purple */
-        font-weight: 600;
-      }
-    }
-  }
-  
-  .nav-user {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    
-    span {
-      font-size: 0.9rem;
-      color: #ddd;
-    }
-    
-    .logout-btn {
-      background: transparent;
-      border: 1px solid white;
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all 0.2s;
-      
-      &:hover {
-        background: white;
-        color: #38003c;
-      }
-    }
-    
-    .login-link {
-      color: white;
-      text-decoration: none;
-      padding: 0.5rem 1rem;
-      border: 1px solid white;
-      border-radius: 4px;
-      transition: all 0.2s;
-      
-      &:hover {
-        background: white;
-        color: #38003c;
-      }
-    }
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f8f9fa;
+  height: 100%;
 }
 
-.main-content {
-  flex: 1;
-  background: #f8f9fa;
-  overflow-y: auto;
+:root {
+  --primary-color: #38003c;
+  --secondary-color: #00b949;
+  --accent-color: #e90052;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --error-color: #dc3545;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --background: #ffffff;
+  --card-background: #ffffff;
+  --border-color: #dee2e6;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-// Responsive design
-@media (max-width: 768px) {
-  .navbar {
-    flex-direction: column;
-    height: auto;
-    padding: 1rem;
-    gap: 1rem;
-    
-    .nav-links {
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    
-    .nav-user {
-      justify-content: center;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .navbar {
-    .nav-brand h1 {
-      font-size: 1.2rem;
-      text-align: center;
-    }
-    
-    .nav-links {
-      gap: 0.5rem;
-      
-      a {
-        padding: 0.5rem;
-        font-size: 0.9rem;
-      }
-    }
-  }
+/* Only target navbar brand specifically */
+.navbar .nav-brand h1 {
+  color: var(--secondary-color) !important;
 }
