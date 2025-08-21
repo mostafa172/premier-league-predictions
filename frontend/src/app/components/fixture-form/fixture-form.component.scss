@@ -1,62 +1,387 @@
+/* filepath: frontend/src/app/components/fixture-form/fixture-form.component.scss */
 .fixture-form-container {
-  max-width: 600px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
-.form-card {
+.form-header {
+  margin-bottom: 2rem;
+  text-align: center;
+  
+  h2 {
+    color: #38003c;
+    font-size: 1.75rem;
+    font-weight: 500;
+    margin: 0;
+  }
+}
+
+.fixture-form {
   background: white;
+  border-radius: 12px;
   padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #dee2e6;
+}
+
+.teams-section {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 2rem;
+  align-items: start;
+  margin-bottom: 2rem;
+}
+
+.vs-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #6c757d;
+  margin-top: 2rem;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.5rem;
+  
+  label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+  
+  select, input {
+    height: 48px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0 1rem;
+    font-size: 1rem;
+    background: white;
+    transition: all 0.2s ease;
+    
+    &:focus {
+      outline: none;
+      border-color: #38003c;
+      box-shadow: 0 0 0 3px rgba(56, 0, 60, 0.1);
+    }
+    
+    &.is-invalid {
+      border-color: #dc3545;
+      
+      &:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+      }
+    }
+  }
+  
+  .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    font-weight: 400;
+  }
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #333;
-}
-
-.form-control {
-  width: 100%;
+.team-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
   padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  
+  .team-logo {
+    /* FORCE SMALL SIZE FOR PREVIEW */
+    width: 32px !important;
+    height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    object-fit: contain;
+    border-radius: 4px;
+    background: white;
+    padding: 2px;
+    border: 1px solid #dee2e6;
+    
+    /* Fallback for broken images */
+    &::before {
+      content: '⚽';
+      display: block;
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+      text-align: center;
+      font-size: 16px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    
+    /* Hide broken image icon */
+    &[src=""], &:not([src]) {
+      display: none;
+      
+      &::before {
+        display: block;
+      }
+    }
+  }
+  
+  .team-info {
+    font-weight: 500;
+    color: #212529;
+    font-size: 0.875rem;
+  }
 }
 
-.form-control:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
+.score-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  border: 1px solid #dee2e6;
+  
+  h3 {
+    color: #38003c;
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
 }
 
-.btn-primary {
-  background-color: #007bff;
-  color: white;
+.match-preview {
+  background: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem 0;
+  text-align: center;
+  
+  h3 {
+    color: #38003c;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+  
+  .match-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    
+    .team {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      
+      .logo {
+        /* CONTROLLED SIZE FOR PREVIEW */
+        width: 48px !important;
+        height: 48px !important;
+        max-width: 48px !important;
+        max-height: 48px !important;
+        min-width: 48px !important;
+        min-height: 48px !important;
+        object-fit: contain;
+        border-radius: 6px;
+        background: white;
+        padding: 4px;
+        border: 1px solid #dee2e6;
+        
+        /* Fallback for broken images */
+        &::before {
+          content: '⚽';
+          display: block;
+          width: 48px;
+          height: 48px;
+          line-height: 48px;
+          text-align: center;
+          font-size: 24px;
+          background: #f8f9fa;
+          border-radius: 6px;
+        }
+        
+        /* Hide broken image icon */
+        &[src=""], &:not([src]) {
+          display: none;
+          
+          &::before {
+            display: block;
+          }
+        }
+      }
+      
+      span {
+        font-weight: 600;
+        color: #212529;
+      }
+    }
+    
+    .vs {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #6c757d;
+    }
+  }
 }
 
-.btn-primary:hover {
-  background-color: #0056b3;
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+  
+  .btn {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 120px;
+    
+    &.btn-primary {
+      background: #38003c;
+      color: white;
+      
+      &:hover:not(:disabled) {
+        background: #2d0030;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(56, 0, 60, 0.3);
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+    }
+    
+    &.btn-secondary {
+      background: #6c757d;
+      color: white;
+      
+      &:hover {
+        background: #5a6268;
+      }
+    }
+  }
 }
 
 .error-message {
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 0.75rem;
-  border-radius: 5px;
-  margin-bottom: 1rem;
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  text-align: center;
+  font-weight: 500;
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .fixture-form-container {
+    padding: 1rem 0.5rem;
+  }
+  
+  .fixture-form {
+    padding: 1.5rem;
+  }
+  
+  .teams-section {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .vs-divider {
+    order: -1;
+    margin: 0;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .match-display {
+    flex-direction: column;
+    gap: 1rem;
+    
+    .vs {
+      order: -1;
+    }
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    
+    .btn {
+      width: 100%;
+    }
+  }
+  
+  .team-logo {
+    width: 28px !important;
+    height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+  }
+  
+  .logo {
+    width: 40px !important;
+    height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .fixture-form {
+    padding: 1rem;
+  }
+  
+  .form-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .team-logo {
+    width: 24px !important;
+    height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+  }
+  
+  .logo {
+    width: 36px !important;
+    height: 36px !important;
+    max-width: 36px !important;
+    max-height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
 }
