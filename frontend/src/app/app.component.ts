@@ -13,7 +13,7 @@ export class AppComponent implements OnInit, OnDestroy {
   title = 'premier-league-predictions';
   isLoggedIn = false;
   currentUser: any = null;
-  isLoading = false;
+  isLoading = false; // This should control the loading component
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -25,9 +25,12 @@ export class AppComponent implements OnInit, OnDestroy {
     // Initialize auth state
     this.checkAuthStatus();
     
-    // Subscribe to loading state
+    // Subscribe to loading state - THIS WAS MISSING OR WRONG
     const loadingSub = this.loadingService.loading$.subscribe(
-      (loading) => this.isLoading = loading
+      (loading: boolean) => {
+        this.isLoading = loading;
+        console.log('🔄 Loading state changed to:', loading); // Debug log
+      }
     );
     this.subscriptions.push(loadingSub);
 

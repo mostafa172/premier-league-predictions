@@ -23,6 +23,6 @@
     <router-outlet></router-outlet>
   </main>
 
-  <!-- Loading Overlay -->
-  <app-loading></app-loading>
+  <!-- Loading Component - Only show when LoadingService.loading$ is true -->
+  <app-loading *ngIf="isLoading"></app-loading>
 </div>
