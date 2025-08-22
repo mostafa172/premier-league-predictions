@@ -1,7 +1,11 @@
 <div class="leaderboard-container">
   <div class="leaderboard-header">
     <h2>Leaderboard</h2>
-    <button (click)="refreshLeaderboard()" class="refresh-btn" [disabled]="loading">
+    <button
+      (click)="refreshLeaderboard()"
+      class="refresh-btn"
+      [disabled]="loading"
+    >
       🔄 Refresh
     </button>
   </div>
@@ -10,9 +14,7 @@
     {{ error }}
   </div>
 
-  <div *ngIf="loading" class="loading-message">
-    Loading leaderboard...
-  </div>
+  <div *ngIf="loading" class="loading-message">Loading leaderboard...</div>
 
   <div *ngIf="currentUsername && currentUserRank > 0" class="current-user-rank">
     <h3>Your Position: #{{ currentUserRank }}</h3>
@@ -25,12 +27,10 @@
           <th>Rank</th>
           <th>Username</th>
           <th>Points</th>
-          <th>Predictions</th>
-          <th>Avg Points</th>
         </tr>
       </thead>
       <tbody>
-        <tr 
+        <tr
           *ngFor="let entry of leaderboard; trackBy: trackByUserId"
           [class.current-user]="entry.username === currentUsername"
         >
@@ -40,13 +40,18 @@
             <span *ngIf="entry.rank === 2" class="trophy">🥈</span>
             <span *ngIf="entry.rank === 3" class="trophy">🥉</span>
           </td>
-          <td class="username">{{ entry.username }}</td>
+
+          <td>
+            <div class="username">
+              <span>{{ entry.username }}</span>
+              <span *ngIf="entry.username === currentUsername" class="you-label"
+                >You</span
+              >
+            </div>
+          </td>
+
           <td class="points">
             <span class="points-number">{{ entry.totalPoints || 0 }}</span>
-          </td>
-          <td class="predictions">{{ entry.totalPredictions || 0 }}</td>
-          <td class="avg-points">
-            {{ entry.totalPredictions > 0 ? (entry.totalPoints / entry.totalPredictions).toFixed(2) : '0.00' }}
           </td>
         </tr>
       </tbody>

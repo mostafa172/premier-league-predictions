@@ -9,7 +9,6 @@ interface LeaderboardEntry {
   userId: number;
   username: string;
   totalPoints: number;
-  totalPredictions: number;
   rank: number;
 }
 
@@ -58,7 +57,6 @@ export class LeaderboardComponent implements OnInit, OnDestroy {
             userId: entry.userId,
             username: entry.username,
             totalPoints: entry.totalPoints || 0,
-            totalPredictions: entry.totalPredictions || 0,
             rank: index + 1
           }));
           
