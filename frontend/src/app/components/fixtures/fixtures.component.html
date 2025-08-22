@@ -98,28 +98,11 @@
             </div>
           </div>
 
-          <div class="fixture-info">
-            <div class="info-item">
-              <span class="label">Gameweek</span>
-              <span class="value">{{ fixture.gameweek }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Status</span>
-              <span class="value">{{ fixture.status | titlecase }}</span>
-            </div>
-          </div>
-
           <div class="fixture-footer" *ngIf="isAdmin">
-            <button
-              class="btn btn-secondary"
-              (click)="editFixture(fixture)"
-            >
+            <button class="btn btn-secondary" (click)="editFixture(fixture)">
               Edit
             </button>
-            <button
-              class="btn btn-danger"
-              (click)="deleteFixture(fixture)"
-            >
+            <button class="btn btn-danger" (click)="deleteFixture(fixture)">
               Delete
             </button>
           </div>
