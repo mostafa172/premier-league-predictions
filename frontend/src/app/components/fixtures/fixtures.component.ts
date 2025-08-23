@@ -1,4 +1,3 @@
-/* filepath: frontend/src/app/components/fixtures/fixtures.component.ts */
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FixtureService } from '../../services/fixture.service';
@@ -29,7 +28,6 @@ export class FixturesComponent implements OnInit {
   loadFixtures(): void {
     this.loading = true;
     this.error = '';
-    
     this.fixtureService.getFixturesByGameweek(this.gameweek).subscribe({
       next: (response: any) => {
         this.loading = false;
@@ -37,10 +35,10 @@ export class FixturesComponent implements OnInit {
           this.fixtures = response.data;
         }
       },
-      error: (error: any) => {
+      error: (err: any) => {
         this.loading = false;
         this.error = 'Error loading fixtures';
-        console.error('Error loading fixtures:', error);
+        console.error('Error loading fixtures:', err);
       }
     });
   }
@@ -62,12 +60,10 @@ export class FixturesComponent implements OnInit {
     if (confirm(`Are you sure you want to delete the fixture: ${fixture.homeTeam.name} vs ${fixture.awayTeam.name}?`)) {
       this.fixtureService.deleteFixture(fixture.id).subscribe({
         next: (response: any) => {
-          if (response.success) {
-            this.loadFixtures(); // Reload fixtures
-          }
+          if (response.success) this.loadFixtures();
         },
-        error: (error: any) => {
-          console.error('Error deleting fixture:', error);
+        error: (err: any) => {
+          console.error('Error deleting fixture:', err);
           this.error = 'Error deleting fixture';
         }
       });

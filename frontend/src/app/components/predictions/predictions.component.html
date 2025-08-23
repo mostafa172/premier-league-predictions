@@ -39,7 +39,6 @@
         <div
           *ngIf="doubleLocked"
           class="alert alert-info"
-          style="margin: 0.5rem 0 1rem"
         >
           Your Double is locked for this gameweek (deadline passed on your
           chosen match).
@@ -51,6 +50,10 @@
             class="fixture-row"
             [class.disabled]="isFixtureDisabled(fixture)"
             [class.has-prediction]="hasValidPrediction(i)"
+            [class.is-double]="
+              predictionsArray.at(i).get('isDouble')?.value ||
+              hasExistingDouble(fixture.id)
+            "
             [formGroupName]="i"
           >
             <div class="fixture-content">
@@ -78,7 +81,7 @@
                   </div>
                 </div>
 
-                <!-- Away Team -->
+                <!-- Away Team (right aligned) -->
                 <div class="away-team">
                   <img
                     [src]="fixture.awayTeam?.logoUrl"
@@ -154,8 +157,7 @@
                       *ngIf="pred.fixtureId === fixture.id"
                       class="user-prediction"
                     >
-                      Your prediction:
-                      {{ pred.predictedHomeScore }} -
+                      Your prediction: {{ pred.predictedHomeScore }} -
                       {{ pred.predictedAwayScore }}
                       <span class="points">{{ pred.points || 0 }} pts</span>
                     </div>
@@ -179,19 +181,6 @@
         <!-- Form Actions -->
         <div class="form-actions" *ngIf="fixtures.length > 0">
           <div>
-            <small class="text-muted">
-              {{ getPredictionsCount() }} of {{ fixtures.length }} predictions
-              made
-            </small>
-          </div>
-          <div>
-            <button
-              type="button"
-              class="btn btn-secondary"
-              (click)="clearPredictions()"
-            >
-              Clear All
-            </button>
             <button
               type="submit"
               class="btn btn-primary"

@@ -1,4 +1,3 @@
-/* filepath: frontend/src/app/components/predictions/predictions.component.scss */
 .predictions-container {
   max-width: 900px;
   margin: 0 auto;
@@ -10,18 +9,18 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  
+
   h2 {
     margin: 0;
     color: #38003c;
     font-size: 1.75rem;
   }
-  
+
   .gameweek-selector {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    
+
     select {
       padding: 0.5rem;
       border: 1px solid #ddd;
@@ -35,17 +34,24 @@
   border-radius: 6px;
   margin-bottom: 1rem;
   font-size: 0.875rem;
-  
+
   &.alert-success {
     background: #d4edda;
     color: #155724;
     border: 1px solid #c3e6cb;
   }
-  
+
   &.alert-danger {
     background: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
+  }
+
+  &.alert-info {
+    background: #e8f3ff;
+    color: #0b4a8f;
+    border: 1px solid #cfe6ff;
+    margin: 1rem 1.5rem; /* 👈 adds space around the info box */
   }
 }
 
@@ -58,9 +64,9 @@
 /* Sheet-style layout */
 .predictions-sheet {
   background: white;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
   border: 1px solid #e9ecef;
 }
 
@@ -68,7 +74,7 @@
   background: #f8f9fa;
   padding: 1rem 1.5rem;
   border-bottom: 2px solid #dee2e6;
-  
+
   h3 {
     margin: 0;
     color: #38003c;
@@ -77,31 +83,77 @@
   }
 }
 
+/* List + row separation */
 .predictions-list {
   display: flex;
   flex-direction: column;
+  gap: 12px; /* spacing between cards */
+  padding: 12px; /* inset spacing around the list */
 }
 
+/* Card */
 .fixture-row {
-  border-bottom: 1px solid #f1f3f4;
-  transition: background-color 0.2s ease;
-  
+  position: relative;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease,
+    background-color 0.2s ease;
+
   &:hover {
-    background: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(16, 24, 40, 0.08);
+    background: #fcfdff;
   }
-  
-  &:last-child {
-    border-bottom: none;
-  }
-  
+
   &.disabled {
-    opacity: 0.7;
-    background: #f9f9f9;
+    opacity: 0.9;
+    background: #fafafa;
+
+    /* No lift for disabled */
+    &:hover {
+      transform: none;
+      box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
+      background: #fafafa;
+    }
   }
-  
+
+  /* When the user has entered a prediction (non-double) */
   &.has-prediction {
-    border-left: 3px solid #38003c;
+    box-shadow: 0 0 0 2px rgba(56, 0, 60, 0.08) inset;
     background: rgba(56, 0, 60, 0.02);
+  }
+
+  /* DOUBLE highlight (gold) — overrides any other background/border */
+  &.is-double {
+    border: 2px solid #ffc107;
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.35);
+    border-radius: 10px;
+    background: #fffef7;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(255, 193, 7, 0.45);
+      background: #fffdf5;
+    }
+
+    /* Badge bottom-right */
+    &::after {
+      content: "DOUBLE";
+      position: absolute;
+      bottom: 10px;
+      right: 12px;
+      background: #ffc107;
+      color: #212529;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      letter-spacing: 0.4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
   }
 }
 
@@ -114,47 +166,60 @@
   grid-template-columns: 2fr 1fr 2fr;
   gap: 1rem;
   align-items: center;
-  margin-bottom: 1.5rem;
-  
-  .home-team, .away-team {
+  margin-bottom: 1rem;
+
+  .home-team,
+  .away-team {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    min-height: 40px; /* keeps logos/names aligned vertically */
   }
-  
+
+  /* Home stays left */
+  .home-team {
+    justify-content: flex-start;
+  }
+
+  /* Away goes to the far right (name to the right of logo) */
   .away-team {
     justify-content: flex-end;
     flex-direction: row-reverse;
+
+    .team-name {
+      text-align: right;
+    }
   }
-  
+
   .team-logo {
     width: 32px;
     height: 32px;
     object-fit: contain;
     border-radius: 4px;
     border: 1px solid #dee2e6;
+    background: #fff;
   }
-  
+
   .team-name {
     font-weight: 600;
     font-size: 0.95rem;
     color: #212529;
   }
-  
+
   .fixture-details {
     text-align: center;
-    
+
     .match-date {
       font-size: 0.85rem;
       color: #666;
       margin-bottom: 0.25rem;
       font-weight: 500;
     }
-    
+
     .deadline {
       font-size: 0.75rem;
       color: #888;
-      
+
       &.expired {
         color: #dc3545;
         font-weight: 600;
@@ -163,39 +228,37 @@
   }
 }
 
-/* Fixed prediction inputs with proper alignment */
+/* Prediction inputs row */
 .prediction-inputs {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 2rem;
-  padding: 1rem 0;
+  padding: 1rem 0.5rem;
   border-top: 1px solid #f1f3f4;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
   background: #fafbfc;
   border-radius: 6px;
-  margin: 1rem -0.5rem 0 -0.5rem;
-  padding: 1rem 0.5rem;
-  
+
   .score-inputs {
     display: flex;
     align-items: center;
     gap: 1rem;
-    
+
     .score-input {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 0.5rem;
       min-width: 60px;
-      
+
       label {
         font-size: 0.75rem;
         font-weight: 600;
         color: #38003c;
         text-transform: uppercase;
       }
-      
+
       input {
         width: 60px;
         height: 40px;
@@ -206,34 +269,41 @@
         font-size: 1rem;
         font-weight: 600;
         background: white;
-        
+
         &:focus {
           outline: none;
           border-color: #38003c;
           box-shadow: 0 0 0 3px rgba(56, 0, 60, 0.1);
         }
-        
+
         &:hover {
           border-color: #bbb;
         }
+
+        /* Make empty inputs look empty (no 0 placeholder spacing issues) */
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button {
+          margin: 0;
+        }
       }
     }
-    
+
     .score-separator {
       font-size: 1.5rem;
       font-weight: bold;
       color: #666;
       margin: 0 0.5rem;
-      margin-top: 1.5rem; /* Align with inputs */
+      margin-top: 1.5rem; /* aligns dash between inputs */
+      user-select: none;
     }
   }
-  
+
   .double-points {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.25rem;
-    
+
     label {
       display: flex;
       flex-direction: column;
@@ -244,14 +314,14 @@
       font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
-      
+
       input[type="checkbox"] {
         width: 20px;
         height: 20px;
         cursor: pointer;
         accent-color: #38003c;
       }
-      
+
       span {
         text-align: center;
         line-height: 1.2;
@@ -260,16 +330,15 @@
   }
 }
 
-/* Finished fixture display */
-.finished-fixture, .deadline-passed {
-  padding: 1rem 0;
+/* Finished fixture & deadline blocks */
+.finished-fixture,
+.deadline-passed {
+  padding: 1rem 0.5rem;
   border-top: 1px solid #f1f3f4;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
   background: #fafbfc;
   border-radius: 6px;
-  margin: 1rem -0.5rem 0 -0.5rem;
-  padding: 1rem 0.5rem;
-  
+
   .actual-score {
     text-align: center;
     font-weight: 600;
@@ -277,14 +346,14 @@
     margin-bottom: 0.5rem;
     font-size: 1.1rem;
   }
-  
+
   .user-predictions {
     text-align: center;
     font-size: 0.9rem;
-    
+
     .user-prediction {
       color: #666;
-      
+
       .points {
         color: #38003c;
         font-weight: 600;
@@ -306,9 +375,10 @@
   background: #f8f9fa;
   border-top: 1px solid #dee2e6;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  margin-top: 0;
   align-items: center;
-  
+
   .btn {
     padding: 0.6rem 1.2rem;
     border: none;
@@ -317,28 +387,17 @@
     cursor: pointer;
     transition: all 0.2s;
     font-size: 0.875rem;
-    
+
     &.btn-primary {
       background: #38003c;
       color: white;
-      
+
       &:hover:not(:disabled) {
         background: #2d0030;
         transform: translateY(-1px);
       }
     }
-    
-    &.btn-secondary {
-      background: #6c757d;
-      color: white;
-      margin-right: 0.5rem;
-      
-      &:hover:not(:disabled) {
-        background: #5a6268;
-        transform: translateY(-1px);
-      }
-    }
-    
+
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
@@ -355,57 +414,48 @@
   border-radius: 8px;
 }
 
-// Responsive design
+/* Responsive */
 @media (max-width: 768px) {
   .predictions-container {
     padding: 1rem 0.5rem;
   }
-  
+
   .predictions-header {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
   }
-  
+
   .fixture-content {
     padding: 1rem;
   }
-  
+
   .fixture-info {
     grid-template-columns: 1fr;
     gap: 0.75rem;
     text-align: center;
-    
-    .home-team, .away-team {
+
+    .home-team,
+    .away-team {
       justify-content: center;
       flex-direction: row;
     }
-    
+
     .fixture-details {
       order: -1;
     }
+
+    .away-team .team-name {
+      text-align: center; /* mobile: center both sides */
+    }
   }
-  
+
   .prediction-inputs {
     flex-direction: column;
     gap: 1rem;
-    
+
     .score-separator {
       margin-top: 0;
-    }
-    
-    .double-points {
-      margin: 0;
-    }
-  }
-  
-  .form-actions {
-    flex-direction: column;
-    gap: 0.75rem;
-    
-    .btn {
-      width: 100%;
-      margin-right: 0 !important;
     }
   }
 }
