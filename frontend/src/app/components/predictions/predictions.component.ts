@@ -159,7 +159,8 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   hasExistingDouble(fixtureId: number): boolean {
     return this.existingPredictions.some(
       (p) =>
-        p.fixtureId === fixtureId && (p.isDouble === true || p.is_double === true)
+        p.fixtureId === fixtureId &&
+        (p.isDouble === true || p.is_double === true)
     );
   }
 
@@ -194,7 +195,9 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     const prevDouble = !!(existing.isDouble ?? existing.is_double ?? false);
 
     return (
-      prevHome !== currHome || prevAway !== currAway || prevDouble !== currDouble
+      prevHome !== currHome ||
+      prevAway !== currAway ||
+      prevDouble !== currDouble
     );
   }
 
@@ -202,14 +205,16 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     if (this.predictionsForm.valid) {
       this.saveAllPredictions();
     } else {
-      this.error = this.message = "Please fill in all prediction fields correctly";
+      this.error = this.message =
+        "Please fill in all prediction fields correctly";
       this.messageType = "danger";
     }
   }
 
   async saveAllPredictions(): Promise<void> {
     if (!this.predictionsForm.valid) {
-      this.error = this.message = "Please fill in all prediction fields correctly";
+      this.error = this.message =
+        "Please fill in all prediction fields correctly";
       this.messageType = "danger";
       return;
     }
@@ -298,7 +303,10 @@ export class PredictionsComponent implements OnInit, OnDestroy {
 
     const current = !!group.get("isDouble")?.value;
     if (current) {
-      if (this.selectedDoubleIndex !== -1 && this.selectedDoubleIndex !== index) {
+      if (
+        this.selectedDoubleIndex !== -1 &&
+        this.selectedDoubleIndex !== index
+      ) {
         this.predictionsArray
           .at(this.selectedDoubleIndex)
           ?.get("isDouble")
@@ -325,7 +333,14 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     if (!group) return false;
     const h = group.get("homeScore")?.value;
     const a = group.get("awayScore")?.value;
-    return h !== null && h !== undefined && a !== null && a !== undefined && h >= 0 && a >= 0;
+    return (
+      h !== null &&
+      h !== undefined &&
+      a !== null &&
+      a !== undefined &&
+      h >= 0 &&
+      a >= 0
+    );
   }
 
   getPredictionPoints(fixture: any): number {
@@ -338,7 +353,18 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   }
 
   getFormattedDate(date: string): string {
-    return new Date(date).toLocaleDateString("en-GB", {
+    // Force JS to treat as UTC then convert to local
+    const utcDate = new Date(date);
+    const localDate = new Date(
+      utcDate.getUTCFullYear(),
+      utcDate.getUTCMonth(),
+      utcDate.getUTCDate(),
+      utcDate.getUTCHours(),
+      utcDate.getUTCMinutes(),
+      utcDate.getUTCSeconds()
+    );
+
+    return localDate.toLocaleString([], {
       day: "numeric",
       month: "short",
       hour: "2-digit",
@@ -347,10 +373,19 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   }
 
   getFormattedDeadline(deadline: string): string {
-    const deadlineDate = new Date(deadline);
+    const utcDate = new Date(deadline);
+    const localDate = new Date(
+      utcDate.getUTCFullYear(),
+      utcDate.getUTCMonth(),
+      utcDate.getUTCDate(),
+      utcDate.getUTCHours(),
+      utcDate.getUTCMinutes(),
+      utcDate.getUTCSeconds()
+    );
+
     const now = new Date();
     const diffInMinutes = Math.floor(
-      (deadlineDate.getTime() - now.getTime()) / (1000 * 60)
+      (localDate.getTime() - now.getTime()) / (1000 * 60)
     );
 
     if (diffInMinutes < 0) return "Deadline passed";

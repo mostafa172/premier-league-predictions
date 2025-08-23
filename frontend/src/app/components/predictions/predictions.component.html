@@ -71,14 +71,14 @@
                 <!-- Match Details -->
                 <div class="fixture-details">
                   <div class="match-date">
-                    {{ getFormattedDate(fixture.matchDate) }}
+                    {{ fixture.matchDate | date : "d MMM, HH:mm" }}
                   </div>
                   <div
                     class="deadline"
                     [class.expired]="isFixtureDisabled(fixture)"
                   >
-                    Deadline: {{ getFormattedDeadline(fixture.deadline) }}
-                  </div>
+                  Deadline: {{ fixture.deadline | date : "d MMM, HH:mm" }}
+                </div>
                 </div>
 
                 <!-- Away Team (right aligned) -->

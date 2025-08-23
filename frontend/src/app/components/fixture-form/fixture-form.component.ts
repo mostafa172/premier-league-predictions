@@ -74,8 +74,8 @@ export class FixtureFormComponent implements OnInit {
           this.fixtureForm.patchValue({
             homeTeamId: fixture.homeTeamId,
             awayTeamId: fixture.awayTeamId,
-            matchDate: this.formatDateTimeLocal(fixture.matchDate),
-            deadline: this.formatDateTimeLocal(fixture.deadline),
+            matchDate: this.formatDateTimeLocalLocal(fixture.matchDate),
+            deadline: this.formatDateTimeLocalLocal(fixture.deadline),
             gameweek: fixture.gameweek,
             homeScore: fixture.homeScore,
             awayScore: fixture.awayScore,
@@ -93,17 +93,6 @@ export class FixtureFormComponent implements OnInit {
     return n.toString().padStart(2, "0");
   }
 
-  /** Format a Date or ISO string into 'YYYY-MM-DDTHH:mm' in the user's local time */
-  formatDateTimeLocal(date: Date | string): string {
-    const d = new Date(date);
-    const yyyy = d.getFullYear();
-    const mm = this.pad(d.getMonth() + 1);
-    const dd = this.pad(d.getDate());
-    const hh = this.pad(d.getHours());
-    const mi = this.pad(d.getMinutes());
-    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-  }
-
   getTeamById(id: number): Team | undefined {
     return this.teams.find((team) => team.id === id);
   }
@@ -118,11 +107,17 @@ export class FixtureFormComponent implements OnInit {
         return;
       }
 
+      const payload = {
+        ...formData,
+        matchDate: this.formatDateTimeLocalLocal(formData.matchDate),
+        deadline: this.formatDateTimeLocalLocal(formData.deadline),
+      };
+
       this.loading = true;
 
       const operation = this.isEdit
-        ? this.fixtureService.updateFixture(this.fixtureId!, formData)
-        : this.fixtureService.createFixture(formData);
+        ? this.fixtureService.updateFixture(this.fixtureId!, payload)
+        : this.fixtureService.createFixture(payload);
 
       operation.subscribe({
         next: (response) => {
@@ -167,5 +162,16 @@ export class FixtureFormComponent implements OnInit {
         return `${fieldName} must be at most ${field.errors["max"].max}`;
     }
     return "";
+  }
+
+  formatDateTimeLocalLocal(iso: string | Date): string {
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mi = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
   }
 }

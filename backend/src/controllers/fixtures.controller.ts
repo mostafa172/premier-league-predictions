@@ -1,10 +1,11 @@
+/* filepath: backend/src/controllers/fixtures.controller.ts */
 import { Request, Response } from "express";
 import { Fixture, FixtureStatus } from "../models/Fixture";
 import { Team } from "../models/Team";
 import { Op } from "sequelize";
 import { Prediction } from "../models/Prediction";
 
-// If a fixture is UPCOMING and now >= matchDate and it doesn’t already have scores, flip to LIVE.
+// UPCOMING → LIVE when kickoff time arrives and no scores yet
 function needsLive(fx: Fixture): boolean {
   return (
     fx.status === FixtureStatus.UPCOMING &&
@@ -35,6 +36,16 @@ interface AuthenticatedRequest extends Request {
   user?: { id: number; username: string; email: string; isAdmin: boolean };
 }
 
+// Helpers: ensure incoming date strings are valid ISO (preferably with Z)
+function parseIsoToDate(value: string | Date | undefined, fieldName: string): Date | undefined {
+  if (value == null) return undefined;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) {
+    throw new Error(`Invalid date format for ${fieldName}`);
+  }
+  return d;
+}
+
 export class FixturesController {
   // Get all fixtures
   public async getAllFixtures(req: Request, res: Response): Promise<Response> {
@@ -46,7 +57,6 @@ export class FixturesController {
         ],
         order: [["matchDate", "ASC"]],
       });
-
       const withLive = await ensureLiveStatus(fixtures);
       return res.status(200).json({ success: true, data: withLive });
     } catch (error) {
@@ -65,7 +75,6 @@ export class FixturesController {
           { model: Team, as: "awayTeam", attributes: ["id", "name", "abbreviation", "logoUrl", "colorPrimary"] },
         ],
       });
-
       if (!fixture) return res.status(404).json({ success: false, message: "Fixture not found" });
 
       if (needsLive(fixture)) {
@@ -89,7 +98,7 @@ export class FixturesController {
   public async getFixturesByGameweek(req: Request, res: Response): Promise<Response> {
     try {
       const { gameweek } = req.params;
-      const fixturesWithTeams = await Fixture.findAll({
+      const fixtures = await Fixture.findAll({
         where: { gameweek: parseInt(gameweek) },
         include: [
           { model: Team, as: "homeTeam", attributes: ["id", "name", "abbreviation", "logoUrl", "colorPrimary"] },
@@ -97,8 +106,7 @@ export class FixturesController {
         ],
         order: [["matchDate", "ASC"]],
       });
-
-      const withLive = await ensureLiveStatus(fixturesWithTeams);
+      const withLive = await ensureLiveStatus(fixtures);
       return res.status(200).json({ success: true, data: withLive });
     } catch (error) {
       console.error("Get fixtures by gameweek error:", error);
@@ -109,10 +117,10 @@ export class FixturesController {
   // Get upcoming fixtures
   public async getUpcomingFixtures(req: Request, res: Response): Promise<Response> {
     try {
-      let fixturesWithTeams = await Fixture.findAll({
+      let fixtures = await Fixture.findAll({
         where: {
           status: FixtureStatus.UPCOMING,
-          matchDate: { [Op.gte]: new Date(new Date().getTime() - 3 * 60 * 1000) }, // small slack
+          matchDate: { [Op.gte]: new Date(new Date().getTime() - 3 * 60 * 1000) },
         },
         include: [
           { model: Team, as: "homeTeam", attributes: ["id", "name", "abbreviation", "logoUrl", "colorPrimary"] },
@@ -120,19 +128,16 @@ export class FixturesController {
         ],
         order: [["matchDate", "ASC"]],
       });
-
-      fixturesWithTeams = await ensureLiveStatus(fixturesWithTeams);
-      // keep only those still upcoming here
-      fixturesWithTeams = fixturesWithTeams.filter((f) => f.status === FixtureStatus.UPCOMING);
-
-      return res.status(200).json({ success: true, data: fixturesWithTeams });
+      fixtures = await ensureLiveStatus(fixtures);
+      fixtures = fixtures.filter((f) => f.status === FixtureStatus.UPCOMING);
+      return res.status(200).json({ success: true, data: fixtures });
     } catch (error) {
       console.error("Get upcoming fixtures error:", error);
       return res.status(500).json({ success: false, message: "Error fetching upcoming fixtures" });
     }
   }
 
-  // Create fixture
+  // Create fixture (expects UTC ISO strings like "2025-08-23T00:45:00.000Z")
   public async createFixture(req: AuthenticatedRequest, res: Response): Promise<Response> {
     try {
       const { homeTeamId, awayTeamId, matchDate, deadline, gameweek } = req.body;
@@ -164,20 +169,18 @@ export class FixturesController {
       });
 
       return res.status(201).json({ success: true, message: "Fixture created successfully", data: createdFixture });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Create fixture error:", error);
-      return res.status(500).json({ success: false, message: "Error creating fixture" });
+      const msg = /Invalid date format/.test(error?.message) ? error.message : "Error creating fixture";
+      return res.status(500).json({ success: false, message: msg });
     }
   }
 
-  // Update fixture
+  // Update fixture (also expects UTC ISO strings from frontend)
   public async updateFixture(req: AuthenticatedRequest, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const {
-        homeTeamId, awayTeamId, matchDate, deadline, gameweek,
-        homeScore, awayScore, status,
-      } = req.body;
+      const { homeTeamId, awayTeamId, matchDate, deadline, gameweek, homeScore, awayScore, status } = req.body;
 
       const fixture = await Fixture.findByPk(id);
       if (!fixture) return res.status(404).json({ success: false, message: "Fixture not found" });
@@ -191,13 +194,11 @@ export class FixturesController {
       if (homeScore !== undefined) updateData.homeScore = homeScore;
       if (awayScore !== undefined) updateData.awayScore = awayScore;
 
-      // When both scores present, mark finished
       if (
         homeScore !== undefined && awayScore !== undefined &&
         homeScore !== null && awayScore !== null
       ) {
         updateData.status = FixtureStatus.FINISHED;
-        console.log(`🏁 Auto-setting fixture ${id} status to 'finished' due to scores being added`);
       } else if (status) {
         if (Object.values(FixtureStatus).includes(status)) {
           updateData.status = status;
@@ -208,17 +209,13 @@ export class FixturesController {
 
       await fixture.update(updateData);
 
-      // If just finished, recalc all predictions for this fixture
+      // Recalc if finished
       if (
         updateData.status === FixtureStatus.FINISHED &&
         updateData.homeScore !== undefined && updateData.awayScore !== undefined
       ) {
-        console.log(`🔄 Recalculating points for fixture ${id} predictions...`);
         const predictions = await Prediction.findAll({ where: { fixtureId: id } });
-        for (const p of predictions) {
-          await p.calculateAndUpdatePoints();
-        }
-        console.log(`✅ Updated ${predictions.length} prediction points for fixture ${id}`);
+        for (const p of predictions) await p.calculateAndUpdatePoints();
       }
 
       const updatedFixture = await Fixture.findByPk(id, {
@@ -229,9 +226,10 @@ export class FixturesController {
       });
 
       return res.status(200).json({ success: true, message: "Fixture updated successfully", data: updatedFixture });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Update fixture error:", error);
-      return res.status(500).json({ success: false, message: "Error updating fixture" });
+      const msg = /Invalid date format/.test(error?.message) ? error.message : "Error updating fixture";
+      return res.status(500).json({ success: false, message: msg });
     }
   }
 
@@ -241,7 +239,6 @@ export class FixturesController {
       const { id } = req.params;
       const fixture = await Fixture.findByPk(id);
       if (!fixture) return res.status(404).json({ success: false, message: "Fixture not found" });
-
       await fixture.destroy();
       return res.status(200).json({ success: true, message: "Fixture deleted successfully" });
     } catch (error) {
