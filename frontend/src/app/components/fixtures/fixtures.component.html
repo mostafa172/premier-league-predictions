@@ -62,10 +62,10 @@
               <span class="team-name">{{ fixture.homeTeam.abbreviation }}</span>
               <span class="full-name">{{ fixture.homeTeam.name }}</span>
               <span
-                *ngIf="
+                class="team-score"
+                [class.is-visible]="
                   fixture.status === 'finished' && fixture.homeScore !== null
                 "
-                class="team-score"
               >
                 {{ fixture.homeScore }}
               </span>
@@ -88,10 +88,10 @@
               <span class="team-name">{{ fixture.awayTeam.abbreviation }}</span>
               <span class="full-name">{{ fixture.awayTeam.name }}</span>
               <span
-                *ngIf="
+                class="team-score"
+                [class.is-visible]="
                   fixture.status === 'finished' && fixture.awayScore !== null
                 "
-                class="team-score"
               >
                 {{ fixture.awayScore }}
               </span>
