@@ -17,7 +17,7 @@ INSERT INTO teams (name, abbreviation, logo_url, color_primary, color_secondary,
 ('Manchester United', 'MUN', '/assets/logos/man-united.png', '#DA020E', '#FBE122', 1878, 'Old Trafford'),
 ('Newcastle United', 'NEW', '/assets/logos/newcastle.png', '#241F20', '#FFFFFF', 1892, 'St. James Park'),
 ('Nottingham Forest', 'NFO', '/assets/logos/nottingham-forest.png', '#DD0000', '#FFFFFF', 1865, 'City Ground'),
-('Sheffield United', 'SHU', '/assets/logos/sheffield-united.png', '#EE2737', '#000000', 1889, 'Bramall Lane'),
+('Sunderland', 'SUN', '/assets/logos/sunderland.png', '#E2231A', '#000000', 1879, 'Stadium of Light'),
 ('Tottenham Hotspur', 'TOT', '/assets/logos/tottenham.png', '#132257', '#FFFFFF', 1882, 'Tottenham Hotspur Stadium'),
 ('West Ham United', 'WHU', '/assets/logos/west-ham.png', '#7A263A', '#1BB1E7', 1895, 'London Stadium'),
 ('Wolverhampton Wanderers', 'WOL', '/assets/logos/wolves.png', '#FDB462', '#231F20', 1877, 'Molineux Stadium');

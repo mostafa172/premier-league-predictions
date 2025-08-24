@@ -45,7 +45,7 @@ export const register = async (req: Request, res: Response) => {
 
     // Create user
     const newUser = await pool.query(
-      'INSERT INTO users (username, email, password, is_admin) VALUES ($1, $2, $3, $4) RETURNING id, username, email, is_admin',
+      'INSERT INTO users (username, email, password, is_admin, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id, username, email, is_admin, created_at, updated_at',
       [username, email, hashedPassword, false]
     );
 
