@@ -36,10 +36,7 @@
           <h3>Gameweek {{ gameweek }} Predictions</h3>
         </div>
 
-        <div
-          *ngIf="doubleLocked"
-          class="alert alert-info"
-        >
+        <div *ngIf="doubleLocked" class="alert alert-info">
           Your Double is locked for this gameweek (deadline passed on your
           chosen match).
         </div>
@@ -57,7 +54,21 @@
             [formGroupName]="i"
           >
             <div class="fixture-content">
-              <div class="fixture-info">
+              <!-- Meta line (date/deadline) -->
+              <div class="fixture-details">
+                <div class="match-date">
+                  {{ fixture.matchDate | date : "d MMM, HH:mm" }}
+                </div>
+                <div
+                  class="deadline"
+                  [class.expired]="isFixtureDisabled(fixture)"
+                >
+                  Deadline: {{ fixture.deadline | date : "d MMM, HH:mm" }}
+                </div>
+              </div>
+
+              <!-- ===== DESKTOP LAYOUT (kept as-is) ===== -->
+              <div class="fixture-info hide-on-mobile">
                 <!-- Home Team -->
                 <div class="home-team">
                   <img
@@ -68,18 +79,8 @@
                   <span class="team-name">{{ fixture.homeTeam?.name }}</span>
                 </div>
 
-                <!-- Match Details -->
-                <div class="fixture-details">
-                  <div class="match-date">
-                    {{ fixture.matchDate | date : "d MMM, HH:mm" }}
-                  </div>
-                  <div
-                    class="deadline"
-                    [class.expired]="isFixtureDisabled(fixture)"
-                  >
-                  Deadline: {{ fixture.deadline | date : "d MMM, HH:mm" }}
-                </div>
-                </div>
+                <!-- Center (nothing else here on desktop) -->
+                <div></div>
 
                 <!-- Away Team (right aligned) -->
                 <div class="away-team">
@@ -92,9 +93,9 @@
                 </div>
               </div>
 
-              <!-- Prediction Inputs -->
+              <!-- Desktop prediction inputs -->
               <div
-                class="prediction-inputs"
+                class="prediction-inputs hide-on-mobile"
                 *ngIf="!isFixtureDisabled(fixture)"
               >
                 <div class="score-inputs">
@@ -137,35 +138,115 @@
                 </div>
               </div>
 
-              <!-- Finished Fixture Display -->
+              <!-- ===== MOBILE INLINE LAYOUT ===== -->
+              <!-- UPCOMING/LIVE row (inputs inline) -->
               <div
-                class="finished-fixture"
+                class="prediction-inline show-on-mobile-inline"
+                *ngIf="!isFixtureDisabled(fixture)"
+              >
+                <div class="side home">
+                  <img
+                    [src]="fixture.homeTeam?.logoUrl"
+                    [alt]="fixture.homeTeam?.abbreviation"
+                    class="team-logo"
+                  />
+                  <span class="abbr">{{ fixture.homeTeam?.abbreviation }}</span>
+                  <input
+                    type="number"
+                    class="score-input-compact"
+                    formControlName="homeScore"
+                    min="0"
+                    max="20"
+                  />
+                </div>
+
+                <div class="vs-pill">VS</div>
+
+                <div class="side away">
+                  <input
+                    type="number"
+                    class="score-input-compact"
+                    formControlName="awayScore"
+                    min="0"
+                    max="20"
+                  />
+                  <span class="abbr">{{ fixture.awayTeam?.abbreviation }}</span>
+                  <img
+                    [src]="fixture.awayTeam?.logoUrl"
+                    [alt]="fixture.awayTeam?.abbreviation"
+                    class="team-logo"
+                  />
+                </div>
+              </div>
+
+              <!-- Mobile double toggle (separate row, small) -->
+              <div
+                class="double-row show-on-mobile-inline"
+                *ngIf="!isFixtureDisabled(fixture)"
+              >
+                <label class="double-toggle">
+                  <input
+                    type="checkbox"
+                    formControlName="isDouble"
+                    [disabled]="doubleLocked || !hasValidPrediction(i)"
+                    (change)="onDoubleChange(i)"
+                  />
+                  <span>Double Points</span>
+                </label>
+              </div>
+
+              <!-- FINISHED row (final score inline + centered “Your … pts”) -->
+              <div
+                class="finished-inline show-on-mobile-inline"
                 *ngIf="
                   isFixtureDisabled(fixture) && fixture.status === 'finished'
                 "
               >
-                <div class="actual-score">
-                  Final: {{ fixture.homeScore }} - {{ fixture.awayScore }}
+                <div class="side home">
+                  <img
+                    [src]="fixture.homeTeam?.logoUrl"
+                    [alt]="fixture.homeTeam?.abbreviation"
+                    class="team-logo"
+                  />
+                  <span class="abbr">{{ fixture.homeTeam?.abbreviation }}</span>
+                  <span class="score-badge">{{ fixture.homeScore }}</span>
                 </div>
 
-                <div
-                  class="user-predictions"
-                  *ngIf="existingPredictions.length > 0"
-                >
-                  <ng-container *ngFor="let pred of existingPredictions">
-                    <div
-                      *ngIf="pred.fixtureId === fixture.id"
-                      class="user-prediction"
-                    >
-                      Your prediction: {{ pred.predictedHomeScore }} -
-                      {{ pred.predictedAwayScore }}
-                      <span class="points">{{ pred.points || 0 }} pts</span>
-                    </div>
-                  </ng-container>
+                <div class="vs-pill">vs</div>
+
+                <div class="side away">
+                  <span class="score-badge">{{ fixture.awayScore }}</span>
+                  <span class="abbr">{{ fixture.awayTeam?.abbreviation }}</span>
+                  <img
+                    [src]="fixture.awayTeam?.logoUrl"
+                    [alt]="fixture.awayTeam?.abbreviation"
+                    class="team-logo"
+                  />
                 </div>
               </div>
 
-              <!-- Upcoming but past deadline -->
+              <div
+                class="finished-footer show-on-mobile-inline"
+                *ngIf="
+                  isFixtureDisabled(fixture) &&
+                  fixture.status === 'finished' &&
+                  existingPredictions.length > 0
+                "
+              >
+                <ng-container *ngFor="let pred of existingPredictions">
+                  <div *ngIf="pred.fixtureId === fixture.id" class="your-line">
+                    <span class="label">Your:</span>
+                    <span class="pred"
+                      >{{ pred.predictedHomeScore }} –
+                      {{ pred.predictedAwayScore }}</span
+                    >
+                    <span class="dot">•</span>
+                    <span class="points">{{ pred.points || 0 }} pts</span>
+                  </div>
+                </ng-container>
+              </div>
+
+              <!-- Upcoming but past deadline (desktop + mobile) -->
               <div
                 class="deadline-passed"
                 *ngIf="

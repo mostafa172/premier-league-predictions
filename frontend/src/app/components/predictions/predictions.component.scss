@@ -51,7 +51,7 @@
     background: #e8f3ff;
     color: #0b4a8f;
     border: 1px solid #cfe6ff;
-    margin: 1rem 1.5rem; /* 👈 adds space around the info box */
+    margin: 1rem 1.5rem; /* spacing around the info box */
   }
 }
 
@@ -87,8 +87,8 @@
 .predictions-list {
   display: flex;
   flex-direction: column;
-  gap: 12px; /* spacing between cards */
-  padding: 12px; /* inset spacing around the list */
+  gap: 12px;
+  padding: 12px;
 }
 
 /* Card */
@@ -112,7 +112,6 @@
     opacity: 0.9;
     background: #fafafa;
 
-    /* No lift for disabled */
     &:hover {
       transform: none;
       box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
@@ -120,13 +119,13 @@
     }
   }
 
-  /* When the user has entered a prediction (non-double) */
+  /* Non-double but has inputs filled */
   &.has-prediction {
     box-shadow: 0 0 0 2px rgba(56, 0, 60, 0.08) inset;
     background: rgba(56, 0, 60, 0.02);
   }
 
-  /* DOUBLE highlight (gold) — overrides any other background/border */
+  /* DOUBLE highlight */
   &.is-double {
     border: 2px solid #ffc107;
     box-shadow: 0 0 8px rgba(255, 193, 7, 0.35);
@@ -161,27 +160,49 @@
   padding: 1.25rem 1.5rem;
 }
 
+/* Meta line */
+.fixture-details {
+  text-align: center;
+  margin-bottom: 0.5rem;
+
+  .match-date {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.15rem;
+    font-weight: 500;
+  }
+
+  .deadline {
+    font-size: 0.75rem;
+    color: #888;
+
+    &.expired {
+      color: #dc3545;
+      font-weight: 600;
+    }
+  }
+}
+
+/* Desktop three-column header */
 .fixture-info {
   display: grid;
   grid-template-columns: 2fr 1fr 2fr;
   gap: 1rem;
   align-items: center;
-  margin-bottom: 1rem;
+  margin: 0.75rem 0 1rem;
 
   .home-team,
   .away-team {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    min-height: 40px; /* keeps logos/names aligned vertically */
+    min-height: 40px;
   }
 
-  /* Home stays left */
   .home-team {
     justify-content: flex-start;
   }
 
-  /* Away goes to the far right (name to the right of logo) */
   .away-team {
     justify-content: flex-end;
     flex-direction: row-reverse;
@@ -205,30 +226,9 @@
     font-size: 0.95rem;
     color: #212529;
   }
-
-  .fixture-details {
-    text-align: center;
-
-    .match-date {
-      font-size: 0.85rem;
-      color: #666;
-      margin-bottom: 0.25rem;
-      font-weight: 500;
-    }
-
-    .deadline {
-      font-size: 0.75rem;
-      color: #888;
-
-      &.expired {
-        color: #dc3545;
-        font-weight: 600;
-      }
-    }
-  }
 }
 
-/* Prediction inputs row */
+/* Desktop inputs */
 .prediction-inputs {
   display: flex;
   align-items: center;
@@ -280,7 +280,6 @@
           border-color: #bbb;
         }
 
-        /* Make empty inputs look empty (no 0 placeholder spacing issues) */
         &::-webkit-outer-spin-button,
         &::-webkit-inner-spin-button {
           margin: 0;
@@ -293,7 +292,7 @@
       font-weight: bold;
       color: #666;
       margin: 0 0.5rem;
-      margin-top: 1.5rem; /* aligns dash between inputs */
+      margin-top: 1.5rem;
       user-select: none;
     }
   }
@@ -330,7 +329,7 @@
   }
 }
 
-/* Finished fixture & deadline blocks */
+/* Finished / deadline blocks (desktop) */
 .finished-fixture,
 .deadline-passed {
   padding: 1rem 0.5rem;
@@ -414,48 +413,187 @@
   border-radius: 8px;
 }
 
-/* Responsive */
+/* ====== MOBILE INLINE SHEET LAYOUT ====== */
+.show-on-mobile-inline {
+  display: none;
+}
+.hide-on-mobile {
+  display: block;
+}
+
 @media (max-width: 768px) {
   .predictions-container {
     padding: 1rem 0.5rem;
   }
-
   .predictions-header {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
   }
 
+  /* swap visibility */
+  .hide-on-mobile {
+    display: none !important;
+  }
+  .show-on-mobile-inline {
+    display: flex !important;
+  }
+
+  /* tighten card spacing */
+  .predictions-list {
+    gap: 10px;
+    padding: 10px;
+  }
   .fixture-content {
-    padding: 1rem;
+    padding: 0.75rem 0.9rem;
   }
 
-  .fixture-info {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
+  /* keep meta line thin */
+  .fixture-details {
+    margin-bottom: 0.3rem;
+  }
+
+  /* shared inline row base */
+  .prediction-inline,
+  .finished-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* sides at edges, VS centered */
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+  }
+
+  .vs-pill {
+    min-width: 36px;
     text-align: center;
+    font-weight: 700;
+    font-size: 0.7rem;
+    line-height: 1;
+    padding: 0.25rem 0.4rem;
+    border-radius: 999px;
+    background: #f1eef4;
+    color: #5c3d5f;
+    margin: 0 0.25rem;
+    text-transform: uppercase;
+  }
 
-    .home-team,
-    .away-team {
-      justify-content: center;
-      flex-direction: row;
-    }
+  .side {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .side.home {
+    justify-content: flex-start;
+  }
+  .side.away {
+    justify-content: flex-end;
+  }
 
-    .fixture-details {
-      order: -1;
-    }
+  .side .team-logo {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+    background: #fff;
+  }
 
-    .away-team .team-name {
-      text-align: center; /* mobile: center both sides */
+  .abbr {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #212529;
+    letter-spacing: 0.2px;
+    min-width: 2.4ch;
+    text-align: left;
+  }
+  .side.away .abbr {
+    text-align: right;
+  }
+
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    padding: 0 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #38003c;
+    background: #f6f1f8;
+    border: 1px solid #eadff0;
+  }
+
+  .score-input-compact {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    text-align: center;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    background: #fff;
+
+    &:focus {
+      outline: none;
+      border-color: #38003c;
+      box-shadow: 0 0 0 3px rgba(56, 0, 60, 0.1);
     }
   }
 
-  .prediction-inputs {
-    flex-direction: column;
-    gap: 1rem;
+  .double-row {
+    display: flex;
+    justify-content: center;
+    margin-top: 6px;
 
-    .score-separator {
-      margin-top: 0;
+    .double-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #6c757d;
+
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #38003c;
+      }
+    }
+  }
+
+  /* finished “Your: … • … pts” line centered + spaced */
+  .finished-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.35rem;
+
+    .your-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: #6c757d;
+      font-size: 0.9rem;
+      line-height: 1.2;
+
+      .label {
+        color: #6c757d;
+      }
+      .pred {
+        color: #212529;
+        font-weight: 600;
+      }
+      .dot {
+        opacity: 0.6;
+      }
+      .points {
+        color: #38003c;
+        font-weight: 700;
+      }
     }
   }
 }
