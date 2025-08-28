@@ -1,15 +1,7 @@
-<!-- Only show the overlay when isLoading is true -->
-<div class="loading-overlay" *ngIf="isLoading">
-  <div class="loading-container">
-    <div class="loading-spinner">
-      <div class="spinner-ring"></div>
-      <div class="spinner-ring"></div>
-      <div class="spinner-ring"></div>
-      <div class="spinner-ring"></div>
-    </div>
-    <div class="loading-text">
-      <h3>Loading...</h3>
-      <p>Please wait while we fetch your data</p>
-    </div>
+<!-- Show only when loading -->
+<div class="loading-overlay" *ngIf="isLoading" aria-live="polite" aria-busy="true">
+  <div class="loading-container" role="status">
+    <div class="simple-spinner"></div>
+    <p class="loading-label">Loading…</p>
   </div>
 </div>
