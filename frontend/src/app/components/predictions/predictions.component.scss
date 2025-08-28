@@ -1,3 +1,5 @@
+/* ============ DESKTOP (default) ============ */
+
 .predictions-container {
   max-width: 900px;
   margin: 0 auto;
@@ -40,18 +42,16 @@
     color: #155724;
     border: 1px solid #c3e6cb;
   }
-
   &.alert-danger {
     background: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
   }
-
   &.alert-info {
     background: #e8f3ff;
     color: #0b4a8f;
     border: 1px solid #cfe6ff;
-    margin: 1rem 1.5rem; /* spacing around the info box */
+    margin: 1rem 1.5rem;
   }
 }
 
@@ -61,9 +61,8 @@
   color: #666;
 }
 
-/* Sheet-style layout */
 .predictions-sheet {
-  background: white;
+  background: #fff;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
@@ -83,7 +82,6 @@
   }
 }
 
-/* List + row separation */
 .predictions-list {
   display: flex;
   flex-direction: column;
@@ -91,7 +89,6 @@
   padding: 12px;
 }
 
-/* Card */
 .fixture-row {
   position: relative;
   background: #fff;
@@ -111,7 +108,6 @@
   &.disabled {
     opacity: 0.9;
     background: #fafafa;
-
     &:hover {
       transform: none;
       box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
@@ -119,17 +115,14 @@
     }
   }
 
-  /* Non-double but has inputs filled */
   &.has-prediction {
-    box-shadow: 0 0 0 2px rgba(56, 0, 60, 0.08) inset;
+    box-shadow: inset 0 0 0 2px rgba(56, 0, 60, 0.08);
     background: rgba(56, 0, 60, 0.02);
   }
 
-  /* DOUBLE highlight */
   &.is-double {
     border: 2px solid #ffc107;
     box-shadow: 0 0 8px rgba(255, 193, 7, 0.35);
-    border-radius: 10px;
     background: #fffef7;
 
     &:hover {
@@ -138,7 +131,6 @@
       background: #fffdf5;
     }
 
-    /* Badge bottom-right */
     &::after {
       content: "DOUBLE";
       position: absolute;
@@ -160,7 +152,6 @@
   padding: 1.25rem 1.5rem;
 }
 
-/* Meta line */
 .fixture-details {
   text-align: center;
   margin-bottom: 0.5rem;
@@ -171,11 +162,9 @@
     margin-bottom: 0.15rem;
     font-weight: 500;
   }
-
   .deadline {
     font-size: 0.75rem;
     color: #888;
-
     &.expired {
       color: #dc3545;
       font-weight: 600;
@@ -183,7 +172,7 @@
   }
 }
 
-/* Desktop three-column header */
+/* --- DESKTOP header + inputs --- */
 .fixture-info {
   display: grid;
   grid-template-columns: 2fr 1fr 2fr;
@@ -198,15 +187,12 @@
     gap: 0.75rem;
     min-height: 40px;
   }
-
   .home-team {
     justify-content: flex-start;
   }
-
   .away-team {
     justify-content: flex-end;
     flex-direction: row-reverse;
-
     .team-name {
       text-align: right;
     }
@@ -220,7 +206,6 @@
     border: 1px solid #dee2e6;
     background: #fff;
   }
-
   .team-name {
     font-weight: 600;
     font-size: 0.95rem;
@@ -228,7 +213,6 @@
   }
 }
 
-/* Desktop inputs */
 .prediction-inputs {
   display: flex;
   align-items: center;
@@ -244,57 +228,54 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+  }
 
-    .score-input {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      min-width: 60px;
+  .score-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 60px;
 
-      label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #38003c;
-        text-transform: uppercase;
-      }
-
-      input {
-        width: 60px;
-        height: 40px;
-        padding: 0.5rem;
-        text-align: center;
-        border: 2px solid #ddd;
-        border-radius: 6px;
-        font-size: 1rem;
-        font-weight: 600;
-        background: white;
-
-        &:focus {
-          outline: none;
-          border-color: #38003c;
-          box-shadow: 0 0 0 3px rgba(56, 0, 60, 0.1);
-        }
-
-        &:hover {
-          border-color: #bbb;
-        }
-
-        &::-webkit-outer-spin-button,
-        &::-webkit-inner-spin-button {
-          margin: 0;
-        }
-      }
+    label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #38003c;
+      text-transform: uppercase;
     }
 
-    .score-separator {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #666;
-      margin: 0 0.5rem;
-      margin-top: 1.5rem;
-      user-select: none;
+    input {
+      width: 60px;
+      height: 40px;
+      padding: 0.5rem;
+      text-align: center;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: #fff;
+      &:focus {
+        outline: none;
+        border-color: #38003c;
+        box-shadow: 0 0 0 3px rgba(56, 0, 60, 0.1);
+      }
+      &:hover {
+        border-color: #bbb;
+      }
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        margin: 0;
+      }
     }
+  }
+
+  .score-separator {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #666;
+    margin: 0 0.5rem;
+    margin-top: 1.5rem;
+    user-select: none;
   }
 
   .double-points {
@@ -302,7 +283,6 @@
     flex-direction: column;
     align-items: center;
     gap: 0.25rem;
-
     label {
       display: flex;
       flex-direction: column;
@@ -313,23 +293,20 @@
       font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
-
-      input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-        accent-color: #38003c;
-      }
-
-      span {
-        text-align: center;
-        line-height: 1.2;
-      }
+    }
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: #38003c;
+    }
+    span {
+      text-align: center;
+      line-height: 1.2;
     }
   }
 }
 
-/* Finished / deadline blocks (desktop) */
 .finished-fixture,
 .deadline-passed {
   padding: 1rem 0.5rem;
@@ -345,14 +322,11 @@
     margin-bottom: 0.5rem;
     font-size: 1.1rem;
   }
-
   .user-predictions {
     text-align: center;
     font-size: 0.9rem;
-
     .user-prediction {
       color: #666;
-
       .points {
         color: #38003c;
         font-weight: 600;
@@ -361,14 +335,12 @@
     }
   }
 }
-
 .deadline-passed {
   text-align: center;
   color: #888;
   font-style: italic;
 }
 
-/* Form actions */
 .form-actions {
   padding: 1rem 1.5rem;
   background: #f8f9fa;
@@ -386,17 +358,14 @@
     cursor: pointer;
     transition: all 0.2s;
     font-size: 0.875rem;
-
     &.btn-primary {
       background: #38003c;
-      color: white;
-
+      color: #fff;
       &:hover:not(:disabled) {
         background: #2d0030;
         transform: translateY(-1px);
       }
     }
-
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
@@ -409,18 +378,19 @@
   text-align: center;
   padding: 3rem;
   color: #666;
-  background: white;
+  background: #fff;
   border-radius: 8px;
 }
 
-/* ====== MOBILE INLINE SHEET LAYOUT ====== */
-.show-on-mobile-inline {
+/* --- mobile-inline blocks default to hidden on desktop --- */
+.prediction-inline,
+.double-row,
+.finished-inline,
+.finished-footer {
   display: none;
 }
-.hide-on-mobile {
-  display: block;
-}
 
+/* ============ MOBILE (≤768px) — force compact only ============ */
 @media (max-width: 768px) {
   .predictions-container {
     padding: 1rem 0.5rem;
@@ -431,15 +401,6 @@
     text-align: center;
   }
 
-  /* swap visibility */
-  .hide-on-mobile {
-    display: none !important;
-  }
-  .show-on-mobile-inline {
-    display: flex !important;
-  }
-
-  /* tighten card spacing */
   .predictions-list {
     gap: 10px;
     padding: 10px;
@@ -447,18 +408,31 @@
   .fixture-content {
     padding: 0.75rem 0.9rem;
   }
-
-  /* keep meta line thin */
   .fixture-details {
     margin-bottom: 0.3rem;
   }
 
-  /* shared inline row base */
+  /* HARD HIDE desktop blocks */
+  .fixture-content > .fixture-info,
+  .fixture-content > .prediction-inputs,
+  .fixture-info,
+  .prediction-inputs {
+    display: none !important;
+  }
+
+  /* HARD SHOW mobile blocks */
+  .prediction-inline,
+  .double-row,
+  .finished-inline,
+  .finished-footer {
+    display: flex !important;
+  }
+
+  /* inline rows */
   .prediction-inline,
   .finished-inline {
-    display: flex;
     align-items: center;
-    justify-content: space-between; /* sides at edges, VS centered */
+    justify-content: space-between;
     gap: 0.5rem;
     padding: 0.25rem 0;
   }
@@ -518,8 +492,8 @@
     justify-content: center;
     min-width: 24px;
     height: 24px;
-    border-radius: 6px;
     padding: 0 6px;
+    border-radius: 6px;
     font-size: 0.85rem;
     font-weight: 700;
     color: #38003c;
@@ -537,7 +511,6 @@
     font-size: 0.9rem;
     font-weight: 700;
     background: #fff;
-
     &:focus {
       outline: none;
       border-color: #38003c;
@@ -546,10 +519,8 @@
   }
 
   .double-row {
-    display: flex;
     justify-content: center;
     margin-top: 6px;
-
     .double-toggle {
       display: inline-flex;
       align-items: center;
@@ -557,21 +528,17 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       color: #6c757d;
-
-      input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        accent-color: #38003c;
-      }
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #38003c;
     }
   }
 
-  /* finished “Your: … • … pts” line centered + spaced */
   .finished-footer {
-    display: flex;
     justify-content: center;
     margin-top: 0.35rem;
-
     .your-line {
       display: inline-flex;
       align-items: center;
@@ -579,21 +546,20 @@
       color: #6c757d;
       font-size: 0.9rem;
       line-height: 1.2;
-
-      .label {
-        color: #6c757d;
-      }
-      .pred {
-        color: #212529;
-        font-weight: 600;
-      }
-      .dot {
-        opacity: 0.6;
-      }
-      .points {
-        color: #38003c;
-        font-weight: 700;
-      }
+    }
+    .your-line .label {
+      color: #6c757d;
+    }
+    .your-line .pred {
+      color: #212529;
+      font-weight: 600;
+    }
+    .your-line .dot {
+      opacity: 0.6;
+    }
+    .your-line .points {
+      color: #38003c;
+      font-weight: 700;
     }
   }
 }
