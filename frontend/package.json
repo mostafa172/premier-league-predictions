@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve -c production",
-    "start-dev": "ng serve -c development",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
+    "start": "ng serve",
+    "build":" ng build --configuration production",
+    "build:dev": "ng build --configuration development",
+    "serve:prod": "npx http-server ./dist/premier-league-predictions -p 8080 -c-1",
     "test": "ng test",
     "lint": "ng lint"
   },
