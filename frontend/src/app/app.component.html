@@ -1,46 +1,51 @@
 <div class="app-container">
   <nav class="navbar" role="navigation" aria-label="Main navigation">
-    <div class="nav-brand">
-      <h1>PL Predictions</h1>
+    <!-- Row 1: brand (left) + user/logout (right) -->
+    <div class="topbar">
+      <div class="nav-brand">
+        <h1>PL Predictions</h1>
+      </div>
+
+      <div class="nav-user">
+        <ng-container *ngIf="isLoggedIn; else loggedOut">
+          <span class="username" *ngIf="currentUser">
+            {{ currentUser.username }}
+          </span>
+          <button
+            class="icon-btn logout"
+            (click)="logout()"
+            aria-label="Logout"
+            title="Logout"
+          >
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </ng-container>
+
+        <ng-template #loggedOut>
+          <!-- text only (no icon) per your request -->
+          <a routerLink="/auth" class="login-link">Login</a>
+        </ng-template>
+      </div>
     </div>
 
-    <div class="nav-links" *ngIf="isLoggedIn">
+    <!-- Row 2: tabs -->
+    <div class="bar-tabs" *ngIf="isLoggedIn">
       <a routerLink="/predictions" routerLinkActive="active">
-        <i class="fa-solid fa-chart-line"></i> Predictions
+        <i class="fa-solid fa-chart-line"></i>
+        <span>Predictions</span>
       </a>
       <a routerLink="/fixtures" routerLinkActive="active">
-        <i class="fa-solid fa-futbol"></i> Fixtures
+        <i class="fa-solid fa-futbol"></i>
+        <span>Fixtures</span>
       </a>
       <a routerLink="/leaderboard" routerLinkActive="active">
-        <i class="fa-solid fa-trophy"></i> Leaderboard
+        <i class="fa-solid fa-trophy"></i>
+        <span>Leaderboard</span>
       </a>
       <a *ngIf="isAdmin" routerLink="/admin" routerLinkActive="active">
-        <i class="fa-solid fa-gear"></i> Admin
+        <i class="fa-solid fa-gear"></i>
+        <span>Admin</span>
       </a>
-    </div>
-
-    <div class="nav-links" *ngIf="!isLoggedIn"></div>
-
-    <div class="nav-user">
-      <ng-container *ngIf="isLoggedIn; else loggedOut">
-        <span class="username" *ngIf="currentUser">{{
-          currentUser.username
-        }}</span>
-        <button
-          class="icon-btn logout"
-          (click)="logout()"
-          aria-label="Logout"
-          title="Logout"
-        >
-          <i class="fa-solid fa-right-from-bracket"></i>
-        </button>
-      </ng-container>
-
-      <ng-template #loggedOut>
-        <a routerLink="/auth" class="login-link">
-          <i class="fa-solid fa-right-to-bracket"></i> Login
-        </a>
-      </ng-template>
     </div>
   </nav>
 

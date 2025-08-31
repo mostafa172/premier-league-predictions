@@ -6,100 +6,65 @@
     "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
-/* ===== NAVBAR: single row, scrollable horizontally if needed ===== */
+/* NAVBAR (2 rows, auto height, not covering content) */
 .navbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 56px;
-  padding: 0 10px;
+  position: sticky; /* stays visible when scrolling, but doesn't overlap content */
+  top: 0;
+  z-index: 1000;
   background: #38003c;
   color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: block; /* allow stacked rows */
+  padding: 8px 10px; /* outer padding only; rows have their own gaps */
+}
 
-  /* keep everything on one line, allow sideways scroll on small screens */
-  overflow-x: auto;
-  overflow-y: hidden;
-  white-space: nowrap;
-  -webkit-overflow-scrolling: touch;
-
-  /* optional: slim scrollbar on mobile/desktop */
-  scrollbar-width: thin;
-  scrollbar-color: #9a9a9a transparent;
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #9a9a9a;
-    border-radius: 8px;
-  }
+/* Row 1 */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
 }
 
 .nav-brand {
-  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
 
   h1 {
     margin: 0;
     font-size: 1.2rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #00b949 !important;
     letter-spacing: -0.02em;
   }
 }
 
-/* Links strip stays inline; won’t wrap; can scroll with the bar */
-.nav-links {
-  flex: 0 0 auto;
+/* User area (right side of topbar) */
+.nav-user {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  min-width: max-content;
-
-  a {
-    color: white;
-    text-decoration: none;
-    padding: 0.35rem 0.75rem;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-
-    &:hover {
-      background: #00b949;
-      color: #38003c;
-      transform: translateY(-1px);
-    }
-    &.active {
-      background: #00b949;
-      color: #38003c;
-    }
-  }
-}
-
-/* User area on the right */
-.nav-user {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
 
   .username {
     font-size: 0.95rem;
     color: #e9ecef;
-    font-weight: 500;
+    font-weight: 600;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .login-link {
-    color: white;
+    color: #fff;
     text-decoration: none;
     padding: 0.35rem 0.75rem;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    transition: all 0.2s;
+    border: 1px solid rgba(233, 236, 239, 0.85);
+    border-radius: 8px;
+    transition: 0.2s;
     &:hover {
-      background: white;
+      background: #fff;
       color: #38003c;
     }
   }
@@ -115,7 +80,7 @@
     background: transparent;
     color: #fff;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: 0.2s ease;
     padding: 0;
 
     i {
@@ -131,8 +96,68 @@
   }
 }
 
+/* Row 2: tabs */
+.bar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  padding-bottom: 2px; /* a little room for the scrollbar */
+
+  /* slim scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 8px;
+  }
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    text-decoration: none;
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    transition: 0.2s ease;
+
+    i {
+      font-size: 0.95rem;
+    }
+
+    &:hover {
+      background: #00b949;
+      color: #38003c;
+      transform: translateY(-1px);
+    }
+    &.active {
+      background: #00b949;
+      color: #38003c;
+    }
+  }
+}
+
 .main-content {
   flex: 1;
   background: #f8f9fa;
   overflow-y: auto;
+}
+
+/* Responsive polish */
+@media (max-width: 480px) {
+  .nav-brand h1 {
+    font-size: 1.05rem;
+  }
+  .username {
+    max-width: 120px;
+  }
 }
