@@ -25,6 +25,7 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   selectedDoubleIndex = -1;
   private subscriptions: Subscription[] = [];
   doubleLocked = false;
+  hasChanges = false;
 
   constructor(
     private fb: FormBuilder,
@@ -50,6 +51,7 @@ export class PredictionsComponent implements OnInit, OnDestroy {
 
   onGameweekChange(gameweek?: number): void {
     if (gameweek) this.gameweek = gameweek;
+    this.hasChanges = false; // reset before reload
     this.loadFixturesAndPredictions();
   }
 
@@ -153,6 +155,15 @@ export class PredictionsComponent implements OnInit, OnDestroy {
       }
 
       this.predictionsArray.push(group);
+    });
+
+    // reset & compute initial state
+    this.hasChanges = this.computeHasChanges();
+
+    // subscribe once per rebuild
+    // (unsubscribe isn’t needed because the whole form is rebuilt between gameweeks)
+    this.predictionsForm.valueChanges.subscribe(() => {
+      this.hasChanges = this.computeHasChanges();
     });
   }
 
@@ -267,6 +278,7 @@ export class PredictionsComponent implements OnInit, OnDestroy {
       this.saving = false;
       this.message = "No changes to save.";
       this.messageType = "info";
+      this.hasChanges = false;
       return;
     }
 
@@ -288,6 +300,7 @@ export class PredictionsComponent implements OnInit, OnDestroy {
         this.messageType = "danger";
       }
 
+      this.hasChanges = false; // reset after successful attempt
       this.loadFixturesAndPredictions();
     } catch (e) {
       this.saving = false;
@@ -316,6 +329,8 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     } else {
       this.selectedDoubleIndex = -1;
     }
+
+    this.hasChanges = this.computeHasChanges();
   }
 
   isFixtureDisabled(fixture: any): boolean {
@@ -406,5 +421,25 @@ export class PredictionsComponent implements OnInit, OnDestroy {
       if (!fx) return false;
       return now >= new Date(fx.deadline) || fx.status !== "upcoming";
     });
+  }
+
+  private computeHasChanges(): boolean {
+    // loop through fixtures, reuse your existing "hasPredictionChanged" logic
+    for (let i = 0; i < this.fixtures.length; i++) {
+      // skip disabled fixtures
+      if (this.isFixtureDisabled(this.fixtures[i])) continue;
+
+      // require both scores to be set before we consider it a change worth saving
+      const fg = this.predictionsArray.at(i);
+      const h = fg?.get("homeScore")?.value;
+      const a = fg?.get("awayScore")?.value;
+      const hasBoth =
+        h !== null && h !== undefined && a !== null && a !== undefined;
+
+      if (hasBoth && this.hasPredictionChanged(i)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
