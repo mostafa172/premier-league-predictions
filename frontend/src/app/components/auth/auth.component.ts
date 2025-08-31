@@ -37,7 +37,7 @@ export class AuthComponent implements OnInit {
   ngOnInit(): void {
     // Redirect if already authenticated
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(["/fixtures"]);
+      this.router.navigate(["/predictions"]);
     }
   }
 
@@ -73,7 +73,7 @@ export class AuthComponent implements OnInit {
           if (response.success) {
             if (this.isLoginMode) {
               // Login successful - redirect to fixtures
-              this.router.navigate(["/fixtures"]);
+              this.router.navigate(["/predictions"]);
             } else {
               // Registration successful - switch to login mode
               this.isLoginMode = true;
