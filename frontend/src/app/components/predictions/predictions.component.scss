@@ -562,4 +562,11 @@
       font-weight: 700;
     }
   }
+
+  .score-input-compact.dimmed {
+    opacity: 0.5; /* make it visually faded */
+    background: #f1f1f1; /* softer background */
+    cursor: not-allowed; /* show disabled cursor */
+    color: #6c757d; /* dim text */
+  }
 }
