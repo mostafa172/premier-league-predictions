@@ -6,14 +6,11 @@
       class="refresh-btn"
       [disabled]="loading"
     >
-      🔄 Refresh
+      Refresh
     </button>
   </div>
 
-  <div *ngIf="error" class="error-message">
-    {{ error }}
-  </div>
-
+  <div *ngIf="error" class="error-message">{{ error }}</div>
   <div *ngIf="loading" class="loading-message">Loading leaderboard...</div>
 
   <div *ngIf="currentUsername && currentUserRank > 0" class="current-user-rank">
@@ -24,26 +21,29 @@
     <table>
       <thead>
         <tr>
-          <th>Rank</th>
-          <th>Username</th>
-          <th>Points</th>
+          <th class="th-rank">Rank</th>
+          <th class="th-username">Username</th>
+          <th class="th-points">Points</th>
         </tr>
       </thead>
+
       <tbody>
         <tr
           *ngFor="let entry of leaderboard; trackBy: trackByUserId"
           [class.current-user]="entry.username === currentUsername"
         >
           <td class="rank">
-            <span class="rank-number">{{ entry.rank }}</span>
-            <span *ngIf="entry.rank === 1" class="trophy">🥇</span>
-            <span *ngIf="entry.rank === 2" class="trophy">🥈</span>
-            <span *ngIf="entry.rank === 3" class="trophy">🥉</span>
+            <ng-container [ngSwitch]="entry.rank">
+              <span *ngSwitchCase="1" class="trophy" aria-label="1st">🥇</span>
+              <span *ngSwitchCase="2" class="trophy" aria-label="2nd">🥈</span>
+              <span *ngSwitchCase="3" class="trophy" aria-label="3rd">🥉</span>
+              <span *ngSwitchDefault class="rank-number">{{ entry.rank }}</span>
+            </ng-container>
           </td>
 
-          <td>
+          <td class="username-cell">
             <div class="username">
-              <span>{{ entry.username }}</span>
+              <span class="name">{{ entry.username }}</span>
               <span *ngIf="entry.username === currentUsername" class="you-label"
                 >You</span
               >
