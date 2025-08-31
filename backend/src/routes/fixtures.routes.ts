@@ -11,6 +11,7 @@ router.get('/', authenticateToken, fixturesController.getAllFixtures.bind(fixtur
 router.get('/gameweek/:gameweek', authenticateToken, fixturesController.getFixturesByGameweek.bind(fixturesController));
 router.get('/upcoming', authenticateToken, fixturesController.getUpcomingFixtures.bind(fixturesController));
 router.get('/:id', authenticateToken, fixturesController.getFixtureById.bind(fixturesController));
+router.get('/gameweeks/closest', fixturesController.getClosestGameweek.bind(fixturesController));
 
 // Admin routes
 router.post('/', authenticateToken, requireAdmin, fixturesController.createFixture.bind(fixturesController));

@@ -38,7 +38,13 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadFixturesAndPredictions();
+    this.fixtureService.getClosestGameweek().subscribe({
+      next: (r) => {
+        if (r?.success && r.data?.gameweek) this.gameweek = Number(r.data.gameweek);
+        this.loadFixturesAndPredictions();
+      },
+      error: () => this.loadFixturesAndPredictions()
+    });
   }
 
   ngOnDestroy(): void {

@@ -22,7 +22,14 @@ export class FixturesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadFixtures();
+    this.fixtureService.getClosestGameweek().subscribe({
+      next: (r) => {
+        if (r?.success && r.data?.gameweek)
+          this.gameweek = Number(r.data.gameweek);
+        this.loadFixtures();
+      },
+      error: () => this.loadFixtures(),
+    });
   }
 
   loadFixtures(): void {
@@ -77,7 +84,7 @@ export class FixturesComponent implements OnInit {
   get isAdmin(): boolean {
     return this.authService.getCurrentUser()?.isAdmin || false;
   }
-  
+
   formatUTCForDatetimeLocal(isoUtc: string | Date): string {
     const d = new Date(isoUtc);
     const pad = (n: number) => String(n).padStart(2, "0");
