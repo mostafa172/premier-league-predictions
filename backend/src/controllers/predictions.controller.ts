@@ -259,6 +259,7 @@ export class PredictionsController {
         FROM users u
         LEFT JOIN predictions p ON u.id = p.user_id
         GROUP BY u.id, u.username
+        HAVING COALESCE(SUM(p.points), 0) > 0
         ORDER BY "totalPoints" DESC, u.username ASC
       `);
 
