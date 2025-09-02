@@ -74,8 +74,8 @@ export class FixtureFormComponent implements OnInit {
           this.fixtureForm.patchValue({
             homeTeamId: fixture.homeTeamId,
             awayTeamId: fixture.awayTeamId,
-            matchDate: this.formatDateTimeLocalLocal(fixture.matchDate),
-            deadline: this.formatDateTimeLocalLocal(fixture.deadline),
+            matchDate: this.formatUTCToDateTimeLocal(fixture.matchDate),
+            deadline: this.formatUTCToDateTimeLocal(fixture.deadline),
             gameweek: fixture.gameweek,
             homeScore: fixture.homeScore,
             awayScore: fixture.awayScore,
@@ -109,8 +109,8 @@ export class FixtureFormComponent implements OnInit {
 
       const payload = {
         ...formData,
-        matchDate: this.formatDateTimeLocalLocal(formData.matchDate),
-        deadline: this.formatDateTimeLocalLocal(formData.deadline),
+        matchDate: this.formatDateTimeLocalToUTC(formData.matchDate),
+        deadline: this.formatDateTimeLocalToUTC(formData.deadline),
       };
 
       this.loading = true;
@@ -164,8 +164,21 @@ export class FixtureFormComponent implements OnInit {
     return "";
   }
 
-  formatDateTimeLocalLocal(iso: string | Date): string {
-    const d = new Date(iso);
+
+
+  // Convert datetime-local input to UTC ISO string for backend
+  formatDateTimeLocalToUTC(datetimeLocal: string): string {
+    if (!datetimeLocal) return '';
+    // Create a Date object from the datetime-local input (treats as local time)
+    const localDate = new Date(datetimeLocal);
+    // Convert to UTC ISO string
+    return localDate.toISOString();
+  }
+
+  // Convert UTC ISO string to datetime-local format for form input
+  formatUTCToDateTimeLocal(utcIso: string | Date): string {
+    if (!utcIso) return '';
+    const d = new Date(utcIso);
     const pad = (n: number) => String(n).padStart(2, '0');
     const yyyy = d.getFullYear();
     const mm = pad(d.getMonth() + 1);
