@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { Prediction } from "../models/Prediction";
 import { Fixture } from "../models/Fixture";
 import { Team } from "../models/Team";
-import { Op } from "sequelize";
+import { Op, QueryTypes } from "sequelize";
 import { sequelize } from "../config/sequelize";
 
 function isFixtureLocked(fixture: Fixture) {
@@ -245,6 +245,39 @@ export class PredictionsController {
     } catch (error) {
       console.error("Error getting user predictions by gameweek:", error);
       res.status(500).json({ success: false, message: "Internal server error" });
+    }
+  }
+
+  // Get user's total points for a specific gameweek
+  async getUserGameweekTotal(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { gameweek } = req.params;
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+      const [results] = await sequelize.query(`
+        SELECT 
+          COALESCE(SUM(p.points), 0) as "totalPoints"
+        FROM predictions p
+        INNER JOIN fixtures f ON p.fixture_id = f.id
+        WHERE p.user_id = :userId AND f.gameweek = :gameweek
+      `, {
+        replacements: { userId, gameweek: parseInt(gameweek) },
+        type: QueryTypes.SELECT
+      });
+
+      const totalPoints = results && (results as any).totalPoints ? parseInt((results as any).totalPoints, 10) : 0;
+
+      return res.status(200).json({ 
+        success: true, 
+        data: { 
+          gameweek: parseInt(gameweek),
+          totalPoints 
+        } 
+      });
+    } catch (error) {
+      console.error("Error getting user gameweek total:", error);
+      return res.status(500).json({ success: false, message: "Internal server error" });
     }
   }
 

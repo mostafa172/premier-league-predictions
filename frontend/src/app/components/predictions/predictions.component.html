@@ -1,33 +1,37 @@
 <div class="predictions-container">
   <div class="predictions-header">
-    <h2>Predictions</h2>
+    <div class="header-left">
+      <h2>Predictions</h2>
+    </div>
 
-    <!-- Scoring Rules Toggle -->
-    <button
-      class="rules-toggle"
-      (click)="showRules = !showRules"
-      [class.active]="showRules"
-    >
-      <i class="fas fa-info-circle"></i>
-      {{ showRules ? "Hide" : "Show" }} Scoring Rules
-    </button>
-
-    <div class="gameweek-selector">
-      <label for="gameweek">Gameweek:</label>
-      <select
-        id="gameweek"
-        [(ngModel)]="gameweek"
-        (change)="onGameweekChange(gameweek)"
+    <div class="header-right">
+      <!-- Scoring Rules Toggle -->
+      <button
+        class="rules-toggle"
+        (click)="showRules = !showRules"
+        [class.active]="showRules"
       >
-        <option *ngFor="let gw of gameweeks" [value]="gw">
-          Gameweek {{ gw }}
-        </option>
-      </select>
+        <i class="fas fa-info-circle"></i>
+        {{ showRules ? "Hide" : "Show" }} Scoring Rules
+      </button>
+
+      <div class="gameweek-selector">
+        <label for="gameweek">Gameweek:</label>
+        <select
+          id="gameweek"
+          [(ngModel)]="gameweek"
+          (change)="onGameweekChange(gameweek)"
+        >
+          <option *ngFor="let gw of gameweeks" [value]="gw">
+            Gameweek {{ gw }}
+          </option>
+        </select>
+      </div>
     </div>
   </div>
 
   <!-- Compact Rules Section -->
-  <div class="scoring-rules" [class.expanded]="showRules">
+  <div class="scoring-rules" *ngIf="showRules">
     <div class="rules-content">
       <h3><i class="fas fa-trophy"></i> How Prediction Scoring Works</h3>
 
@@ -106,8 +110,12 @@
       (ngSubmit)="onSubmit()"
     >
       <div class="predictions-sheet">
-        <div class="sheet-header">
-          <h3>Gameweek {{ gameweek }} Predictions</h3>
+        <!-- Gameweek Total Points Card -->
+        <div class="gameweek-summary-card" *ngIf="predictions.length > 0">
+          <div class="summary-content">
+            <div class="summary-title">Your Gameweek {{ gameweek }} Total</div>
+            <div class="summary-points">{{ getGameweekTotalPoints() }} pts</div>
+          </div>
         </div>
 
         <div *ngIf="doubleLocked" class="alert alert-info">

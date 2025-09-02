@@ -372,6 +372,12 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     return prediction?.points || 0;
   }
 
+  getGameweekTotalPoints(): number {
+    return this.predictions.reduce((total, prediction) => {
+      return total + (prediction.points || 0);
+    }, 0);
+  }
+
   trackByFixtureId(index: number, fixture: any): number {
     return fixture.id;
   }
