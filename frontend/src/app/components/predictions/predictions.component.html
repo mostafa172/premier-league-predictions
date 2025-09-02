@@ -5,6 +5,15 @@
     </div>
 
     <div class="header-right">
+      <!-- View Other Users Button -->
+      <button
+        class="view-users-btn"
+        (click)="openUserPredictionsModal()"
+      >
+        <i class="fas fa-users"></i>
+        View Others
+      </button>
+
       <!-- Scoring Rules Toggle -->
       <button
         class="rules-toggle"
@@ -353,7 +362,15 @@
             </button>
           </div>
         </div>
-      </div>
-    </form>
-  </div>
+          </div>
+  </form>
+
+  <!-- User Predictions Modal -->
+  <app-user-predictions-modal 
+    [isOpen]="showUserPredictionsModal"
+    [currentGameweek]="gameweek"
+    [users]="allUsers"
+    (close)="closeUserPredictionsModal()">
+  </app-user-predictions-modal>
+</div>
 </div>

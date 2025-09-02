@@ -281,6 +281,71 @@ export class PredictionsController {
     }
   }
 
+  // Get another user's predictions for a specific gameweek
+  async getOtherUserPredictions(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { userId, gameweek } = req.params;
+      const currentUserId = req.user?.id;
+      if (!currentUserId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+      // Get the target user's info
+      const targetUser = await sequelize.models.User.findByPk(userId, {
+        attributes: ['id', 'username']
+      });
+
+      if (!targetUser) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      // Get fixtures for the gameweek
+      const fixtures = await Fixture.findAll({
+        where: { gameweek: parseInt(gameweek) },
+        include: [
+          { model: sequelize.models.Team, as: "homeTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+          { model: sequelize.models.Team, as: "awayTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+        ],
+        order: [["matchDate", "ASC"]],
+      });
+
+      // Get the target user's predictions for this gameweek
+      const predictions = await Prediction.findAll({
+        where: { userId: parseInt(userId) },
+        include: [
+          {
+            model: Fixture,
+            as: "fixture",
+            where: { gameweek: parseInt(gameweek) },
+            include: [
+              { model: sequelize.models.Team, as: "homeTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+              { model: sequelize.models.Team, as: "awayTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+            ],
+          },
+        ],
+        order: [["fixture", "matchDate", "ASC"]],
+      });
+
+      // Calculate total points for this gameweek
+      const totalPoints = predictions.reduce((sum, prediction) => sum + (prediction.points || 0), 0);
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          user: {
+            id: (targetUser as any).id,
+            username: (targetUser as any).username
+          },
+          gameweek: parseInt(gameweek),
+          fixtures,
+          predictions,
+          totalPoints
+        }
+      });
+    } catch (error) {
+      console.error("Error getting other user predictions:", error);
+      return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+  }
+
   // Basic leaderboard
   async getLeaderboard(req: Request, res: Response) {
     try {

@@ -83,6 +83,14 @@ export class PredictionService {
     );
   }
 
+  // Get another user's predictions for a specific gameweek
+  getOtherUserPredictions(userId: number, gameweek: number): Observable<any> {
+    return this.http.get<any>(
+      `${this.API_URL}/predictions/user/${userId}/gameweek/${gameweek}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
   // Get user's predictions
   getUserPredictions(): Observable<any> {
     return this.http.get<any>(

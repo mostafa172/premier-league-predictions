@@ -14,6 +14,7 @@ import { FixturesComponent } from "./components/fixtures/fixtures.component";
 import { PredictionsComponent } from "./components/predictions/predictions.component";
 import { LeaderboardComponent } from "./components/leaderboard/leaderboard.component";
 import { FixtureFormComponent } from "./components/fixture-form/fixture-form.component";
+import { UserPredictionsModalComponent } from "./components/user-predictions-modal/user-predictions-modal.component";
 
 // Import your services and guards
 import { AuthService } from "./services/auth.service";
@@ -33,6 +34,7 @@ import { AuthInterceptor } from "./interceptors/auth.interceptor";
     AuthComponent,
     FixtureFormComponent,
     LoadingComponent,
+    UserPredictionsModalComponent,
   ],
   imports: [
     BrowserModule,

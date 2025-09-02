@@ -29,6 +29,30 @@
     align-items: center;
     gap: 1rem;
 
+    .view-users-btn {
+      background: #38003c;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &:hover {
+        background: #2a002d;
+        transform: translateY(-1px);
+      }
+
+      i {
+        font-size: 0.8rem;
+      }
+    }
+
     .gameweek-selector {
       display: flex;
       align-items: center;
