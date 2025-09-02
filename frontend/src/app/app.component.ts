@@ -1,16 +1,16 @@
 /* filepath: frontend/src/app/app.component.ts */
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { AuthService } from './services/auth.service';
-import { LoadingService } from './services/loading.service';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy } from "@angular/core";
+import { AuthService } from "./services/auth.service";
+import { LoadingService } from "./services/loading.service";
+import { Subscription } from "rxjs";
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  selector: "app-root",
+  templateUrl: "./app.component.html",
+  styleUrls: ["./app.component.scss"],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  title = 'premier-league-predictions';
+  title = "premier-league-predictions";
   isLoggedIn = false;
   currentUser: any = null;
   isLoading = false;
@@ -25,7 +25,7 @@ export class AppComponent implements OnInit, OnDestroy {
     // Initialize auth state from storage first
     this.currentUser = this.authService.getCurrentUser();
     this.isLoggedIn = this.authService.isAuthenticated();
-    
+
     // Subscribe to loading state
     const loadingSub = this.loadingService.loading$.subscribe(
       (loading: boolean) => {
@@ -35,12 +35,10 @@ export class AppComponent implements OnInit, OnDestroy {
     this.subscriptions.push(loadingSub);
 
     // Subscribe to auth changes
-    const authSub = this.authService.currentUser$.subscribe(
-      (user) => {
-        this.currentUser = user;
-        this.isLoggedIn = !!user;
-      }
-    );
+    const authSub = this.authService.currentUser$.subscribe((user) => {
+      this.currentUser = user;
+      this.isLoggedIn = !!user;
+    });
     this.subscriptions.push(authSub);
 
     // Only validate token if we think we're logged in
@@ -50,7 +48,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
   private validateToken(): void {
@@ -62,7 +60,7 @@ export class AppComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.authService.logout();
-      }
+      },
     });
   }
 
@@ -71,6 +69,8 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   get isAdmin(): boolean {
-    return this.currentUser?.isAdmin || false;
+    return (
+      this.currentUser?.role === "admin" || this.currentUser?.isAdmin || false
+    );
   }
 }
