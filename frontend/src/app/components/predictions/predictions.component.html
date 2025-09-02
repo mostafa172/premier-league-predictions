@@ -1,6 +1,17 @@
 <div class="predictions-container">
   <div class="predictions-header">
     <h2>Predictions</h2>
+
+    <!-- Scoring Rules Toggle -->
+    <button
+      class="rules-toggle"
+      (click)="showRules = !showRules"
+      [class.active]="showRules"
+    >
+      <i class="fas fa-info-circle"></i>
+      {{ showRules ? "Hide" : "Show" }} Scoring Rules
+    </button>
+
     <div class="gameweek-selector">
       <label for="gameweek">Gameweek:</label>
       <select
@@ -12,6 +23,69 @@
           Gameweek {{ gw }}
         </option>
       </select>
+    </div>
+  </div>
+
+  <!-- Compact Rules Section -->
+  <div class="scoring-rules" [class.expanded]="showRules">
+    <div class="rules-content">
+      <h3><i class="fas fa-trophy"></i> How Prediction Scoring Works</h3>
+
+      <div class="rules-list">
+        <div class="rule-row">
+          <div class="rule-icon">🎯</div>
+          <div class="rule-content">
+            <div class="rule-title">Exact Score</div>
+          </div>
+          <div class="rule-points">+4 pts</div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-icon">📊</div>
+          <div class="rule-content">
+            <div class="rule-title">Goal Difference</div>
+          </div>
+          <div class="rule-points">+2 pts</div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-icon">🏆</div>
+          <div class="rule-content">
+            <div class="rule-title">Winner</div>
+          </div>
+          <div class="rule-points">+1 pt</div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-icon">🤝</div>
+          <div class="rule-content">
+            <div class="rule-title">Draw</div>
+          </div>
+          <div class="rule-points">+2 pts</div>
+        </div>
+
+        <div class="rule-row special">
+          <div class="rule-icon">⚡</div>
+          <div class="rule-content">
+            <div class="rule-title">Double</div>
+            <div class="warning-note">Only one double fixutre per gameweek</div>
+          </div>
+          <div class="rule-points multiplier">×2</div>
+        </div>
+      </div>
+
+      <div class="rules-summary">
+        <h4>📋 Quick Summary</h4>
+        <ul>
+          <li>
+            Points stack! Exact score = 4 + 2 + 1 =
+            <strong>7 points total</strong>
+          </li>
+          <li>Double points apply to your total score for that fixture</li>
+          <li>Only one double per gameweek</li>
+          <li>Predictions lock at deadline (1 hour before kickoff)</li>
+        </ul>
+      </div>
     </div>
   </div>
 

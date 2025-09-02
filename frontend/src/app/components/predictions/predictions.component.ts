@@ -27,6 +27,8 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   doubleLocked = false;
   hasChanges = false;
 
+  showRules = false;
+
   constructor(
     private fb: FormBuilder,
     private predictionService: PredictionService,
@@ -40,10 +42,11 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.fixtureService.getClosestGameweek().subscribe({
       next: (r) => {
-        if (r?.success && r.data?.gameweek) this.gameweek = Number(r.data.gameweek);
+        if (r?.success && r.data?.gameweek)
+          this.gameweek = Number(r.data.gameweek);
         this.loadFixturesAndPredictions();
       },
-      error: () => this.loadFixturesAndPredictions()
+      error: () => this.loadFixturesAndPredictions(),
     });
   }
 
