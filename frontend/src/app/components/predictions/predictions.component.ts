@@ -151,15 +151,9 @@ export class PredictionsComponent implements OnInit, OnDestroy {
         predictionId: [existing?.id || null],
       });
 
-      const hasValues =
-        prevHome !== null &&
-        prevHome !== undefined &&
-        prevAway !== null &&
-        prevAway !== undefined &&
-        prevHome >= 0 &&
-        prevAway >= 0;
-
-      if (this.doubleLocked || !hasValues) {
+      // Only disable double if double is locked (deadline passed on existing double)
+      // Allow users to select double even without scores entered yet
+      if (this.doubleLocked) {
         group.get("isDouble")?.disable({ emitEvent: false });
       }
 
@@ -170,9 +164,10 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     this.hasChanges = this.computeHasChanges();
 
     // subscribe once per rebuild
-    // (unsubscribe isn’t needed because the whole form is rebuilt between gameweeks)
+    // (unsubscribe isn't needed because the whole form is rebuilt between gameweeks)
     this.predictionsForm.valueChanges.subscribe(() => {
       this.hasChanges = this.computeHasChanges();
+      this.updateDoubleCheckboxStates();
     });
   }
 
@@ -340,6 +335,26 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     }
 
     this.hasChanges = this.computeHasChanges();
+  }
+
+  private updateDoubleCheckboxStates(): void {
+    // Update double checkbox states based on current form values
+    this.predictionsArray.controls.forEach((group, index) => {
+      const isDoubleControl = group.get("isDouble");
+      if (!isDoubleControl || this.doubleLocked) return;
+
+      const homeScore = group.get("homeScore")?.value;
+      const awayScore = group.get("awayScore")?.value;
+      const hasValidScores = homeScore !== null && homeScore !== undefined && 
+                           awayScore !== null && awayScore !== undefined &&
+                           homeScore >= 0 && awayScore >= 0;
+
+      // If user has selected double but doesn't have valid scores, keep it enabled
+      // The validation will happen on submit
+      if (isDoubleControl.value === true) {
+        isDoubleControl.enable({ emitEvent: false });
+      }
+    });
   }
 
   isFixtureDisabled(fixture: any): boolean {

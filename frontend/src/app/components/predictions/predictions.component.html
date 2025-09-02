@@ -129,10 +129,7 @@
             class="fixture-row"
             [class.disabled]="isFixtureDisabled(fixture)"
             [class.has-prediction]="hasValidPrediction(i)"
-            [class.is-double]="
-              predictionsArray.at(i).get('isDouble')?.value ||
-              hasExistingDouble(fixture.id)
-            "
+            [class.is-double]="predictionsArray.at(i).get('isDouble')?.value"
             [formGroupName]="i"
           >
             <div class="fixture-content">
@@ -213,7 +210,7 @@
                     <input
                       type="checkbox"
                       formControlName="isDouble"
-                      [disabled]="doubleLocked || !hasValidPrediction(i)"
+                      [disabled]="doubleLocked"
                       (change)="onDoubleChange(i)"
                     />
                     <span>Double<br />Points</span>
@@ -273,7 +270,7 @@
                   <input
                     type="checkbox"
                     formControlName="isDouble"
-                    [disabled]="doubleLocked || !hasValidPrediction(i)"
+                    [disabled]="doubleLocked"
                     (change)="onDoubleChange(i)"
                   />
                   <span>Double Points</span>
