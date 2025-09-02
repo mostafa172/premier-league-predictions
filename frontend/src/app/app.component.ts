@@ -26,6 +26,11 @@ export class AppComponent implements OnInit, OnDestroy {
     this.currentUser = this.authService.getCurrentUser();
     this.isLoggedIn = this.authService.isAuthenticated();
 
+    console.log("🚀 App initialized with auth state:", {
+      isLoggedIn: this.isLoggedIn,
+      user: this.currentUser?.username,
+    });
+
     // Subscribe to loading state
     const loadingSub = this.loadingService.loading$.subscribe(
       (loading: boolean) => {
@@ -38,11 +43,16 @@ export class AppComponent implements OnInit, OnDestroy {
     const authSub = this.authService.currentUser$.subscribe((user) => {
       this.currentUser = user;
       this.isLoggedIn = !!user;
+      console.log("🔄 Auth state changed:", {
+        isLoggedIn: this.isLoggedIn,
+        user: user?.username,
+      });
     });
     this.subscriptions.push(authSub);
 
     // Only validate token if we think we're logged in
     if (this.isLoggedIn) {
+      console.log("🔍 Validating stored token...");
       this.validateToken();
     }
   }
@@ -55,10 +65,14 @@ export class AppComponent implements OnInit, OnDestroy {
     this.authService.checkTokenValidity().subscribe({
       next: (response: any) => {
         if (!response.success) {
+          console.log("❌ Token validation failed, logging out");
           this.authService.logout();
+        } else {
+          console.log("✅ Token validation successful");
         }
       },
       error: () => {
+        console.log("❌ Token validation error, logging out");
         this.authService.logout();
       },
     });
