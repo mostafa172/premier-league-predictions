@@ -1,4 +1,4 @@
-<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()">
+<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()" role="dialog" aria-modal="true">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <!-- Modal Header -->
     <div class="modal-header">
@@ -18,8 +18,8 @@
           (change)="onUserSelect(selectedUserId)"
           class="form-control"
         >
-          <option value="">Choose a user...</option>
-          <option *ngFor="let user of users" [value]="user.id">
+          <option [ngValue]="null">Choose a user...</option>
+          <option *ngFor="let user of filteredUsers" [ngValue]="user.id">
             {{ user.username }}
           </option>
         </select>
@@ -50,6 +50,9 @@
     <div *ngIf="error" class="error-state">
       <i class="fas fa-exclamation-triangle"></i>
       {{ error }}
+      <div>
+        <button class="btn btn-retry" (click)="retryLoad()">Retry</button>
+      </div>
     </div>
 
     <!-- User Predictions Display -->
@@ -147,7 +150,7 @@
 
     <!-- Modal Footer -->
     <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="closeModal()">
+      <button class="btn btn-secondary" (click)="closeModal()" aria-label="Close modal">
         Close
       </button>
     </div>

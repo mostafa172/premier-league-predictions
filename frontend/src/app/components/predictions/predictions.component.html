@@ -370,6 +370,8 @@
     [isOpen]="showUserPredictionsModal"
     [currentGameweek]="gameweek"
     [users]="allUsers"
+    (isOpenChange)="showUserPredictionsModal = $event"
+    (closed)="closeUserPredictionsModal()"
     (close)="closeUserPredictionsModal()">
   </app-user-predictions-modal>
 </div>

@@ -343,6 +343,38 @@
   text-align: right;
 }
 
+// Small UX helpers
+.btn {
+  appearance: none;
+  border: 1px solid #dee2e6;
+  background: #fff;
+  color: #38003c;
+  padding: 0.45rem 0.8rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.btn-secondary {
+  background: #38003c;
+  color: #fff;
+  border-color: #38003c;
+
+  &:hover {
+    background: #4b0a52;
+    border-color: #4b0a52;
+  }
+}
+
+.btn-retry {
+  margin-top: 0.75rem;
+}
+
 // Responsive Design
 @media (max-width: 768px) {
   .modal-overlay {
