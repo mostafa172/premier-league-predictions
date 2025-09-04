@@ -15,10 +15,13 @@ import { PredictionsComponent } from "./components/predictions/predictions.compo
 import { LeaderboardComponent } from "./components/leaderboard/leaderboard.component";
 import { FixtureFormComponent } from "./components/fixture-form/fixture-form.component";
 import { UserPredictionsModalComponent } from "./components/user-predictions-modal/user-predictions-modal.component";
+import { LeaguesComponent } from "./components/leagues/leagues.component";
+import { LeagueDetailComponent } from "./components/league-detail/league-detail.component";
 
 // Import your services and guards
 import { AuthService } from "./services/auth.service";
 import { LoadingService } from "./services/loading.service";
+import { LeagueService } from "./services/league.service";
 import { AuthGuard } from "./guards/auth.guard";
 import { LoadingComponent } from "./components/loading/loading.component";
 import { RouterModule } from "@angular/router";
@@ -35,6 +38,8 @@ import { AuthInterceptor } from "./interceptors/auth.interceptor";
     FixtureFormComponent,
     LoadingComponent,
     UserPredictionsModalComponent,
+    LeaguesComponent,
+    LeagueDetailComponent,
   ],
   imports: [
     BrowserModule,
@@ -53,6 +58,7 @@ import { AuthInterceptor } from "./interceptors/auth.interceptor";
     },
     AuthService,
     LoadingService,
+    LeagueService,
     AuthGuard,
   ],
   bootstrap: [AppComponent],

@@ -1,0 +1,182 @@
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { LeagueService } from '../../services/league.service';
+import { League, CreateLeagueRequest } from '../../models/league.model';
+
+@Component({
+  selector: 'app-leagues',
+  templateUrl: './leagues.component.html',
+  styleUrls: ['./leagues.component.scss']
+})
+export class LeaguesComponent implements OnInit, OnDestroy {
+  userLeagues: League[] = [];
+  loading = false;
+  error = '';
+  showCreateModal = false;
+  showJoinModal = false;
+  showSuccessModal = false;
+  successMessage = '';
+  createdLeagueCode = '';
+  
+  // Create league form
+  createLeagueForm: CreateLeagueRequest = {
+    name: '',
+    description: ''
+  };
+  
+  // Join league form
+  joinCode = '';
+  
+  private subscriptions: Subscription[] = [];
+
+  constructor(private leagueService: LeagueService) {}
+
+  ngOnInit(): void {
+    this.loadData();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  loadData(): void {
+    this.loading = true;
+    this.error = '';
+
+    const userLeaguesSub = this.leagueService.getUserLeagues().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.userLeagues = response.data;
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading user leagues:', error);
+        this.error = 'Error loading your leagues';
+        this.loading = false;
+      }
+    });
+
+    this.subscriptions.push(userLeaguesSub);
+  }
+
+
+  openCreateModal(): void {
+    this.showCreateModal = true;
+    this.createLeagueForm = { name: '', description: '' };
+  }
+
+  closeCreateModal(): void {
+    this.showCreateModal = false;
+    this.createLeagueForm = { name: '', description: '' };
+  }
+
+  openJoinModal(): void {
+    this.showJoinModal = true;
+    this.joinCode = '';
+    this.error = ''; // Clear any previous errors
+  }
+
+  closeJoinModal(): void {
+    this.showJoinModal = false;
+    this.joinCode = '';
+    this.error = ''; // Clear any previous errors
+  }
+
+  createLeague(): void {
+    if (!this.createLeagueForm.name.trim()) {
+      this.error = 'League name is required';
+      return;
+    }
+
+    this.loading = true;
+    this.error = '';
+
+    const sub = this.leagueService.createLeague({
+      name: this.createLeagueForm.name.trim(),
+      description: this.createLeagueForm.description?.trim() || undefined
+    }).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.createdLeagueCode = response.data.joinCode;
+          this.successMessage = `League "${response.data.name}" created successfully!`;
+          this.showSuccessModal = true;
+          this.closeCreateModal();
+          this.loadData(); // Reload data to show the new league
+        } else {
+          this.error = response.message || 'Failed to create league';
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error creating league:', error);
+        this.error = 'Error creating league';
+        this.loading = false;
+      }
+    });
+
+    this.subscriptions.push(sub);
+  }
+
+  joinLeague(): void {
+    if (!this.joinCode.trim()) {
+      this.error = 'Join code is required';
+      return;
+    }
+
+    this.loading = true;
+    this.error = '';
+
+    const sub = this.leagueService.joinLeague(this.joinCode.trim().toUpperCase()).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.successMessage = `Successfully joined "${response.data.leagueName}"!`;
+          this.showSuccessModal = true;
+          this.closeJoinModal();
+          this.loadData(); // Reload data to show the joined league
+        } else {
+          this.error = response.message || 'Failed to join league';
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error joining league:', error);
+        this.error = 'Error joining league';
+        this.loading = false;
+      }
+    });
+
+    this.subscriptions.push(sub);
+  }
+
+  copyJoinCode(joinCode: string): void {
+    navigator.clipboard.writeText(joinCode).then(() => {
+      // Show a simple alert for now (you can replace with a proper toast later)
+      alert('League code copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy join code:', err);
+      alert('Failed to copy league code');
+    });
+  }
+
+  refreshData(): void {
+    this.loadData();
+  }
+
+  closeSuccessModal(): void {
+    this.showSuccessModal = false;
+    this.successMessage = '';
+    this.createdLeagueCode = '';
+  }
+
+  copyCreatedLeagueCode(): void {
+    if (this.createdLeagueCode) {
+      navigator.clipboard.writeText(this.createdLeagueCode).then(() => {
+        alert('League code copied to clipboard!');
+      }).catch(err => {
+        console.error('Failed to copy league code:', err);
+        alert('Failed to copy league code');
+      });
+    }
+  }
+}

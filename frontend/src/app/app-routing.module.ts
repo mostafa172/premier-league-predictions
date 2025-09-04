@@ -6,6 +6,8 @@ import { FixturesComponent } from "./components/fixtures/fixtures.component";
 import { PredictionsComponent } from "./components/predictions/predictions.component";
 import { LeaderboardComponent } from "./components/leaderboard/leaderboard.component";
 import { FixtureFormComponent } from "./components/fixture-form/fixture-form.component";
+import { LeaguesComponent } from "./components/leagues/leagues.component";
+import { LeagueDetailComponent } from "./components/league-detail/league-detail.component";
 import { AuthGuard } from "./guards/auth.guard";
 
 const routes: Routes = [
@@ -20,6 +22,16 @@ const routes: Routes = [
   {
     path: "leaderboard",
     component: LeaderboardComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: "leagues",
+    component: LeaguesComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: "leagues/:id",
+    component: LeagueDetailComponent,
     canActivate: [AuthGuard],
   },
   {

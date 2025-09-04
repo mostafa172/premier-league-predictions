@@ -44,6 +44,8 @@ export const connectDatabase = async (): Promise<void> => {
     require('../models/Team');
     require('../models/Fixture');
     require('../models/Prediction');
+    require('../models/League');
+    require('../models/LeagueMembership');
 
     // Set up associations
     const { setupAssociations } = require('../models/associations');

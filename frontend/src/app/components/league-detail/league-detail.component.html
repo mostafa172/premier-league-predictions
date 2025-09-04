@@ -1,0 +1,205 @@
+<div class="league-detail-container">
+  <div class="league-detail-header">
+    <button class="back-btn" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i>
+      Back to Leagues
+    </button>
+    
+    <div class="header-actions">
+      <button class="btn btn-outline" (click)="refreshData()" [disabled]="loading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+        Refresh
+      </button>
+      <button 
+        *ngIf="!isCreator" 
+        class="btn btn-danger" 
+        (click)="openLeaveModal()"
+        [disabled]="loading"
+      >
+        <i class="fas fa-sign-out-alt"></i>
+        Leave League
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ error }}
+  </div>
+
+  <div *ngIf="loading" class="loading-message">
+    <i class="fas fa-spinner fa-spin"></i>
+    Loading league details...
+  </div>
+
+  <div *ngIf="leagueDetails && !loading" class="league-content">
+    <!-- League Info Card -->
+    <div class="league-info-card">
+      <div class="league-header">
+        <div class="league-title">
+          <h2>{{ leagueDetails.league.name }}</h2>
+          <div class="league-badges">
+            <span class="member-count">
+              <i class="fas fa-users"></i>
+              {{ leagueDetails.members.length }} Members
+            </span>
+            <span *ngIf="isCreator" class="creator-badge">
+              <i class="fas fa-crown"></i>
+              You are the creator
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="league-details">
+        <p *ngIf="leagueDetails.league.description" class="description">
+          {{ leagueDetails.league.description }}
+        </p>
+        
+        <div class="league-meta">
+          <div class="meta-item">
+            <span class="label">Created by:</span>
+            <span class="value">{{ leagueDetails.league.creator?.username || leagueDetails.league.creatorUsername }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="label">Join Code:</span>
+            <span class="value join-code">
+              {{ leagueDetails.league.joinCode }}
+              <button class="copy-btn" (click)="copyJoinCode(leagueDetails.league.joinCode)" title="Copy join code">
+                <i class="fas fa-copy"></i>
+              </button>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- League Leaderboard -->
+    <div class="leaderboard-section">
+      <h3>League Leaderboard</h3>
+      
+      <div *ngIf="sortedMembers.length === 0" class="no-members">
+        <i class="fas fa-users"></i>
+        <p>No members in this league yet.</p>
+      </div>
+      
+      <!-- Desktop Table View -->
+      <div *ngIf="sortedMembers.length > 0" class="leaderboard-table desktop-view">
+        <table>
+          <thead>
+            <tr>
+              <th class="th-rank">Rank</th>
+              <th class="th-username">Member</th>
+              <th class="th-points">Total Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let member of sortedMembers; let i = index" [class.creator]="member.isCreator">
+              <td class="rank">
+                <ng-container [ngSwitch]="i + 1">
+                  <span *ngSwitchCase="1" class="trophy" aria-label="1st">🥇</span>
+                  <span *ngSwitchCase="2" class="trophy" aria-label="2nd">🥈</span>
+                  <span *ngSwitchCase="3" class="trophy" aria-label="3rd">🥉</span>
+                  <span *ngSwitchDefault class="rank-number">{{ i + 1 }}</span>
+                </ng-container>
+              </td>
+              
+              <td class="username-cell">
+                <div class="username">
+                  <span class="name">{{ member.username }}</span>
+                  <span *ngIf="member.isCreator" class="creator-label">
+                    <i class="fas fa-crown"></i>
+                    Creator
+                  </span>
+                </div>
+              </td>
+              
+              <td class="points">
+                <span class="points-number">{{ member.totalPoints }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile List View -->
+      <div *ngIf="sortedMembers.length > 0" class="leaderboard-list mobile-view">
+        <div *ngFor="let member of sortedMembers; let i = index" class="leaderboard-item" [class.creator]="member.isCreator">
+          <div class="item-rank">
+            <ng-container [ngSwitch]="i + 1">
+              <span *ngSwitchCase="1" class="trophy" aria-label="1st">🥇</span>
+              <span *ngSwitchCase="2" class="trophy" aria-label="2nd">🥈</span>
+              <span *ngSwitchCase="3" class="trophy" aria-label="3rd">🥉</span>
+              <span *ngSwitchDefault class="rank-number">{{ i + 1 }}</span>
+            </ng-container>
+          </div>
+          
+          <div class="item-member">
+            <div class="member-name">{{ member.username }}</div>
+            <div *ngIf="member.isCreator" class="creator-badge">
+              <i class="fas fa-crown"></i>
+              Creator
+            </div>
+          </div>
+          
+          <div class="item-points">
+            <span class="points-number">{{ member.totalPoints }}</span>
+            <span class="points-label">points</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Leave League Modal -->
+<div class="modal-overlay" *ngIf="showLeaveModal" (click)="closeLeaveModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Leave League</h3>
+      <button class="close-btn" (click)="closeLeaveModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="warning-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Are you sure you want to leave <strong>{{ leagueDetails?.league?.name }}</strong>?</p>
+        <p>You will lose access to this league and its leaderboard.</p>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeLeaveModal()">Cancel</button>
+      <button class="btn btn-danger" (click)="leaveLeague()" [disabled]="loading">
+        <i class="fas fa-sign-out-alt" *ngIf="!loading"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+        {{ loading ? 'Leaving...' : 'Leave League' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+  <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Success!</h3>
+      <button class="close-btn" (click)="closeSuccessModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="success-message">
+        <i class="fas fa-check-circle"></i>
+        <p>{{ successMessage }}</p>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="closeSuccessModal()">Got it!</button>
+    </div>
+  </div>
+</div>

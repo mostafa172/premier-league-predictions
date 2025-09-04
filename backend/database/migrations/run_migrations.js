@@ -18,7 +18,9 @@ const migrationFiles = [
   '002_create_teams.sql', 
   '003_create_fixtures.sql',
   '004_create_predictions.sql',
-  '005_insert_premier_league_teams.sql'
+  '005_insert_premier_league_teams.sql',
+  '006_create_leagues.sql',
+  '007_create_league_memberships.sql'
 ];
 
 async function runMigrations() {

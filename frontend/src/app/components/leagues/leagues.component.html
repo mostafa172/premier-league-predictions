@@ -1,0 +1,230 @@
+<div class="leagues-container">
+  <div class="leagues-header">
+    <h2>Leagues</h2>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <i class="fas fa-plus"></i>
+        Create League
+      </button>
+      <button class="btn btn-secondary" (click)="openJoinModal()">
+        <i class="fas fa-sign-in-alt"></i>
+        Join League
+      </button>
+      <button class="btn btn-outline" (click)="refreshData()" [disabled]="loading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ error }}
+  </div>
+
+  <div *ngIf="loading" class="loading-message">
+    <i class="fas fa-spinner fa-spin"></i>
+    Loading leagues...
+  </div>
+
+  <!-- My Leagues Section -->
+  <div class="section" *ngIf="!loading">
+    <h3>My Leagues</h3>
+    <div *ngIf="userLeagues.length === 0" class="no-data">
+      <i class="fas fa-users"></i>
+      <p>You haven't joined any leagues yet.</p>
+      <p>Create a league or join one using a join code!</p>
+    </div>
+    
+    <!-- Desktop Grid View -->
+    <div *ngIf="userLeagues.length > 0" class="leagues-grid">
+      <div *ngFor="let league of userLeagues" class="league-card my-league">
+        <div class="league-header">
+          <h4>{{ league.name }}</h4>
+          <div class="league-badges">
+            <span class="member-count">
+              <i class="fas fa-users"></i>
+              {{ league.memberCount }}
+            </span>
+            <span *ngIf="league.isCreator" class="creator-badge">
+              <i class="fas fa-crown"></i>
+              Creator
+            </span>
+          </div>
+        </div>
+        
+        <div class="league-info">
+          <p *ngIf="league.description" class="description">{{ league.description }}</p>
+          <div class="league-meta">
+            <span class="creator">Created by {{ league.creatorUsername }}</span>
+            <div class="meta-right">
+              <span class="join-code">
+                Code: {{ league.joinCode }}
+                <button class="copy-btn" (click)="copyJoinCode(league.joinCode)" title="Copy join code">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </span>
+              <button class="btn btn-primary view-btn" [routerLink]="['/leagues', league.id]">
+                <i class="fas fa-eye"></i>
+                View
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Sheet List View -->
+    <div *ngIf="userLeagues.length > 0" class="leagues-list">
+      <div *ngFor="let league of userLeagues" class="league-sheet-item">
+        <div class="sheet-header">
+          <div class="league-name">{{ league.name }}</div>
+          <div class="member-count">
+            <i class="fas fa-users"></i>
+            {{ league.memberCount }}
+          </div>
+        </div>
+        
+        <div class="sheet-meta">
+          <span class="creator">by {{ league.creatorUsername }}</span>
+          <div class="sheet-right">
+            <span class="join-code">
+              {{ league.joinCode }}
+              <button class="copy-btn" (click)="copyJoinCode(league.joinCode)" title="Copy join code">
+                <i class="fas fa-copy"></i>
+              </button>
+            </span>
+            <button class="btn btn-primary view-btn" [routerLink]="['/leagues', league.id]">
+              <i class="fas fa-eye"></i>
+              View
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Create League Modal -->
+<div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Create New League</h3>
+      <button class="close-btn" (click)="closeCreateModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="leagueName">League Name *</label>
+        <input 
+          type="text" 
+          id="leagueName"
+          [(ngModel)]="createLeagueForm.name"
+          placeholder="Enter league name"
+          class="form-control"
+          maxlength="255"
+        >
+      </div>
+      
+      <div class="form-group">
+        <label for="leagueDescription">Description (Optional)</label>
+        <textarea 
+          id="leagueDescription"
+          [(ngModel)]="createLeagueForm.description"
+          placeholder="Enter league description"
+          class="form-control"
+          rows="3"
+          maxlength="500"
+        ></textarea>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="createLeague()" [disabled]="loading">
+        <i class="fas fa-plus" *ngIf="!loading"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+        {{ loading ? 'Creating...' : 'Create League' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Join League Modal -->
+<div class="modal-overlay" *ngIf="showJoinModal" (click)="closeJoinModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Join League</h3>
+      <button class="close-btn" (click)="closeJoinModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="joinCode">Join Code *</label>
+        <input 
+          type="text" 
+          id="joinCode"
+          [(ngModel)]="joinCode"
+          placeholder="ABC123"
+          class="form-control"
+          maxlength="6"
+          style="text-transform: uppercase;"
+        >
+        <small class="form-help">Enter the 6-character code provided by the league creator</small>
+      </div>
+      
+      <div *ngIf="error" class="error-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        {{ error }}
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeJoinModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="joinLeague()" [disabled]="loading">
+        <i class="fas fa-sign-in-alt" *ngIf="!loading"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+        {{ loading ? 'Joining...' : 'Join League' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+  <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Success!</h3>
+      <button class="close-btn" (click)="closeSuccessModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="success-message">
+        <i class="fas fa-check-circle"></i>
+        <p>{{ successMessage }}</p>
+        
+        <div *ngIf="createdLeagueCode" class="league-code-section">
+          <p class="code-label">Your league join code:</p>
+          <div class="code-display">
+            <span class="code-text">{{ createdLeagueCode }}</span>
+            <button class="copy-btn" (click)="copyCreatedLeagueCode()" title="Copy join code">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+          <small class="code-help">Share this code with others to let them join your league</small>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="closeSuccessModal()">Got it!</button>
+    </div>
+  </div>
+</div>
