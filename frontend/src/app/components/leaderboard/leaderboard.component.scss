@@ -20,6 +20,26 @@
     line-height: 1.2;
   }
 
+  .leaderboard-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0, 185, 74, 0.1);
+    color: var(--success-color);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    border: 1px solid rgba(0, 185, 74, 0.2);
+    
+    i {
+      font-size: 0.9rem;
+    }
+    
+    span {
+      font-weight: 500;
+    }
+  }
+
   .refresh-btn {
     appearance: none;
     border: 1px solid var(--border-color);
@@ -155,6 +175,20 @@
     overflow: hidden;
     text-overflow: ellipsis;
     line-height: 1.2;
+  }
+  
+  .username.clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      color: var(--primary-color);
+      transform: translateX(2px);
+    }
+    
+    &:active {
+      transform: translateX(1px);
+    }
   }
   .you-label {
     background: rgba(0, 185, 74, 0.18);

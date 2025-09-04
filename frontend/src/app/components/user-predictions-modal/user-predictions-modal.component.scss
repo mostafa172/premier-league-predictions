@@ -79,6 +79,26 @@
       border-radius: 4px;
       font-size: 0.9rem;
     }
+
+    .disabled-select {
+      background-color: #f8f9fa;
+      color: #6c757d;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .disabled-label {
+      color: #6c757d;
+      opacity: 0.7;
+    }
+
+    .pre-selected-hint {
+      font-size: 0.75rem;
+      color: #6c757d;
+      font-weight: 400;
+      font-style: italic;
+      margin-left: 0.5rem;
+    }
   }
 }
 
@@ -143,6 +163,7 @@
 }
 
 .fixture-row {
+  position: relative;
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 8px;
@@ -156,6 +177,27 @@
   &.disabled {
     opacity: 0.6;
     background: #f8f9fa;
+  }
+
+  &.is-double {
+    border: 2px solid #ffc107;
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.35);
+    background: #fffef7;
+
+    &::after {
+      content: "DOUBLE";
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      background: #ffc107;
+      color: #212529;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      letter-spacing: 0.4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
   }
 }
 
@@ -375,6 +417,112 @@
   margin-top: 0.75rem;
 }
 
+// Mobile Layout Styles (matching predictions component)
+.prediction-inline,
+.finished-inline,
+.finished-footer {
+  display: none;
+}
+
+.vs-pill {
+  min-width: 36px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0.25rem 0.4rem;
+  border-radius: 999px;
+  background: #f1eef4;
+  color: #5c3d5f;
+  margin: 0 0.25rem;
+  text-transform: uppercase;
+}
+
+.side {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.side.home {
+  justify-content: flex-start;
+}
+
+.side.away {
+  justify-content: flex-end;
+}
+
+.side .team-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  background: #fff;
+}
+
+.abbr {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #212529;
+  letter-spacing: 0.2px;
+  min-width: 2.4ch;
+  text-align: left;
+}
+
+.side.away .abbr {
+  text-align: right;
+}
+
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #38003c;
+  background: #f6f1f8;
+  border: 1px solid #eadff0;
+}
+
+.finished-footer {
+  justify-content: center;
+  margin-top: 0.35rem;
+  
+  .your-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.2;
+  }
+  
+  .your-line .label {
+    color: #6c757d;
+  }
+  
+  .your-line .pred {
+    color: #212529;
+    font-weight: 600;
+  }
+  
+  .your-line .dot {
+    opacity: 0.6;
+  }
+  
+  .your-line .points {
+    color: #38003c;
+    font-weight: 700;
+  }
+}
+
 // Responsive Design
 @media (max-width: 768px) {
   .modal-overlay {
@@ -405,6 +553,26 @@
     h3 {
       font-size: 1.1rem;
     }
+  }
+
+  // Hide desktop layout on mobile
+  .fixture-info {
+    display: none !important;
+  }
+
+  // Show mobile layout on mobile
+  .prediction-inline,
+  .finished-inline,
+  .finished-footer {
+    display: flex !important;
+  }
+
+  .prediction-inline,
+  .finished-inline {
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
   }
 
   .predictions-display {

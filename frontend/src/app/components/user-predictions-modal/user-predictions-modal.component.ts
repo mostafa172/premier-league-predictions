@@ -25,14 +25,25 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
   @Input() isOpen = false;
   @Input() currentGameweek = 1;
   @Input() users: User[] = [];
+  @Input() set selectedUserId(value: number | null) {
+    this.preSelectedUserId = value;
+  }
 
   @Output() isOpenChange = new EventEmitter<boolean>();
   @Output() closed = new EventEmitter<void>();
   // Back-compat for parent listening to (close)
   @Output() close = new EventEmitter<void>();
 
-  selectedUserId: number | null = null;
+  private preSelectedUserId: number | null = null;
   selectedGameweek = 1;
+  
+  get selectedUserId(): number | null {
+    return this.preSelectedUserId;
+  }
+  
+  get isUserPreSelected(): boolean {
+    return this.preSelectedUserId !== null;
+  }
   userPredictionData: UserPredictionData | null = null;
   loading = false;
   error = '';
@@ -48,6 +59,11 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
     const me = this.authService.getCurrentUser();
     this.currentUserId = me?.id ?? null;
     this.refreshFilteredUsers();
+    
+    // If a user is pre-selected, load their predictions
+    if (this.preSelectedUserId) {
+      this.loadUserPredictions();
+    }
   }
 
   ngOnDestroy(): void {
@@ -64,18 +80,29 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
     if (changes['users']) {
       this.refreshFilteredUsers();
     }
+    if (changes['currentGameweek']) {
+      // Update selected gameweek when currentGameweek input changes
+      this.selectedGameweek = this.currentGameweek;
+      if (this.preSelectedUserId) {
+        this.loadUserPredictions();
+      }
+    }
+    if (changes['selectedUserId'] && this.preSelectedUserId) {
+      // If a user is pre-selected from parent, load their predictions
+      this.loadUserPredictions();
+    }
   }
 
   onUserSelect(userId: number | null): void {
     if (userId == null) {
       // Reset selections and clear data when default option is chosen
-      this.selectedUserId = null;
+      this.preSelectedUserId = null;
       this.userPredictionData = null;
       this.error = '';
       this.loading = false;
       return;
     }
-    this.selectedUserId = userId;
+    this.preSelectedUserId = userId;
     this.loadUserPredictions();
   }
 
@@ -136,7 +163,7 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
     this.closed.emit();
     this.close.emit();
     // Local cleanup (do not mutate Input directly)
-    this.selectedUserId = null;
+    this.preSelectedUserId = null;
     this.userPredictionData = null;
     this.error = '';
   }

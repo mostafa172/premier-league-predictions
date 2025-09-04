@@ -11,12 +11,16 @@
     <!-- User and Gameweek Selection -->
     <div class="selection-section">
       <div class="form-group">
-        <label for="userSelect">Select User:</label>
+        <label for="userSelect" [class.disabled-label]="isUserPreSelected">
+          Select User:
+        </label>
         <select 
           id="userSelect" 
           [(ngModel)]="selectedUserId" 
           (change)="onUserSelect(selectedUserId)"
           class="form-control"
+          [class.disabled-select]="isUserPreSelected"
+          [disabled]="isUserPreSelected"
         >
           <option [ngValue]="null">Choose a user...</option>
           <option *ngFor="let user of filteredUsers" [ngValue]="user.id">
@@ -59,7 +63,7 @@
     <div *ngIf="userPredictionData && !loading && !error" class="predictions-display">
       <!-- User Summary -->
       <div class="user-summary">
-        <h3>{{ userPredictionData.user.username }}'s Gameweek {{ userPredictionData.gameweek }} Predictions</h3>
+        <h3>{{ userPredictionData.user.username }}'s Predictions</h3>
         <div class="total-points">
           <span class="points-label">Total Points:</span>
           <span class="points-value">{{ userPredictionData.totalPoints }} pts</span>
@@ -72,6 +76,7 @@
           *ngFor="let fixture of userPredictionData.fixtures; let i = index"
           class="fixture-row readonly"
           [class.disabled]="isFixtureDisabled(fixture)"
+          [class.is-double]="getPredictionForFixture(fixture.id)?.isDouble"
         >
           <div class="fixture-content">
             <!-- Meta line (date/deadline) -->
@@ -114,27 +119,44 @@
 
             <!-- Mobile Layout -->
             <div class="mobile-layout show-on-mobile">
-              <div class="teams-row">
-                <div class="team">
-                  <img [src]="fixture.homeTeam?.logoUrl" [alt]="fixture.homeTeam?.name" class="team-logo">
-                  <span class="team-name">{{ fixture.homeTeam?.abbreviation }}</span>
+              <!-- Teams row with final scores -->
+              <div class="finished-inline" *ngIf="fixture.status === 'finished'">
+                <div class="side home">
+                  <img [src]="fixture.homeTeam?.logoUrl" [alt]="fixture.homeTeam?.abbreviation" class="team-logo">
+                  <span class="abbr">{{ fixture.homeTeam?.abbreviation }}</span>
+                  <span class="score-badge">{{ fixture.homeScore }}</span>
                 </div>
-                <span class="vs">VS</span>
-                <div class="team">
-                  <img [src]="fixture.awayTeam?.logoUrl" [alt]="fixture.awayTeam?.name" class="team-logo">
-                  <span class="team-name">{{ fixture.awayTeam?.abbreviation }}</span>
+
+                <div class="vs-pill">vs</div>
+
+                <div class="side away">
+                  <span class="score-badge">{{ fixture.awayScore }}</span>
+                  <span class="abbr">{{ fixture.awayTeam?.abbreviation }}</span>
+                  <img [src]="fixture.awayTeam?.logoUrl" [alt]="fixture.awayTeam?.abbreviation" class="team-logo">
                 </div>
               </div>
 
-              <div class="prediction-row" *ngIf="getPredictionForFixture(fixture.id) as prediction">
-                <div class="prediction-info">
-                  <span class="prediction-label">Prediction:</span>
-                  <span class="prediction-scores">
-                    {{ prediction.predictedHomeScore }} - {{ prediction.predictedAwayScore }}
-                  </span>
-                  <span class="double-badge" *ngIf="prediction.isDouble">DOUBLE</span>
+              <!-- Teams row for upcoming fixtures -->
+              <div class="prediction-inline" *ngIf="fixture.status !== 'finished'">
+                <div class="side home">
+                  <img [src]="fixture.homeTeam?.logoUrl" [alt]="fixture.homeTeam?.abbreviation" class="team-logo">
+                  <span class="abbr">{{ fixture.homeTeam?.abbreviation }}</span>
                 </div>
-                <div class="points-info">
+
+                <div class="vs-pill">VS</div>
+
+                <div class="side away">
+                  <span class="abbr">{{ fixture.awayTeam?.abbreviation }}</span>
+                  <img [src]="fixture.awayTeam?.logoUrl" [alt]="fixture.awayTeam?.abbreviation" class="team-logo">
+                </div>
+              </div>
+
+              <!-- Prediction footer -->
+              <div class="finished-footer" *ngIf="getPredictionForFixture(fixture.id) as prediction">
+                <div class="your-line">
+                  <span class="label">Prediction:</span>
+                  <span class="pred">{{ prediction.predictedHomeScore }} – {{ prediction.predictedAwayScore }}</span>
+                  <span class="dot">•</span>
                   <span class="points">{{ getPredictionPoints(fixture) }} pts</span>
                 </div>
               </div>
