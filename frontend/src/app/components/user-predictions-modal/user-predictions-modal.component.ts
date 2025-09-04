@@ -25,8 +25,10 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
   @Input() isOpen = false;
   @Input() currentGameweek = 1;
   @Input() users: User[] = [];
-  @Input() set selectedUserId(value: number | null) {
+  @Input() set selectedUserId(value: number | null | undefined) {
     this.preSelectedUserId = value;
+    // If a value is provided, it means the user was pre-selected from leaderboard
+    this.isPreSelectedFromLeaderboard = value !== null && value !== undefined;
   }
 
   @Output() isOpenChange = new EventEmitter<boolean>();
@@ -34,15 +36,16 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
   // Back-compat for parent listening to (close)
   @Output() close = new EventEmitter<void>();
 
-  private preSelectedUserId: number | null = null;
+  private preSelectedUserId: number | null | undefined = undefined;
+  private isPreSelectedFromLeaderboard = false;
   selectedGameweek = 1;
   
-  get selectedUserId(): number | null {
+  get selectedUserId(): number | null | undefined {
     return this.preSelectedUserId;
   }
   
   get isUserPreSelected(): boolean {
-    return this.preSelectedUserId !== null;
+    return this.isPreSelectedFromLeaderboard;
   }
   userPredictionData: UserPredictionData | null = null;
   loading = false;
@@ -89,12 +92,13 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
     }
     if (changes['selectedUserId'] && this.preSelectedUserId) {
       // If a user is pre-selected from parent, load their predictions
+      this.isPreSelectedFromLeaderboard = true;
       this.loadUserPredictions();
     }
   }
 
-  onUserSelect(userId: number | null): void {
-    if (userId == null) {
+  onUserSelect(userId: number | null | undefined): void {
+    if (userId == null || userId === undefined) {
       // Reset selections and clear data when default option is chosen
       this.preSelectedUserId = null;
       this.userPredictionData = null;
@@ -102,13 +106,15 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
       this.loading = false;
       return;
     }
+    // When user selects from dropdown, don't mark as pre-selected from leaderboard
     this.preSelectedUserId = userId;
+    this.isPreSelectedFromLeaderboard = false;
     this.loadUserPredictions();
   }
 
   onGameweekChange(gameweek: number): void {
     this.selectedGameweek = gameweek;
-    if (this.selectedUserId != null) {
+    if (this.selectedUserId != null && this.selectedUserId !== undefined) {
       this.loadUserPredictions();
     } else {
       // No user selected: clear displayed data for the new gameweek
@@ -164,6 +170,7 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
     this.close.emit();
     // Local cleanup (do not mutate Input directly)
     this.preSelectedUserId = null;
+    this.isPreSelectedFromLeaderboard = false;
     this.userPredictionData = null;
     this.error = '';
   }
