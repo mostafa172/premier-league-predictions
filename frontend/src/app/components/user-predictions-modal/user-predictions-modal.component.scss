@@ -526,11 +526,12 @@
 // Responsive Design
 @media (max-width: 768px) {
   .modal-overlay {
-    padding: 0.5rem;
+    padding: 0.25rem;
   }
 
   .modal-content {
-    max-height: 95vh;
+    max-height: 85vh;
+    max-width: 95vw;
   }
 
   .modal-header {

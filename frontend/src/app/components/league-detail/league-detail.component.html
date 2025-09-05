@@ -77,6 +77,10 @@
     <!-- League Leaderboard -->
     <div class="leaderboard-section">
       <h3>League Leaderboard</h3>
+      <div class="leaderboard-hint">
+        <i class="fas fa-info-circle"></i>
+        <span>Click on any username to view their predictions</span>
+      </div>
       
       <div *ngIf="sortedMembers.length === 0" class="no-members">
         <i class="fas fa-users"></i>
@@ -94,7 +98,11 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let member of sortedMembers; let i = index" [class.creator]="member.isCreator">
+            <tr *ngFor="let member of sortedMembers; let i = index" 
+                [class.creator]="member.isCreator"
+                [class.clickable-row]="!isCurrentUser(member)" 
+                [class.current-user-row]="isCurrentUser(member)"
+                (click)="onUserClick(member)">
               <td class="rank">
                 <ng-container [ngSwitch]="i + 1">
                   <span *ngSwitchCase="1" class="trophy" aria-label="1st">🥇</span>
@@ -111,6 +119,10 @@
                     <i class="fas fa-crown"></i>
                     Creator
                   </span>
+                  <span *ngIf="isCurrentUser(member)" class="current-user-label">
+                    <i class="fas fa-user"></i>
+                    You
+                  </span>
                 </div>
               </td>
               
@@ -124,7 +136,12 @@
 
       <!-- Mobile List View -->
       <div *ngIf="sortedMembers.length > 0" class="leaderboard-list mobile-view">
-        <div *ngFor="let member of sortedMembers; let i = index" class="leaderboard-item" [class.creator]="member.isCreator">
+        <div *ngFor="let member of sortedMembers; let i = index" 
+             class="leaderboard-item" 
+             [class.creator]="member.isCreator"
+             [class.clickable-item]="!isCurrentUser(member)" 
+             [class.current-user-item]="isCurrentUser(member)"
+             (click)="onUserClick(member)">
           <div class="item-rank">
             <ng-container [ngSwitch]="i + 1">
               <span *ngSwitchCase="1" class="trophy" aria-label="1st">🥇</span>
@@ -139,6 +156,10 @@
             <div *ngIf="member.isCreator" class="creator-badge">
               <i class="fas fa-crown"></i>
               Creator
+            </div>
+            <div *ngIf="isCurrentUser(member)" class="current-user-badge">
+              <i class="fas fa-user"></i>
+              You
             </div>
           </div>
           
@@ -203,3 +224,14 @@
     </div>
   </div>
 </div>
+
+<!-- User Predictions Modal -->
+<app-user-predictions-modal
+  [isOpen]="showUserPredictionsModal"
+  [currentGameweek]="currentGameweek"
+  [users]="allUsers"
+  [selectedUserId]="selectedUser?.id || null"
+  (isOpenChange)="showUserPredictionsModal = $event"
+  (closed)="closeUserPredictionsModal()"
+  (close)="closeUserPredictionsModal()">
+</app-user-predictions-modal>

@@ -95,6 +95,13 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
       this.isPreSelectedFromLeaderboard = true;
       this.loadUserPredictions();
     }
+    
+    // Handle case where modal opens with both user and gameweek set
+    if (this.isOpen && this.preSelectedUserId && this.currentGameweek) {
+      this.selectedGameweek = this.currentGameweek;
+      this.isPreSelectedFromLeaderboard = true;
+      this.loadUserPredictions();
+    }
   }
 
   onUserSelect(userId: number | null | undefined): void {

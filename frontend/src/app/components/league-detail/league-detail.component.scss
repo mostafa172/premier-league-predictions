@@ -157,9 +157,26 @@
   h3 {
     color: var(--primary-color);
     font-size: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 0.5rem;
+  }
+
+  .leaderboard-hint {
+    background: rgba(0, 185, 74, 0.1);
+    color: var(--success-color);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+
+    i {
+      font-size: 1rem;
+    }
   }
 
   .no-members {
@@ -234,6 +251,20 @@
             border-left: 4px solid #ffc107;
           }
 
+          &.clickable-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+
+            &:hover {
+              background: rgba(56, 0, 60, 0.05);
+            }
+          }
+
+          &.current-user-row {
+            cursor: default;
+            opacity: 0.7;
+          }
+
           td {
             padding: 1rem;
             vertical-align: middle;
@@ -271,6 +302,16 @@
                   color: #ffc107;
                   font-size: 0.8rem;
                   font-weight: 600;
+                }
+
+                .current-user-label {
+                  display: flex;
+                  align-items: center;
+                  gap: 0.25rem;
+                  color: #6c757d;
+                  font-size: 0.8rem;
+                  font-weight: 600;
+                  font-style: italic;
                 }
               }
             }
@@ -320,6 +361,20 @@
       border-left: 4px solid #ffc107;
     }
 
+    &.clickable-item {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background: rgba(56, 0, 60, 0.05);
+      }
+    }
+
+    &.current-user-item {
+      cursor: default;
+      opacity: 0.7;
+    }
+
     .item-rank {
       width: 50px;
       text-align: center;
@@ -355,6 +410,16 @@
         color: #ffc107;
         font-size: 0.8rem;
         font-weight: 600;
+      }
+
+      .current-user-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: #6c757d;
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-style: italic;
       }
     }
 
