@@ -1,37 +1,37 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { LeagueService } from '../../services/league.service';
-import { LeagueDetails, LeagueMember } from '../../models/league.model';
-import { FixtureService } from '../../services/fixture.service';
-import { User } from '../../models/user.model';
-import { AuthService } from '../../services/auth.service';
+import { Component, OnInit, OnDestroy } from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import { Subscription } from "rxjs";
+import { LeagueService } from "../../services/league.service";
+import { LeagueDetails, LeagueMember } from "../../models/league.model";
+import { FixtureService } from "../../services/fixture.service";
+import { User } from "../../models/user.model";
+import { AuthService } from "../../services/auth.service";
 
 @Component({
-  selector: 'app-league-detail',
-  templateUrl: './league-detail.component.html',
-  styleUrls: ['./league-detail.component.scss']
+  selector: "app-league-detail",
+  templateUrl: "./league-detail.component.html",
+  styleUrls: ["./league-detail.component.scss"],
 })
 export class LeagueDetailComponent implements OnInit, OnDestroy {
   leagueId: number | null = null;
   leagueDetails: LeagueDetails | null = null;
   loading = false;
-  error = '';
+  error = "";
   showLeaveModal = false;
   showDeleteModal = false;
-  
+
   // Toast properties
   showToast = false;
-  toastMessage = '';
-  toastType = 'success'; // 'success' or 'error'
-  
+  toastMessage = "";
+  toastType = "success"; // 'success' or 'error'
+
   // User predictions modal properties
   showUserPredictionsModal = false;
   selectedUser: User | null = null;
   allUsers: User[] = [];
   currentGameweek: number = 1;
   currentUserId: number | null = null;
-  
+
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -47,8 +47,8 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
     const currentUser = this.authService.getCurrentUser();
     this.currentUserId = currentUser?.id || null;
 
-    this.route.params.subscribe(params => {
-      this.leagueId = parseInt(params['id']);
+    this.route.params.subscribe((params) => {
+      this.leagueId = parseInt(params["id"]);
       if (this.leagueId) {
         this.loadLeagueDetails();
         this.loadAllUsers();
@@ -58,14 +58,14 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
   loadLeagueDetails(): void {
     if (!this.leagueId) return;
 
     this.loading = true;
-    this.error = '';
+    this.error = "";
 
     const sub = this.leagueService.getLeagueDetails(this.leagueId).subscribe({
       next: (response) => {
@@ -73,27 +73,30 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
           this.leagueDetails = response.data;
           this.loadAllUsers(); // Load users after league details are loaded
         } else {
-          this.error = response.message || 'Failed to load league details';
+          this.error = response.message || "Failed to load league details";
         }
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading league details:', error);
-        this.error = 'Error loading league details';
+        console.error("Error loading league details:", error);
+        this.error = "Error loading league details";
         this.loading = false;
-      }
+      },
     });
 
     this.subscriptions.push(sub);
   }
 
   copyJoinCode(joinCode: string): void {
-    navigator.clipboard.writeText(joinCode).then(() => {
-      this.showToastMessage('League code copied to clipboard!', 'success');
-    }).catch(err => {
-      console.error('Failed to copy join code:', err);
-      this.showToastMessage('Failed to copy league code', 'error');
-    });
+    navigator.clipboard
+      .writeText(joinCode)
+      .then(() => {
+        this.showToastMessage("League code copied to clipboard!", "success");
+      })
+      .catch((err) => {
+        console.error("Failed to copy join code:", err);
+        this.showToastMessage("Failed to copy league code", "error");
+      });
   }
 
   openLeaveModal(): void {
@@ -108,27 +111,61 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
     if (!this.leagueId) return;
 
     this.loading = true;
-    this.error = '';
+    this.error = "";
 
     const sub = this.leagueService.leaveLeague(this.leagueId).subscribe({
       next: (response) => {
         if (response.success) {
-          this.showToastMessage('You have successfully left the league!', 'success');
           this.closeLeaveModal();
-          // Navigate back to leagues page after a short delay
-          setTimeout(() => {
-            this.router.navigate(['/leagues']);
-          }, 2000);
+          // Navigate with success message
+          this.router.navigate(["/leagues"], {
+            state: {
+              successMessage: `You have successfully left "${this.leagueDetails?.league?.name}"!`,
+              messageType: "success",
+            },
+          });
         } else {
-          this.error = response.message || 'Failed to leave league';
+          this.error = response.message || "Failed to leave league";
         }
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error leaving league:', error);
-        this.error = 'Error leaving league';
+        console.error("Error leaving league:", error);
+        this.error = "Error leaving league";
         this.loading = false;
-      }
+      },
+    });
+
+    this.subscriptions.push(sub);
+  }
+
+  deleteLeague(): void {
+    if (!this.leagueId) return;
+
+    this.loading = true;
+    this.error = "";
+
+    const sub = this.leagueService.deleteLeague(this.leagueId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.closeDeleteModal();
+          // Navigate with success message
+          this.router.navigate(["/leagues"], {
+            state: {
+              successMessage: `League "${this.leagueDetails?.league?.name}" has been successfully deleted!`,
+              messageType: "success",
+            },
+          });
+        } else {
+          this.error = response.message || "Failed to delete league";
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error("Error deleting league:", error);
+        this.error = "Error deleting league";
+        this.loading = false;
+      },
     });
 
     this.subscriptions.push(sub);
@@ -142,38 +179,8 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
     this.showDeleteModal = false;
   }
 
-  deleteLeague(): void {
-    if (!this.leagueId) return;
-
-    this.loading = true;
-    this.error = '';
-
-    const sub = this.leagueService.deleteLeague(this.leagueId).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.showToastMessage('League has been successfully deleted!', 'success');
-          this.closeDeleteModal();
-          // Navigate back to leagues page after a short delay
-          setTimeout(() => {
-            this.router.navigate(['/leagues']);
-          }, 2000);
-        } else {
-          this.error = response.message || 'Failed to delete league';
-        }
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error deleting league:', error);
-        this.error = 'Error deleting league';
-        this.loading = false;
-      }
-    });
-
-    this.subscriptions.push(sub);
-  }
-
   goBack(): void {
-    this.router.navigate(['/leagues']);
+    this.router.navigate(["/leagues"]);
   }
 
   refreshData(): void {
@@ -185,44 +192,43 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
     if (this.leagueDetails?.league.isCreator !== undefined) {
       return this.leagueDetails.league.isCreator;
     }
-    
+
     // Fallback: check if current user is the creator
     if (this.leagueDetails?.league.createdBy && this.currentUserId) {
       return this.leagueDetails.league.createdBy === this.currentUserId;
     }
-    
+
     return false;
   }
 
   get sortedMembers(): LeagueMember[] {
     if (!this.leagueDetails?.members) return [];
-    
+
     return [...this.leagueDetails.members].sort((a, b) => {
       // Creator always first
       if (a.isCreator && !b.isCreator) return -1;
       if (!a.isCreator && b.isCreator) return 1;
-      
+
       // Then by points (descending)
       if (b.totalPoints !== a.totalPoints) {
         return b.totalPoints - a.totalPoints;
       }
-      
+
       // Finally by username (ascending)
       return a.username.localeCompare(b.username);
     });
   }
 
-
   loadAllUsers(): void {
     // Convert league members to User objects for the modal
     if (this.leagueDetails?.members) {
-      this.allUsers = this.leagueDetails.members.map(member => ({
+      this.allUsers = this.leagueDetails.members.map((member) => ({
         id: member.id,
         username: member.username,
-        email: '', // Not needed for the modal
+        email: "", // Not needed for the modal
         totalPoints: member.totalPoints,
         createdAt: member.joinedAt,
-        isAdmin: false // Not needed for the modal
+        isAdmin: false, // Not needed for the modal
       }));
     }
   }
@@ -233,9 +239,9 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
         this.currentGameweek = gameweek;
       },
       error: (error) => {
-        console.error('Error loading current gameweek:', error);
+        console.error("Error loading current gameweek:", error);
         this.currentGameweek = 1; // fallback
-      }
+      },
     });
     this.subscriptions.push(sub);
   }
@@ -247,8 +253,9 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
     }
 
     // Find the user in allUsers array
-    this.selectedUser = this.allUsers.find(user => user.id === member.id) || null;
-    
+    this.selectedUser =
+      this.allUsers.find((user) => user.id === member.id) || null;
+
     if (this.selectedUser) {
       // Get the closest gameweek before opening the modal (like leaderboard component)
       this.fixtureService.getClosestGameweek().subscribe({
@@ -266,7 +273,7 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
           setTimeout(() => {
             this.showUserPredictionsModal = true;
           }, 50);
-        }
+        },
       });
     }
   }
@@ -280,11 +287,11 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
     return member.id === this.currentUserId;
   }
 
-  showToastMessage(message: string, type: 'success' | 'error'): void {
+  showToastMessage(message: string, type: "success" | "error"): void {
     this.toastMessage = message;
     this.toastType = type;
     this.showToast = true;
-    
+
     // Auto-hide toast after 3 seconds
     setTimeout(() => {
       this.showToast = false;
