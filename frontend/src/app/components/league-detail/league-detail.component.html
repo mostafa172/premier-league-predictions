@@ -4,24 +4,28 @@
       <i class="fas fa-arrow-left"></i>
       Back to Leagues
     </button>
-    
+
     <div class="header-actions">
-      <button class="btn btn-outline" (click)="refreshData()" [disabled]="loading">
+      <button
+        class="btn btn-outline"
+        (click)="refreshData()"
+        [disabled]="loading"
+      >
         <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
         Refresh
       </button>
-      <button 
-        *ngIf="!isCreator" 
-        class="btn btn-danger" 
+      <button
+        *ngIf="!isCreator"
+        class="btn btn-danger"
         (click)="openLeaveModal()"
         [disabled]="loading"
       >
         <i class="fas fa-sign-out-alt"></i>
         Leave League
       </button>
-      <button 
-        *ngIf="isCreator" 
-        class="btn btn-danger delete-league-btn" 
+      <button
+        *ngIf="isCreator"
+        class="btn btn-danger delete-league-btn"
         (click)="openDeleteModal()"
         [disabled]="loading"
       >
@@ -59,22 +63,29 @@
           </div>
         </div>
       </div>
-      
+
       <div class="league-details">
         <p *ngIf="leagueDetails.league.description" class="description">
           {{ leagueDetails.league.description }}
         </p>
-        
+
         <div class="league-meta">
           <div class="meta-item">
             <span class="label">Created by:</span>
-            <span class="value">{{ leagueDetails.league.creator?.username || leagueDetails.league.creatorUsername }}</span>
+            <span class="value">{{
+              leagueDetails.league.creator?.username ||
+                leagueDetails.league.creatorUsername
+            }}</span>
           </div>
           <div class="meta-item">
             <span class="label">Join Code:</span>
             <span class="value join-code">
               {{ leagueDetails.league.joinCode }}
-              <button class="copy-btn" (click)="copyJoinCode(leagueDetails.league.joinCode)" title="Copy join code">
+              <button
+                class="copy-btn"
+                (click)="copyJoinCode(leagueDetails.league.joinCode)"
+                title="Copy join code"
+              >
                 <i class="fas fa-copy"></i>
               </button>
             </span>
@@ -90,14 +101,17 @@
         <i class="fas fa-info-circle"></i>
         <span>Click on any username to view their predictions</span>
       </div>
-      
+
       <div *ngIf="sortedMembers.length === 0" class="no-members">
         <i class="fas fa-users"></i>
         <p>No members in this league yet.</p>
       </div>
-      
+
       <!-- Desktop Table View -->
-      <div *ngIf="sortedMembers.length > 0" class="leaderboard-table desktop-view">
+      <div
+        *ngIf="sortedMembers.length > 0"
+        class="leaderboard-table desktop-view"
+      >
         <table>
           <thead>
             <tr>
@@ -107,20 +121,28 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let member of sortedMembers; let i = index" 
-                [class.creator]="member.isCreator"
-                [class.clickable-row]="!isCurrentUser(member)" 
-                [class.current-user-row]="isCurrentUser(member)"
-                (click)="onUserClick(member)">
+            <tr
+              *ngFor="let member of sortedMembers; let i = index"
+              [class.current-user]="isCurrentUser(member)"
+              [class.clickable-row]="!isCurrentUser(member)"
+              [class.current-user-row]="isCurrentUser(member)"
+              (click)="onUserClick(member)"
+            >
               <td class="rank">
                 <ng-container [ngSwitch]="i + 1">
-                  <span *ngSwitchCase="1" class="trophy" aria-label="1st">🥇</span>
-                  <span *ngSwitchCase="2" class="trophy" aria-label="2nd">🥈</span>
-                  <span *ngSwitchCase="3" class="trophy" aria-label="3rd">🥉</span>
+                  <span *ngSwitchCase="1" class="trophy" aria-label="1st"
+                    >🥇</span
+                  >
+                  <span *ngSwitchCase="2" class="trophy" aria-label="2nd"
+                    >🥈</span
+                  >
+                  <span *ngSwitchCase="3" class="trophy" aria-label="3rd"
+                    >🥉</span
+                  >
                   <span *ngSwitchDefault class="rank-number">{{ i + 1 }}</span>
                 </ng-container>
               </td>
-              
+
               <td class="username-cell">
                 <div class="username">
                   <span class="name">{{ member.username }}</span>
@@ -128,13 +150,16 @@
                     <i class="fas fa-crown"></i>
                     Creator
                   </span>
-                  <span *ngIf="isCurrentUser(member)" class="current-user-label">
+                  <span
+                    *ngIf="isCurrentUser(member)"
+                    class="current-user-label"
+                  >
                     <i class="fas fa-user"></i>
                     You
                   </span>
                 </div>
               </td>
-              
+
               <td class="points">
                 <span class="points-number">{{ member.totalPoints }}</span>
               </td>
@@ -144,13 +169,18 @@
       </div>
 
       <!-- Mobile List View -->
-      <div *ngIf="sortedMembers.length > 0" class="leaderboard-list mobile-view">
-        <div *ngFor="let member of sortedMembers; let i = index" 
-             class="leaderboard-item" 
-             [class.creator]="member.isCreator"
-             [class.clickable-item]="!isCurrentUser(member)" 
-             [class.current-user-item]="isCurrentUser(member)"
-             (click)="onUserClick(member)">
+      <div
+        *ngIf="sortedMembers.length > 0"
+        class="leaderboard-list mobile-view"
+      >
+        <div
+          *ngFor="let member of sortedMembers; let i = index"
+          class="leaderboard-item"
+          [class.current-user]="isCurrentUser(member)"
+          [class.clickable-item]="!isCurrentUser(member)"
+          [class.current-user-item]="isCurrentUser(member)"
+          (click)="onUserClick(member)"
+        >
           <div class="item-rank">
             <ng-container [ngSwitch]="i + 1">
               <span *ngSwitchCase="1" class="trophy" aria-label="1st">🥇</span>
@@ -159,7 +189,7 @@
               <span *ngSwitchDefault class="rank-number">{{ i + 1 }}</span>
             </ng-container>
           </div>
-          
+
           <div class="item-member">
             <div class="member-name">{{ member.username }}</div>
             <div *ngIf="member.isCreator" class="creator-badge">
@@ -171,7 +201,7 @@
               You
             </div>
           </div>
-          
+
           <div class="item-points">
             <span class="points-number">{{ member.totalPoints }}</span>
             <span class="points-label">points</span>
@@ -191,21 +221,31 @@
         <i class="fas fa-times"></i>
       </button>
     </div>
-    
+
     <div class="modal-body">
       <div class="warning-message">
         <i class="fas fa-exclamation-triangle"></i>
-        <p>Are you sure you want to leave <strong>{{ leagueDetails?.league?.name }}</strong>?</p>
+        <p>
+          Are you sure you want to leave
+          <strong>{{ leagueDetails?.league?.name }}</strong
+          >?
+        </p>
         <p>You will lose access to this league and its leaderboard.</p>
       </div>
     </div>
-    
+
     <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="closeLeaveModal()">Cancel</button>
-      <button class="btn btn-danger" (click)="leaveLeague()" [disabled]="loading">
+      <button class="btn btn-secondary" (click)="closeLeaveModal()">
+        Cancel
+      </button>
+      <button
+        class="btn btn-danger"
+        (click)="leaveLeague()"
+        [disabled]="loading"
+      >
         <i class="fas fa-sign-out-alt" *ngIf="!loading"></i>
         <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
-        {{ loading ? 'Leaving...' : 'Leave League' }}
+        {{ loading ? "Leaving..." : "Leave League" }}
       </button>
     </div>
   </div>
@@ -220,39 +260,61 @@
         <i class="fas fa-times"></i>
       </button>
     </div>
-    
+
     <div class="modal-body">
       <div class="warning-message">
         <i class="fas fa-exclamation-triangle"></i>
-        <p>Are you sure you want to delete <strong>{{ leagueDetails?.league?.name }}</strong>?</p>
-        <p><strong>This action cannot be undone.</strong> All members will be removed from this league and all data will be permanently deleted.</p>
+        <p>
+          Are you sure you want to delete
+          <strong>{{ leagueDetails?.league?.name }}</strong
+          >?
+        </p>
+        <p>
+          <strong>This action cannot be undone.</strong> All members will be
+          removed from this league and all data will be permanently deleted.
+        </p>
       </div>
     </div>
-    
+
     <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="closeDeleteModal()">Cancel</button>
-      <button class="btn btn-danger" (click)="deleteLeague()" [disabled]="loading">
+      <button class="btn btn-secondary" (click)="closeDeleteModal()">
+        Cancel
+      </button>
+      <button
+        class="btn btn-danger"
+        (click)="deleteLeague()"
+        [disabled]="loading"
+      >
         <i class="fas fa-trash" *ngIf="!loading"></i>
         <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
-        {{ loading ? 'Deleting...' : 'Delete League' }}
+        {{ loading ? "Deleting..." : "Delete League" }}
       </button>
     </div>
   </div>
 </div>
 
-
 <!-- User Predictions Modal -->
-  <app-user-predictions-modal 
-    [isOpen]="showUserPredictionsModal"
-    [currentGameweek]="currentGameweek"
-    [selectedUser]="selectedUser"
-    (isOpenChange)="showUserPredictionsModal = $event"
-    (closed)="closeUserPredictionsModal()"
-    (close)="closeUserPredictionsModal()">
-  </app-user-predictions-modal>
+<app-user-predictions-modal
+  [isOpen]="showUserPredictionsModal"
+  [currentGameweek]="currentGameweek"
+  [selectedUser]="selectedUser"
+  (isOpenChange)="showUserPredictionsModal = $event"
+  (closed)="closeUserPredictionsModal()"
+  (close)="closeUserPredictionsModal()"
+>
+</app-user-predictions-modal>
 
 <!-- Toast Message -->
-<div class="toast" *ngIf="showToast" [class.toast-success]="toastType === 'success'" [class.toast-error]="toastType === 'error'">
-  <i class="fas" [class.fa-check-circle]="toastType === 'success'" [class.fa-exclamation-circle]="toastType === 'error'"></i>
+<div
+  class="toast"
+  *ngIf="showToast"
+  [class.toast-success]="toastType === 'success'"
+  [class.toast-error]="toastType === 'error'"
+>
+  <i
+    class="fas"
+    [class.fa-check-circle]="toastType === 'success'"
+    [class.fa-exclamation-circle]="toastType === 'error'"
+  ></i>
   <span>{{ toastMessage }}</span>
 </div>

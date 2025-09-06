@@ -205,10 +205,6 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
     if (!this.leagueDetails?.members) return [];
 
     return [...this.leagueDetails.members].sort((a, b) => {
-      // Creator always first
-      if (a.isCreator && !b.isCreator) return -1;
-      if (!a.isCreator && b.isCreator) return 1;
-
       // Then by points (descending)
       if (b.totalPoints !== a.totalPoints) {
         return b.totalPoints - a.totalPoints;

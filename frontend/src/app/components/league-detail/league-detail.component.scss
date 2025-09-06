@@ -246,9 +246,35 @@
             border-bottom: none;
           }
 
-          &.creator {
-            background: rgba(255, 193, 7, 0.05);
+          &.current-user {
+            background: rgba(255, 193, 7, 0.08);
             border-left: 4px solid #ffc107;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+
+            // Make the golden border more prominent
+            position: relative;
+
+            &::before {
+              content: "";
+              position: absolute;
+              left: 0;
+              top: 0;
+              bottom: 0;
+              width: 4px;
+              background: linear-gradient(
+                135deg,
+                #ffc107 0%,
+                #ffb300 50%,
+                #ff8f00 100%
+              );
+              border-radius: 0 2px 2px 0;
+            }
+
+            // Add subtle golden glow
+            &:hover {
+              background: rgba(255, 193, 7, 0.12);
+              box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+            }
           }
 
           &.clickable-row {
@@ -262,7 +288,7 @@
 
           &.current-user-row {
             cursor: default;
-            opacity: 0.7;
+            opacity: 1;
           }
 
           td {
@@ -299,19 +325,27 @@
                   display: flex;
                   align-items: center;
                   gap: 0.25rem;
-                  color: #ffc107;
+                  color: #17a2b8; // Change to a different color (teal)
                   font-size: 0.8rem;
                   font-weight: 600;
+
+                  i {
+                    color: #17a2b8;
+                  }
                 }
 
                 .current-user-label {
                   display: flex;
                   align-items: center;
                   gap: 0.25rem;
-                  color: #6c757d;
+                  color: #ffc107 !important;
                   font-size: 0.8rem;
                   font-weight: 600;
-                  font-style: italic;
+                  font-style: normal;
+
+                  i {
+                    color: #ffc107;
+                  }
                 }
               }
             }
@@ -356,9 +390,34 @@
       border-bottom: none;
     }
 
-    &.creator {
-      background: rgba(255, 193, 7, 0.05);
+    // Add current user styling for mobile
+    &.current-user {
+      background: rgba(255, 193, 7, 0.08);
       border-left: 4px solid #ffc107;
+      box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+
+      position: relative;
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(
+          135deg,
+          #ffc107 0%,
+          #ffb300 50%,
+          #ff8f00 100%
+        );
+        border-radius: 0 2px 2px 0;
+      }
+
+      &:hover {
+        background: rgba(255, 193, 7, 0.12);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+      }
     }
 
     &.clickable-item {
@@ -372,7 +431,7 @@
 
     &.current-user-item {
       cursor: default;
-      opacity: 0.7;
+      opacity: 1;
     }
 
     .item-rank {
@@ -407,19 +466,27 @@
         display: flex;
         align-items: center;
         gap: 0.25rem;
-        color: #ffc107;
+        color: #17a2b8; // Change to a different color (teal)
         font-size: 0.8rem;
         font-weight: 600;
+
+        i {
+          color: #17a2b8;
+        }
       }
 
       .current-user-badge {
         display: flex;
         align-items: center;
         gap: 0.25rem;
-        color: #6c757d;
+        color: #ffc107 !important;
         font-size: 0.8rem;
         font-weight: 600;
-        font-style: italic;
+        font-style: normal;
+
+        i {
+          color: #ffc107;
+        }
       }
     }
 
@@ -618,7 +685,7 @@
     &.delete-league-btn {
       background: #dc3545;
       border: 2px solid #dc3545;
-      
+
       &:hover:not(:disabled) {
         background: #b02a37;
         border-color: #b02a37;
@@ -677,7 +744,7 @@
 
   &.toast-success {
     border-left-color: var(--success-color);
-    
+
     i {
       color: var(--success-color);
     }
@@ -685,7 +752,7 @@
 
   &.toast-error {
     border-left-color: #dc3545;
-    
+
     i {
       color: #dc3545;
     }
@@ -784,5 +851,17 @@
     left: 10px;
     max-width: none;
     padding: 0.75rem 1rem;
+  }
+}
+
+// If the current user is also the creator, prioritize the current user styling
+.current-user {
+  .creator-label,
+  .creator-badge {
+    color: #ffc107 !important;
+
+    i {
+      color: #ffc107 !important;
+    }
   }
 }
