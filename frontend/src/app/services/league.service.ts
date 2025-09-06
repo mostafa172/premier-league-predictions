@@ -67,6 +67,13 @@ export class LeagueService {
     });
   }
 
+  // Delete a league (creator only)
+  deleteLeague(leagueId: number): Observable<{ success: boolean; message?: string }> {
+    return this.http.delete<{ success: boolean; message?: string }>(`${this.API_URL}/leagues/${leagueId}`, {
+      headers: this.getHeaders(),
+    });
+  }
+
   // Get league details with members
   getLeagueDetails(leagueId: number): Observable<LeagueDetailsResponse> {
     return this.http.get<LeagueDetailsResponse>(`${this.API_URL}/leagues/${leagueId}`, {

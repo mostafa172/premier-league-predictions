@@ -19,6 +19,15 @@
         <i class="fas fa-sign-out-alt"></i>
         Leave League
       </button>
+      <button 
+        *ngIf="isCreator" 
+        class="btn btn-danger delete-league-btn" 
+        (click)="openDeleteModal()"
+        [disabled]="loading"
+      >
+        <i class="fas fa-trash"></i>
+        Delete League
+      </button>
     </div>
   </div>
 
@@ -202,36 +211,48 @@
   </div>
 </div>
 
-<!-- Success Modal -->
-<div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
-  <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+<!-- Delete League Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Success!</h3>
-      <button class="close-btn" (click)="closeSuccessModal()">
+      <h3>Delete League</h3>
+      <button class="close-btn" (click)="closeDeleteModal()">
         <i class="fas fa-times"></i>
       </button>
     </div>
     
     <div class="modal-body">
-      <div class="success-message">
-        <i class="fas fa-check-circle"></i>
-        <p>{{ successMessage }}</p>
+      <div class="warning-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Are you sure you want to delete <strong>{{ leagueDetails?.league?.name }}</strong>?</p>
+        <p><strong>This action cannot be undone.</strong> All members will be removed from this league and all data will be permanently deleted.</p>
       </div>
     </div>
     
     <div class="modal-footer">
-      <button class="btn btn-primary" (click)="closeSuccessModal()">Got it!</button>
+      <button class="btn btn-secondary" (click)="closeDeleteModal()">Cancel</button>
+      <button class="btn btn-danger" (click)="deleteLeague()" [disabled]="loading">
+        <i class="fas fa-trash" *ngIf="!loading"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+        {{ loading ? 'Deleting...' : 'Delete League' }}
+      </button>
     </div>
   </div>
 </div>
 
+
 <!-- User Predictions Modal -->
-<app-user-predictions-modal
-  [isOpen]="showUserPredictionsModal"
-  [currentGameweek]="currentGameweek"
-  [users]="allUsers"
-  [selectedUserId]="selectedUser?.id || null"
-  (isOpenChange)="showUserPredictionsModal = $event"
-  (closed)="closeUserPredictionsModal()"
-  (close)="closeUserPredictionsModal()">
-</app-user-predictions-modal>
+  <app-user-predictions-modal 
+    [isOpen]="showUserPredictionsModal"
+    [currentGameweek]="currentGameweek"
+    [selectedUser]="selectedUser"
+    (isOpenChange)="showUserPredictionsModal = $event"
+    (closed)="closeUserPredictionsModal()"
+    (close)="closeUserPredictionsModal()">
+  </app-user-predictions-modal>
+
+<!-- Toast Message -->
+<div class="toast" *ngIf="showToast" [class.toast-success]="toastType === 'success'" [class.toast-error]="toastType === 'error'">
+  <i class="fas" [class.fa-check-circle]="toastType === 'success'" [class.fa-exclamation-circle]="toastType === 'error'"></i>
+  <span>{{ toastMessage }}</span>
+</div>

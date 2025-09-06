@@ -24,35 +24,18 @@ interface UserPredictionData {
 export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChanges {
   @Input() isOpen = false;
   @Input() currentGameweek = 1;
-  @Input() users: User[] = [];
-  @Input() set selectedUserId(value: number | null | undefined) {
-    this.preSelectedUserId = value;
-    // If a value is provided, it means the user was pre-selected from leaderboard
-    this.isPreSelectedFromLeaderboard = value !== null && value !== undefined;
-  }
+  @Input() selectedUser: User | null = null;
 
   @Output() isOpenChange = new EventEmitter<boolean>();
   @Output() closed = new EventEmitter<void>();
   // Back-compat for parent listening to (close)
   @Output() close = new EventEmitter<void>();
 
-  private preSelectedUserId: number | null | undefined = undefined;
-  private isPreSelectedFromLeaderboard = false;
   selectedGameweek = 1;
-  
-  get selectedUserId(): number | null | undefined {
-    return this.preSelectedUserId;
-  }
-  
-  get isUserPreSelected(): boolean {
-    return this.isPreSelectedFromLeaderboard;
-  }
   userPredictionData: UserPredictionData | null = null;
   loading = false;
   error = '';
   private subscriptions: Subscription[] = [];
-  // Filtered users for selection (exclude current user and zero-point users)
-  filteredUsers: User[] = [];
   private currentUserId: number | null = null;
 
   constructor(private predictionService: PredictionService, private authService: AuthService) {}
@@ -61,10 +44,9 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
     this.selectedGameweek = this.currentGameweek;
     const me = this.authService.getCurrentUser();
     this.currentUserId = me?.id ?? null;
-    this.refreshFilteredUsers();
     
     // If a user is pre-selected, load their predictions
-    if (this.preSelectedUserId) {
+    if (this.selectedUser) {
       this.loadUserPredictions();
     }
   }
@@ -78,50 +60,29 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
       // Reset transient UI state on open
       this.loading = false;
       this.error = '';
-      // Keep selections to allow quick re-open review
-    }
-    if (changes['users']) {
-      this.refreshFilteredUsers();
     }
     if (changes['currentGameweek']) {
       // Update selected gameweek when currentGameweek input changes
       this.selectedGameweek = this.currentGameweek;
-      if (this.preSelectedUserId) {
+      if (this.selectedUser) {
         this.loadUserPredictions();
       }
     }
-    if (changes['selectedUserId'] && this.preSelectedUserId) {
+    if (changes['selectedUser'] && this.selectedUser) {
       // If a user is pre-selected from parent, load their predictions
-      this.isPreSelectedFromLeaderboard = true;
       this.loadUserPredictions();
     }
     
     // Handle case where modal opens with both user and gameweek set
-    if (this.isOpen && this.preSelectedUserId && this.currentGameweek) {
+    if (this.isOpen && this.selectedUser && this.currentGameweek) {
       this.selectedGameweek = this.currentGameweek;
-      this.isPreSelectedFromLeaderboard = true;
       this.loadUserPredictions();
     }
   }
 
-  onUserSelect(userId: number | null | undefined): void {
-    if (userId == null || userId === undefined) {
-      // Reset selections and clear data when default option is chosen
-      this.preSelectedUserId = null;
-      this.userPredictionData = null;
-      this.error = '';
-      this.loading = false;
-      return;
-    }
-    // When user selects from dropdown, don't mark as pre-selected from leaderboard
-    this.preSelectedUserId = userId;
-    this.isPreSelectedFromLeaderboard = false;
-    this.loadUserPredictions();
-  }
-
   onGameweekChange(gameweek: number): void {
     this.selectedGameweek = gameweek;
-    if (this.selectedUserId != null && this.selectedUserId !== undefined) {
+    if (this.selectedUser) {
       this.loadUserPredictions();
     } else {
       // No user selected: clear displayed data for the new gameweek
@@ -132,13 +93,13 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
   }
 
   loadUserPredictions(): void {
-    if (!this.selectedUserId) return;
+    if (!this.selectedUser) return;
 
     this.loading = true;
     this.error = '';
     this.userPredictionData = null;
 
-    const sub = this.predictionService.getOtherUserPredictions(this.selectedUserId, this.selectedGameweek)
+    const sub = this.predictionService.getOtherUserPredictions(this.selectedUser.id, this.selectedGameweek)
       .subscribe({
         next: (response) => {
           this.loading = false;
@@ -175,9 +136,7 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
     this.isOpen = false;
     this.closed.emit();
     this.close.emit();
-    // Local cleanup (do not mutate Input directly)
-    this.preSelectedUserId = null;
-    this.isPreSelectedFromLeaderboard = false;
+    // Local cleanup
     this.userPredictionData = null;
     this.error = '';
   }
@@ -225,33 +184,4 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
     this.loadUserPredictions();
   }
 
-  private refreshFilteredUsers(): void {
-    // If no users list, nothing to filter
-    if (!this.users || this.users.length === 0) {
-      this.filteredUsers = [];
-      return;
-    }
-
-    // Fetch leaderboard to know who has points
-    const sub = this.predictionService.getLeaderboard().subscribe({
-      next: (resp) => {
-        if (resp?.success && Array.isArray(resp.data)) {
-          const usersWithPoints = new Set<number>(resp.data.filter((u: any) => (u.totalPoints ?? 0) > 0).map((u: any) => u.userId));
-          this.filteredUsers = this.users.filter(u => {
-            const notMe = this.currentUserId == null ? true : u.id !== this.currentUserId;
-            const hasPoints = usersWithPoints.has(u.id);
-            return notMe && hasPoints;
-          });
-        } else {
-          // Fallback: exclude only current user
-          this.filteredUsers = this.users.filter(u => (this.currentUserId == null ? true : u.id !== this.currentUserId));
-        }
-      },
-      error: () => {
-        // On error, fallback to excluding current user only
-        this.filteredUsers = this.users.filter(u => (this.currentUserId == null ? true : u.id !== this.currentUserId));
-      }
-    });
-    this.subscriptions.push(sub);
-  }
 }

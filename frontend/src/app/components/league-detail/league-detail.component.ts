@@ -18,8 +18,12 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
   loading = false;
   error = '';
   showLeaveModal = false;
-  showSuccessModal = false;
-  successMessage = '';
+  showDeleteModal = false;
+  
+  // Toast properties
+  showToast = false;
+  toastMessage = '';
+  toastType = 'success'; // 'success' or 'error'
   
   // User predictions modal properties
   showUserPredictionsModal = false;
@@ -85,11 +89,10 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
 
   copyJoinCode(joinCode: string): void {
     navigator.clipboard.writeText(joinCode).then(() => {
-      // Show a simple alert for now (you can replace with a proper toast later)
-      alert('League code copied to clipboard!');
+      this.showToastMessage('League code copied to clipboard!', 'success');
     }).catch(err => {
       console.error('Failed to copy join code:', err);
-      alert('Failed to copy league code');
+      this.showToastMessage('Failed to copy league code', 'error');
     });
   }
 
@@ -110,8 +113,7 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
     const sub = this.leagueService.leaveLeague(this.leagueId).subscribe({
       next: (response) => {
         if (response.success) {
-          this.successMessage = 'You have successfully left the league!';
-          this.showSuccessModal = true;
+          this.showToastMessage('You have successfully left the league!', 'success');
           this.closeLeaveModal();
           // Navigate back to leagues page after a short delay
           setTimeout(() => {
@@ -132,6 +134,44 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
     this.subscriptions.push(sub);
   }
 
+  openDeleteModal(): void {
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+  }
+
+  deleteLeague(): void {
+    if (!this.leagueId) return;
+
+    this.loading = true;
+    this.error = '';
+
+    const sub = this.leagueService.deleteLeague(this.leagueId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.showToastMessage('League has been successfully deleted!', 'success');
+          this.closeDeleteModal();
+          // Navigate back to leagues page after a short delay
+          setTimeout(() => {
+            this.router.navigate(['/leagues']);
+          }, 2000);
+        } else {
+          this.error = response.message || 'Failed to delete league';
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error deleting league:', error);
+        this.error = 'Error deleting league';
+        this.loading = false;
+      }
+    });
+
+    this.subscriptions.push(sub);
+  }
+
   goBack(): void {
     this.router.navigate(['/leagues']);
   }
@@ -141,7 +181,17 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
   }
 
   get isCreator(): boolean {
-    return this.leagueDetails?.league.isCreator || false;
+    // Check both the backend response and direct comparison
+    if (this.leagueDetails?.league.isCreator !== undefined) {
+      return this.leagueDetails.league.isCreator;
+    }
+    
+    // Fallback: check if current user is the creator
+    if (this.leagueDetails?.league.createdBy && this.currentUserId) {
+      return this.leagueDetails.league.createdBy === this.currentUserId;
+    }
+    
+    return false;
   }
 
   get sortedMembers(): LeagueMember[] {
@@ -162,10 +212,6 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  closeSuccessModal(): void {
-    this.showSuccessModal = false;
-    this.successMessage = '';
-  }
 
   loadAllUsers(): void {
     // Convert league members to User objects for the modal
@@ -232,5 +278,16 @@ export class LeagueDetailComponent implements OnInit, OnDestroy {
 
   isCurrentUser(member: LeagueMember): boolean {
     return member.id === this.currentUserId;
+  }
+
+  showToastMessage(message: string, type: 'success' | 'error'): void {
+    this.toastMessage = message;
+    this.toastType = type;
+    this.showToast = true;
+    
+    // Auto-hide toast after 3 seconds
+    setTimeout(() => {
+      this.showToast = false;
+    }, 3000);
   }
 }

@@ -195,8 +195,8 @@
   </div>
 </div>
 
-<!-- Success Modal -->
-<div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+<!-- Success Modal (only for league creation) -->
+<div class="modal-overlay" *ngIf="showSuccessModal && createdLeagueCode" (click)="closeSuccessModal()">
   <div class="modal-content success-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Success!</h3>
@@ -227,4 +227,10 @@
       <button class="btn btn-primary" (click)="closeSuccessModal()">Got it!</button>
     </div>
   </div>
+</div>
+
+<!-- Toast Message -->
+<div class="toast" *ngIf="showToast" [class.toast-success]="toastType === 'success'" [class.toast-error]="toastType === 'error'">
+  <i class="fas" [class.fa-check-circle]="toastType === 'success'" [class.fa-exclamation-circle]="toastType === 'error'"></i>
+  <span>{{ toastMessage }}</span>
 </div>

@@ -72,8 +72,7 @@
   <app-user-predictions-modal 
     [isOpen]="showUserPredictionsModal"
     [currentGameweek]="currentGameweek"
-    [users]="allUsers"
-    [selectedUserId]="selectedUser?.id || null"
+    [selectedUser]="selectedUser"
     (isOpenChange)="showUserPredictionsModal = $event"
     (closed)="closeUserPredictionsModal()"
     (close)="closeUserPredictionsModal()">

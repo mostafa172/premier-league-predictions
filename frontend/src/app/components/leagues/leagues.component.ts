@@ -18,6 +18,11 @@ export class LeaguesComponent implements OnInit, OnDestroy {
   successMessage = '';
   createdLeagueCode = '';
   
+  // Toast properties
+  showToast = false;
+  toastMessage = '';
+  toastType = 'success'; // 'success' or 'error'
+  
   // Create league form
   createLeagueForm: CreateLeagueRequest = {
     name: '',
@@ -130,8 +135,7 @@ export class LeaguesComponent implements OnInit, OnDestroy {
     const sub = this.leagueService.joinLeague(this.joinCode.trim().toUpperCase()).subscribe({
       next: (response) => {
         if (response.success) {
-          this.successMessage = `Successfully joined "${response.data.leagueName}"!`;
-          this.showSuccessModal = true;
+          this.showToastMessage(`Successfully joined "${response.data.leagueName}"!`, 'success');
           this.closeJoinModal();
           this.loadData(); // Reload data to show the joined league
         } else {
@@ -151,11 +155,10 @@ export class LeaguesComponent implements OnInit, OnDestroy {
 
   copyJoinCode(joinCode: string): void {
     navigator.clipboard.writeText(joinCode).then(() => {
-      // Show a simple alert for now (you can replace with a proper toast later)
-      alert('League code copied to clipboard!');
+      this.showToastMessage('League code copied to clipboard!', 'success');
     }).catch(err => {
       console.error('Failed to copy join code:', err);
-      alert('Failed to copy league code');
+      this.showToastMessage('Failed to copy league code', 'error');
     });
   }
 
@@ -172,11 +175,22 @@ export class LeaguesComponent implements OnInit, OnDestroy {
   copyCreatedLeagueCode(): void {
     if (this.createdLeagueCode) {
       navigator.clipboard.writeText(this.createdLeagueCode).then(() => {
-        alert('League code copied to clipboard!');
+        this.showToastMessage('League code copied to clipboard!', 'success');
       }).catch(err => {
         console.error('Failed to copy league code:', err);
-        alert('Failed to copy league code');
+        this.showToastMessage('Failed to copy league code', 'error');
       });
     }
+  }
+
+  showToastMessage(message: string, type: 'success' | 'error'): void {
+    this.toastMessage = message;
+    this.toastType = type;
+    this.showToast = true;
+    
+    // Auto-hide toast after 3 seconds
+    setTimeout(() => {
+      this.showToast = false;
+    }, 3000);
   }
 }

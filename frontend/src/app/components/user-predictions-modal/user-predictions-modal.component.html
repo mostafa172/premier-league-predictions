@@ -2,33 +2,14 @@
   <div class="modal-content" (click)="$event.stopPropagation()">
     <!-- Modal Header -->
     <div class="modal-header">
-      <h2>View User Predictions</h2>
+      <h2>{{ selectedUser?.username }}'s Predictions</h2>
       <button class="close-btn" (click)="closeModal()">
         <i class="fas fa-times"></i>
       </button>
     </div>
 
-    <!-- User and Gameweek Selection -->
+    <!-- Gameweek Selection -->
     <div class="selection-section">
-      <div class="form-group">
-        <label for="userSelect" [class.disabled-label]="isUserPreSelected">
-          Select User:
-        </label>
-        <select 
-          id="userSelect" 
-          [(ngModel)]="selectedUserId" 
-          (change)="onUserSelect(selectedUserId)"
-          class="form-control"
-          [class.disabled-select]="isUserPreSelected"
-          [disabled]="isUserPreSelected"
-        >
-          <option [ngValue]="null">Choose a user...</option>
-          <option *ngFor="let user of filteredUsers" [ngValue]="user.id">
-            {{ user.username }}
-          </option>
-        </select>
-      </div>
-
       <div class="form-group">
         <label for="gameweekSelect">Gameweek:</label>
         <select 

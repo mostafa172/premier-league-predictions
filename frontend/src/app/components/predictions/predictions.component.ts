@@ -28,8 +28,6 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   hasChanges = false;
 
   showRules = false;
-  showUserPredictionsModal = false;
-  allUsers: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -50,8 +48,6 @@ export class PredictionsComponent implements OnInit, OnDestroy {
       },
       error: () => this.loadFixturesAndPredictions(),
     });
-    
-    this.loadAllUsers();
   }
 
   ngOnDestroy(): void {
@@ -477,27 +473,5 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     return false;
   }
 
-  loadAllUsers(): void {
-    this.predictionService.getLeaderboard().subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.allUsers = response.data.map((entry: any) => ({
-            id: entry.userId,
-            username: entry.username
-          }));
-        }
-      },
-      error: (error) => {
-        console.error('Error loading users:', error);
-      }
-    });
-  }
 
-  openUserPredictionsModal(): void {
-    this.showUserPredictionsModal = true;
-  }
-
-  closeUserPredictionsModal(): void {
-    this.showUserPredictionsModal = false;
-  }
 }

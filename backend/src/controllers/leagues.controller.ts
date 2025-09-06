@@ -288,15 +288,59 @@ export class LeaguesController {
         type: QueryTypes.SELECT
       });
 
+      // Add isCreator property to league object
+      const leagueData = {
+        ...league.toJSON(),
+        isCreator: league.createdBy === userId
+      };
+
       return res.status(200).json({
         success: true,
         data: {
-          league,
+          league: leagueData,
           members
         }
       });
     } catch (error) {
       console.error('Error fetching league details:', error);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  }
+
+  // Delete a league (creator only)
+  public async deleteLeague(req: AuthenticatedRequest, res: Response): Promise<Response> {
+    try {
+      const { leagueId } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+      }
+
+      if (!leagueId || isNaN(parseInt(leagueId))) {
+        return res.status(400).json({ success: false, message: 'Invalid league ID' });
+      }
+
+      // Find the league and verify the user is the creator
+      const league = await League.findByPk(parseInt(leagueId));
+
+      if (!league) {
+        return res.status(404).json({ success: false, message: 'League not found' });
+      }
+
+      if (league.createdBy !== userId) {
+        return res.status(403).json({ success: false, message: 'Only the league creator can delete the league' });
+      }
+
+      // Delete the league (this will cascade delete memberships due to foreign key constraints)
+      await league.destroy();
+
+      return res.status(200).json({
+        success: true,
+        message: 'League deleted successfully'
+      });
+    } catch (error) {
+      console.error('Error deleting league:', error);
       return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   }

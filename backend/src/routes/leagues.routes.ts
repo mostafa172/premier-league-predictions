@@ -17,4 +17,7 @@ router.get('/:leagueId', leaguesController.getLeagueDetails.bind(leaguesControll
 router.post('/join', leaguesController.joinLeague.bind(leaguesController));
 router.delete('/:leagueId/leave', leaguesController.leaveLeague.bind(leaguesController));
 
+// League management operations
+router.delete('/:leagueId', leaguesController.deleteLeague.bind(leaguesController));
+
 export default router;
