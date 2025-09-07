@@ -3,6 +3,8 @@ import { User } from './User';
 import { Team } from './Team';
 import { Fixture } from './Fixture';
 import { Prediction } from './Prediction';
+import { League } from './League';
+import { LeagueMembership } from './LeagueMembership';
 
 export function setupAssociations() {
   console.log('🔗 Setting up database associations...');
@@ -19,6 +21,12 @@ export function setupAssociations() {
   });
   Object.keys(Prediction.associations || {}).forEach(key => {
     delete Prediction.associations[key];
+  });
+  Object.keys(League.associations || {}).forEach(key => {
+    delete League.associations[key];
+  });
+  Object.keys(LeagueMembership.associations || {}).forEach(key => {
+    delete LeagueMembership.associations[key];
   });
 
   // Team associations - each team can have many fixtures as home or away
@@ -64,6 +72,53 @@ export function setupAssociations() {
   Prediction.belongsTo(Fixture, { 
     foreignKey: 'fixtureId', 
     as: 'fixture' 
+  });
+
+  // League associations
+  League.belongsTo(User, { 
+    foreignKey: 'createdBy', 
+    as: 'creator' 
+  });
+
+  League.hasMany(LeagueMembership, { 
+    foreignKey: 'leagueId', 
+    as: 'memberships' 
+  });
+
+  League.belongsToMany(User, { 
+    through: LeagueMembership, 
+    foreignKey: 'leagueId', 
+    otherKey: 'userId', 
+    as: 'members' 
+  });
+
+  // LeagueMembership associations
+  LeagueMembership.belongsTo(League, { 
+    foreignKey: 'leagueId', 
+    as: 'league' 
+  });
+
+  LeagueMembership.belongsTo(User, { 
+    foreignKey: 'userId', 
+    as: 'user' 
+  });
+
+  // User associations with leagues
+  User.hasMany(League, { 
+    foreignKey: 'createdBy', 
+    as: 'createdLeagues' 
+  });
+
+  User.hasMany(LeagueMembership, { 
+    foreignKey: 'userId', 
+    as: 'leagueMemberships' 
+  });
+
+  User.belongsToMany(League, { 
+    through: LeagueMembership, 
+    foreignKey: 'userId', 
+    otherKey: 'leagueId', 
+    as: 'leagues' 
   });
 
   console.log('✅ Database associations set up successfully');

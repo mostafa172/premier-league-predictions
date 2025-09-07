@@ -1,0 +1,594 @@
+// Modal Overlay
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+// Modal Header
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid #e9ecef;
+
+  h2 {
+    margin: 0;
+    color: #38003c;
+    font-size: 1.5rem;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f8f9fa;
+      color: #38003c;
+    }
+  }
+}
+
+// Selection Section
+.selection-section {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+
+  .form-group {
+    flex: 1;
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #38003c;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+
+  }
+}
+
+// Loading and Error States
+.loading-state, .error-state {
+  padding: 2rem;
+  text-align: center;
+  color: #6c757d;
+
+  i {
+    margin-right: 0.5rem;
+  }
+}
+
+.error-state {
+  color: #dc3545;
+}
+
+// User Summary
+.user-summary {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid #e9ecef;
+
+  h3 {
+    margin: 0 0 1rem 0;
+    color: #38003c;
+    font-size: 1.3rem;
+  }
+
+  .total-points {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+
+    .points-label {
+      color: #6c757d;
+      font-weight: 500;
+    }
+
+    .points-value {
+      color: #38003c;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+  }
+}
+
+// Predictions Display
+.predictions-display {
+  padding: 1rem 1.5rem;
+}
+
+.predictions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fixture-row {
+  position: relative;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+
+  &.readonly {
+    border-left: 4px solid #6c757d;
+  }
+
+  &.disabled {
+    opacity: 0.6;
+    background: #f8f9fa;
+  }
+
+  &.is-double {
+    border: 2px solid #ffc107;
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.35);
+    background: #fffef7;
+
+    &::after {
+      content: "DOUBLE";
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      background: #ffc107;
+      color: #212529;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      letter-spacing: 0.4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+  }
+}
+
+.fixture-content {
+  padding: 1rem;
+}
+
+.fixture-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: #6c757d;
+
+  .match-date {
+    font-weight: 500;
+  }
+
+  .deadline {
+    &.expired {
+      color: #dc3545;
+      font-weight: 600;
+    }
+  }
+}
+
+// Desktop Layout
+.fixture-info {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr;
+  gap: 1rem;
+  align-items: center;
+
+  .home-team, .away-team {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .away-team {
+    justify-content: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .team-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    background: #fff;
+  }
+
+  .team-name {
+    font-weight: 600;
+    color: #38003c;
+  }
+}
+
+.prediction-display {
+  text-align: center;
+
+  .prediction-scores {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #38003c;
+
+    .vs {
+      color: #6c757d;
+    }
+
+    .double-badge {
+      background: #ffc107;
+      color: #000;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      margin-left: 0.5rem;
+    }
+  }
+
+  .no-prediction {
+    color: #6c757d;
+    font-style: italic;
+  }
+}
+
+// Mobile Layout
+.mobile-layout {
+  .teams-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+
+    .team {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .vs {
+      color: #6c757d;
+      font-weight: 500;
+    }
+
+    .team-logo {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      border-radius: 3px;
+      border: 1px solid #dee2e6;
+      background: #fff;
+    }
+
+    .team-name {
+      font-weight: 600;
+      color: #38003c;
+      font-size: 0.9rem;
+    }
+  }
+
+  .prediction-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+
+    .prediction-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .prediction-label {
+        color: #6c757d;
+        font-size: 0.8rem;
+      }
+
+      .prediction-scores {
+        font-weight: 600;
+        color: #38003c;
+      }
+
+      .double-badge {
+        background: #ffc107;
+        color: #000;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+        font-size: 0.6rem;
+        font-weight: bold;
+      }
+    }
+
+    .points-info {
+      .points {
+        color: #38003c;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  .no-prediction-row {
+    text-align: center;
+    padding: 0.5rem;
+    color: #6c757d;
+    font-style: italic;
+    font-size: 0.9rem;
+  }
+}
+
+// Modal Footer
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  text-align: right;
+}
+
+// Small UX helpers
+.btn {
+  appearance: none;
+  border: 1px solid #dee2e6;
+  background: #fff;
+  color: #38003c;
+  padding: 0.45rem 0.8rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.btn-secondary {
+  background: #38003c;
+  color: #fff;
+  border-color: #38003c;
+
+  &:hover {
+    background: #4b0a52;
+    border-color: #4b0a52;
+  }
+}
+
+.btn-retry {
+  margin-top: 0.75rem;
+}
+
+// Mobile Layout Styles (matching predictions component)
+.prediction-inline,
+.finished-inline,
+.finished-footer {
+  display: none;
+}
+
+.vs-pill {
+  min-width: 36px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0.25rem 0.4rem;
+  border-radius: 999px;
+  background: #f1eef4;
+  color: #5c3d5f;
+  margin: 0 0.25rem;
+  text-transform: uppercase;
+}
+
+.side {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.side.home {
+  justify-content: flex-start;
+}
+
+.side.away {
+  justify-content: flex-end;
+}
+
+.side .team-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  background: #fff;
+}
+
+.abbr {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #212529;
+  letter-spacing: 0.2px;
+  min-width: 2.4ch;
+  text-align: left;
+}
+
+.side.away .abbr {
+  text-align: right;
+}
+
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #38003c;
+  background: #f6f1f8;
+  border: 1px solid #eadff0;
+}
+
+.finished-footer {
+  justify-content: center;
+  margin-top: 0.35rem;
+  
+  .your-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.2;
+  }
+  
+  .your-line .label {
+    color: #6c757d;
+  }
+  
+  .your-line .pred {
+    color: #212529;
+    font-weight: 600;
+  }
+  
+  .your-line .dot {
+    opacity: 0.6;
+  }
+  
+  .your-line .points {
+    color: #38003c;
+    font-weight: 700;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0.25rem;
+  }
+
+  .modal-content {
+    max-height: 85vh;
+    max-width: 95vw;
+  }
+
+  .modal-header {
+    padding: 1rem;
+
+    h2 {
+      font-size: 1.3rem;
+    }
+  }
+
+  .selection-section {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .user-summary {
+    padding: 1rem;
+
+    h3 {
+      font-size: 1.1rem;
+    }
+  }
+
+  // Hide desktop layout on mobile
+  .fixture-info {
+    display: none !important;
+  }
+
+  // Show mobile layout on mobile
+  .prediction-inline,
+  .finished-inline,
+  .finished-footer {
+    display: flex !important;
+  }
+
+  .prediction-inline,
+  .finished-inline {
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+  }
+
+  .predictions-display {
+    padding: 0.5rem 1rem;
+  }
+
+  .fixture-content {
+    padding: 0.75rem;
+  }
+
+  .fixture-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
+// Hide/Show utilities
+.hide-on-mobile {
+  display: block;
+}
+
+.show-on-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  .show-on-mobile {
+    display: block !important;
+  }
+}

@@ -2,7 +2,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PredictionService } from '../../services/prediction.service';
 import { AuthService } from '../../services/auth.service';
+import { FixtureService } from '../../services/fixture.service';
 import { Subscription } from 'rxjs';
+import { User } from '../../models/user.model';
 
 // Define the LeaderboardEntry interface
 interface LeaderboardEntry {
@@ -24,10 +26,17 @@ export class LeaderboardComponent implements OnInit, OnDestroy {
   currentUsername = '';
   currentUserRank = 0;
   private subscription?: Subscription;
+  
+  // User predictions modal properties
+  showUserPredictionsModal = false;
+  selectedUser: User | null = null;
+  allUsers: User[] = [];
+  currentGameweek = 1;
 
   constructor(
     private predictionService: PredictionService,
-    private authService: AuthService
+    private authService: AuthService,
+    private fixtureService: FixtureService
   ) {}
 
   ngOnInit(): void {
@@ -37,6 +46,7 @@ export class LeaderboardComponent implements OnInit, OnDestroy {
     });
     
     this.loadLeaderboard();
+    this.loadAllUsers();
   }
 
   ngOnDestroy(): void {
@@ -86,5 +96,52 @@ export class LeaderboardComponent implements OnInit, OnDestroy {
 
   trackByUserId(index: number, entry: LeaderboardEntry): number {
     return entry.userId;
+  }
+
+  loadAllUsers(): void {
+    this.predictionService.getLeaderboard().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.allUsers = response.data.map((entry: any) => ({
+            id: entry.userId,
+            username: entry.username
+          }));
+        }
+      },
+      error: (error) => {
+        console.error('Error loading users:', error);
+      }
+    });
+  }
+
+  onUserClick(entry: LeaderboardEntry): void {
+    // Don't open modal for current user
+    if (entry.username === this.currentUsername) {
+      return;
+    }
+
+    // Find the user in allUsers array
+    this.selectedUser = this.allUsers.find(user => user.id === entry.userId) || null;
+    
+    if (this.selectedUser) {
+      // Get the closest gameweek before opening the modal
+      this.fixtureService.getClosestGameweek().subscribe({
+        next: (response) => {
+          if (response?.success && response.data?.gameweek) {
+            this.currentGameweek = Number(response.data.gameweek);
+          }
+          this.showUserPredictionsModal = true;
+        },
+        error: () => {
+          // If getting closest gameweek fails, still open modal with current gameweek
+          this.showUserPredictionsModal = true;
+        }
+      });
+    }
+  }
+
+  closeUserPredictionsModal(): void {
+    this.showUserPredictionsModal = false;
+    this.selectedUser = null;
   }
 }

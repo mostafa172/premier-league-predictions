@@ -1,0 +1,161 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()" role="dialog" aria-modal="true">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2>{{ selectedUser?.username }}'s Predictions</h2>
+      <button class="close-btn" (click)="closeModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Gameweek Selection -->
+    <div class="selection-section">
+      <div class="form-group">
+        <label for="gameweekSelect">Gameweek:</label>
+        <select 
+          id="gameweekSelect" 
+          [(ngModel)]="selectedGameweek" 
+          (change)="onGameweekChange(selectedGameweek)"
+          class="form-control"
+        >
+          <option *ngFor="let gw of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38]" [value]="gw">
+            Gameweek {{ gw }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      Loading predictions...
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="error-state">
+      <i class="fas fa-exclamation-triangle"></i>
+      {{ error }}
+      <div>
+        <button class="btn btn-retry" (click)="retryLoad()">Retry</button>
+      </div>
+    </div>
+
+    <!-- User Predictions Display -->
+    <div *ngIf="userPredictionData && !loading && !error" class="predictions-display">
+      <!-- User Summary -->
+      <div class="user-summary">
+        <h3>{{ userPredictionData.user.username }}'s Predictions</h3>
+        <div class="total-points">
+          <span class="points-label">Total Points:</span>
+          <span class="points-value">{{ userPredictionData.totalPoints }} pts</span>
+        </div>
+      </div>
+
+      <!-- Predictions List -->
+      <div class="predictions-list">
+        <div 
+          *ngFor="let fixture of userPredictionData.fixtures; let i = index"
+          class="fixture-row readonly"
+          [class.disabled]="isFixtureDisabled(fixture)"
+          [class.is-double]="getPredictionForFixture(fixture.id)?.isDouble"
+        >
+          <div class="fixture-content">
+            <!-- Meta line (date/deadline) -->
+            <div class="fixture-details">
+              <div class="match-date">
+                {{ getFormattedDate(fixture.matchDate) }}
+              </div>
+              <div class="deadline" *ngIf="fixture.status !== 'finished'">
+                Deadline: {{ getFormattedDate(fixture.deadline) }}
+              </div>
+            </div>
+
+            <!-- Desktop Layout -->
+            <div class="fixture-info hide-on-mobile">
+              <!-- Home Team -->
+              <div class="home-team">
+                <img [src]="fixture.homeTeam?.logoUrl" [alt]="fixture.homeTeam?.name" class="team-logo">
+                <span class="team-name">{{ fixture.homeTeam?.name }}</span>
+              </div>
+
+              <!-- Center (prediction display) -->
+              <div class="prediction-display">
+                <div class="prediction-scores" *ngIf="getPredictionForFixture(fixture.id) as prediction">
+                  <span class="predicted-score">{{ prediction.predictedHomeScore }}</span>
+                  <span class="vs">-</span>
+                  <span class="predicted-score">{{ prediction.predictedAwayScore }}</span>
+                  <div class="double-badge" *ngIf="prediction.isDouble">DOUBLE</div>
+                </div>
+                <div class="no-prediction" *ngIf="!getPredictionForFixture(fixture.id)">
+                  No prediction
+                </div>
+              </div>
+
+              <!-- Away Team -->
+              <div class="away-team">
+                <img [src]="fixture.awayTeam?.logoUrl" [alt]="fixture.awayTeam?.name" class="team-logo">
+                <span class="team-name">{{ fixture.awayTeam?.name }}</span>
+              </div>
+            </div>
+
+            <!-- Mobile Layout -->
+            <div class="mobile-layout show-on-mobile">
+              <!-- Teams row with final scores -->
+              <div class="finished-inline" *ngIf="fixture.status === 'finished'">
+                <div class="side home">
+                  <img [src]="fixture.homeTeam?.logoUrl" [alt]="fixture.homeTeam?.abbreviation" class="team-logo">
+                  <span class="abbr">{{ fixture.homeTeam?.abbreviation }}</span>
+                  <span class="score-badge">{{ fixture.homeScore }}</span>
+                </div>
+
+                <div class="vs-pill">vs</div>
+
+                <div class="side away">
+                  <span class="score-badge">{{ fixture.awayScore }}</span>
+                  <span class="abbr">{{ fixture.awayTeam?.abbreviation }}</span>
+                  <img [src]="fixture.awayTeam?.logoUrl" [alt]="fixture.awayTeam?.abbreviation" class="team-logo">
+                </div>
+              </div>
+
+              <!-- Teams row for upcoming fixtures -->
+              <div class="prediction-inline" *ngIf="fixture.status !== 'finished'">
+                <div class="side home">
+                  <img [src]="fixture.homeTeam?.logoUrl" [alt]="fixture.homeTeam?.abbreviation" class="team-logo">
+                  <span class="abbr">{{ fixture.homeTeam?.abbreviation }}</span>
+                </div>
+
+                <div class="vs-pill">VS</div>
+
+                <div class="side away">
+                  <span class="abbr">{{ fixture.awayTeam?.abbreviation }}</span>
+                  <img [src]="fixture.awayTeam?.logoUrl" [alt]="fixture.awayTeam?.abbreviation" class="team-logo">
+                </div>
+              </div>
+
+              <!-- Prediction footer -->
+              <div class="finished-footer" *ngIf="getPredictionForFixture(fixture.id) as prediction">
+                <div class="your-line">
+                  <span class="label">Prediction:</span>
+                  <span class="pred">{{ prediction.predictedHomeScore }} – {{ prediction.predictedAwayScore }}</span>
+                  <span class="dot">•</span>
+                  <span class="points">{{ getPredictionPoints(fixture) }} pts</span>
+                </div>
+              </div>
+
+              <div class="no-prediction-row" *ngIf="!getPredictionForFixture(fixture.id)">
+                <span class="no-prediction">No prediction made</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeModal()" aria-label="Close modal">
+        Close
+      </button>
+    </div>
+  </div>
+</div>

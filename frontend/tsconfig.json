@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ES2022", 
+    "module": "ES2022",
     "moduleResolution": "bundler",
     "lib": ["ES2022", "dom"],
     "outDir": "./dist",
@@ -15,23 +15,23 @@
     "declaration": false,
     "downlevelIteration": true,
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "importHelpers": true,
     "sourceMap": true,
     "baseUrl": "./",
-    "paths": {},
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+    "allowJs": false,
+    "noEmitOnError": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
-    "strictTemplates": true
+    "strictTemplates": true,
+    "enableBlockSyntax": true
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }

@@ -34,13 +34,17 @@
         <i class="fa-solid fa-chart-line"></i>
         <span>Predictions</span>
       </a>
-      <a routerLink="/fixtures" routerLinkActive="active">
-        <i class="fa-solid fa-futbol"></i>
-        <span>Fixtures</span>
+      <a routerLink="/leagues" routerLinkActive="active">
+        <i class="fa-solid fa-users"></i>
+        <span>Leagues</span>
       </a>
       <a routerLink="/leaderboard" routerLinkActive="active">
         <i class="fa-solid fa-trophy"></i>
         <span>Leaderboard</span>
+      </a>
+      <a routerLink="/fixtures" routerLinkActive="active">
+        <i class="fa-solid fa-futbol"></i>
+        <span>Fixtures</span>
       </a>
       <a *ngIf="isAdmin" routerLink="/admin" routerLinkActive="active">
         <i class="fa-solid fa-gear"></i>

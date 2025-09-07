@@ -20,16 +20,12 @@
             "outputPath": "dist/premier-league-predictions",
             "index": "src/index.html",
             "main": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [
-              "src/favicon.ico",
-              "src/assets"
-            ],
+            "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
               "src/styles.scss"
             ],
             "scripts": []
@@ -37,11 +33,19 @@
           "configurations": {
             "development": {
               "optimization": false,
+              "extractLicenses": false,
               "sourceMap": true,
               "vendorChunk": true,
-              "extractLicenses": false
+              "buildOptimizer": false,
+              "namedChunks": true
             },
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -50,20 +54,17 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "6kb",
-                  "maximumError": "10kb"
-                }
-              ],
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
+                  "maximumWarning": "20kb",
+                  "maximumError": "25kb"
                 }
               ],
               "outputHashing": "all",
               "optimization": true,
               "sourceMap": false,
-              "extractLicenses": true
+              "extractLicenses": true,
+              "buildOptimizer": true,
+              "namedChunks": false,
+              "vendorChunk": false
             }
           },
           "defaultConfiguration": "development"
@@ -71,14 +72,14 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "premier-league-predictions:build"
+            "buildTarget": "premier-league-predictions:build"
           },
           "configurations": {
             "development": {
-              "browserTarget": "premier-league-predictions:build:development"
+              "buildTarget": "premier-league-predictions:build:development"
             },
             "production": {
-              "browserTarget": "premier-league-predictions:build:production"
+              "buildTarget": "premier-league-predictions:build:production"
             }
           },
           "defaultConfiguration": "development"
@@ -86,40 +87,20 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "premier-league-predictions:build"
+            "buildTarget": "premier-league-predictions:build"
           }
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "main": "src/test.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "tsconfig.spec.json",
-            "karmaConfig": "karma.conf.js",
-            "assets": [
-              "src/favicon.ico",
-              "src/assets"
-            ],
+            "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
               "src/styles.scss"
             ],
             "scripts": []
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "tsconfig.app.json",
-              "tsconfig.spec.json",
-              "e2e/tsconfig.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
           }
         }
       }

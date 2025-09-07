@@ -8,6 +8,8 @@ const router = Router();
 // Public routes (with authentication)
 router.get('/gameweek/:gameweek', authenticateToken, predictionsController.getUserPredictionsByGameweek.bind(predictionsController));
 router.get('/user/gameweek/:gameweek', authenticateToken, predictionsController.getUserPredictionsByGameweek.bind(predictionsController));
+router.get('/user/gameweek/:gameweek/total', authenticateToken, predictionsController.getUserGameweekTotal.bind(predictionsController));
+router.get('/user/:userId/gameweek/:gameweek', authenticateToken, predictionsController.getOtherUserPredictions.bind(predictionsController));
 router.get('/my-predictions', authenticateToken, predictionsController.getUserPredictions.bind(predictionsController));
 router.get('/leaderboard', authenticateToken, predictionsController.getLeaderboard.bind(predictionsController));
 

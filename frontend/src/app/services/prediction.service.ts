@@ -75,6 +75,22 @@ export class PredictionService {
     );
   }
 
+  // Get user's total points for a specific gameweek
+  getUserGameweekTotal(gameweek: number): Observable<any> {
+    return this.http.get<any>(
+      `${this.API_URL}/predictions/user/gameweek/${gameweek}/total`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Get another user's predictions for a specific gameweek
+  getOtherUserPredictions(userId: number, gameweek: number): Observable<any> {
+    return this.http.get<any>(
+      `${this.API_URL}/predictions/user/${userId}/gameweek/${gameweek}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
   // Get user's predictions
   getUserPredictions(): Observable<any> {
     return this.http.get<any>(

@@ -1,17 +1,95 @@
 <div class="predictions-container">
   <div class="predictions-header">
-    <h2>Predictions</h2>
-    <div class="gameweek-selector">
-      <label for="gameweek">Gameweek:</label>
-      <select
-        id="gameweek"
-        [(ngModel)]="gameweek"
-        (change)="onGameweekChange(gameweek)"
+    <div class="header-left">
+      <h2>Predictions</h2>
+    </div>
+
+    <div class="header-right">
+      <!-- Scoring Rules Toggle -->
+      <button
+        class="rules-toggle"
+        (click)="showRules = !showRules"
+        [class.active]="showRules"
       >
-        <option *ngFor="let gw of gameweeks" [value]="gw">
-          Gameweek {{ gw }}
-        </option>
-      </select>
+        <i class="fas fa-info-circle"></i>
+        {{ showRules ? "Hide" : "Show" }} Scoring Rules
+      </button>
+
+      <div class="gameweek-selector">
+        <label for="gameweek">Gameweek:</label>
+        <select
+          id="gameweek"
+          [(ngModel)]="gameweek"
+          (change)="onGameweekChange(gameweek)"
+        >
+          <option *ngFor="let gw of gameweeks" [value]="gw">
+            Gameweek {{ gw }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compact Rules Section -->
+  <div class="scoring-rules" *ngIf="showRules">
+    <div class="rules-content">
+      <h3><i class="fas fa-trophy"></i> How Prediction Scoring Works</h3>
+
+      <div class="rules-list">
+        <div class="rule-row">
+          <div class="rule-icon">🎯</div>
+          <div class="rule-content">
+            <div class="rule-title">Exact Score</div>
+          </div>
+          <div class="rule-points">+4 pts</div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-icon">📊</div>
+          <div class="rule-content">
+            <div class="rule-title">Goal Difference</div>
+          </div>
+          <div class="rule-points">+2 pts</div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-icon">🏆</div>
+          <div class="rule-content">
+            <div class="rule-title">Winner</div>
+          </div>
+          <div class="rule-points">+1 pt</div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-icon">🤝</div>
+          <div class="rule-content">
+            <div class="rule-title">Draw</div>
+          </div>
+          <div class="rule-points">+2 pts</div>
+        </div>
+
+        <div class="rule-row special">
+          <div class="rule-icon">⚡</div>
+          <div class="rule-content">
+            <div class="rule-title">Double</div>
+            <div class="warning-note">Only one double fixutre per gameweek</div>
+          </div>
+          <div class="rule-points multiplier">×2</div>
+        </div>
+      </div>
+
+      <div class="rules-summary">
+        <h4>📋 Quick Summary</h4>
+        <ul>
+          <li>
+            Points stack! Exact score = 4 + 2 + 1 =
+            <strong>7 points total</strong>
+          </li>
+          <li>Double points apply to your total score for that fixture</li>
+          <li>Only one double per gameweek</li>
+          <li>Predictions lock at deadline (1 hour before kickoff)</li>
+        </ul>
+      </div>
     </div>
   </div>
 
@@ -32,8 +110,12 @@
       (ngSubmit)="onSubmit()"
     >
       <div class="predictions-sheet">
-        <div class="sheet-header">
-          <h3>Gameweek {{ gameweek }} Predictions</h3>
+        <!-- Gameweek Total Points Card -->
+        <div class="gameweek-summary-card">
+          <div class="summary-content">
+            <div class="summary-title">Your Gameweek {{ gameweek }} Total</div>
+            <div class="summary-points">{{ getGameweekTotalPoints() }} pts</div>
+          </div>
         </div>
 
         <div *ngIf="doubleLocked" class="alert alert-info">
@@ -47,10 +129,7 @@
             class="fixture-row"
             [class.disabled]="isFixtureDisabled(fixture)"
             [class.has-prediction]="hasValidPrediction(i)"
-            [class.is-double]="
-              predictionsArray.at(i).get('isDouble')?.value ||
-              hasExistingDouble(fixture.id)
-            "
+            [class.is-double]="predictionsArray.at(i).get('isDouble')?.value"
             [formGroupName]="i"
           >
             <div class="fixture-content">
@@ -104,6 +183,8 @@
                     <label>{{ fixture.homeTeam?.abbreviation }}</label>
                     <input
                       type="number"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
                       formControlName="homeScore"
                       min="0"
                       max="20"
@@ -117,6 +198,8 @@
                     <label>{{ fixture.awayTeam?.abbreviation }}</label>
                     <input
                       type="number"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
                       formControlName="awayScore"
                       min="0"
                       max="20"
@@ -131,7 +214,7 @@
                     <input
                       type="checkbox"
                       formControlName="isDouble"
-                      [disabled]="doubleLocked || !hasValidPrediction(i)"
+                      [disabled]="doubleLocked"
                       (change)="onDoubleChange(i)"
                     />
                     <span>Double<br />Points</span>
@@ -154,6 +237,8 @@
                   <span class="abbr">{{ fixture.homeTeam?.abbreviation }}</span>
                   <input
                     type="number"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
                     class="score-input-compact"
                     formControlName="homeScore"
                     min="0"
@@ -167,6 +252,8 @@
                 <div class="side away">
                   <input
                     type="number"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
                     class="score-input-compact"
                     formControlName="awayScore"
                     min="0"
@@ -191,7 +278,7 @@
                   <input
                     type="checkbox"
                     formControlName="isDouble"
-                    [disabled]="doubleLocked || !hasValidPrediction(i)"
+                    [disabled]="doubleLocked"
                     (change)="onDoubleChange(i)"
                   />
                   <span>Double Points</span>

@@ -1,44 +1,105 @@
 <div class="auth-container">
   <div class="auth-card">
-    <h2>{{ isLoginMode ? 'Login' : 'Register' }}</h2>
-    
-    <form [formGroup]="isLoginMode ? loginForm : registerForm" (ngSubmit)="onSubmit()">
+    <h2>{{ isLoginMode ? "Login" : "Register" }}</h2>
+
+    <div class="success-message" *ngIf="successMessage">
+      {{ successMessage }}
+    </div>
+
+    <form
+      [formGroup]="isLoginMode ? loginForm : registerForm"
+      (ngSubmit)="onSubmit()"
+    >
+      <!-- REGISTER-ONLY: Username -->
       <div class="form-group" *ngIf="!isLoginMode">
         <label for="username">Username</label>
-        <input 
-          type="text" 
-          id="username" 
-          formControlName="username" 
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
           class="form-control"
-          [class.is-invalid]="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">
-        <div class="invalid-feedback" *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">
+          [class.is-invalid]="
+            registerForm.get('username')?.invalid &&
+            registerForm.get('username')?.touched
+          "
+        />
+        <div
+          class="invalid-feedback"
+          *ngIf="
+            registerForm.get('username')?.invalid &&
+            registerForm.get('username')?.touched
+          "
+        >
           Username is required (min 3 characters)
         </div>
       </div>
 
+      <!-- Email (both modes) -->
       <div class="form-group">
-        <label for="email">{{ isLoginMode ? 'Email' : 'Email' }}</label>
-        <input 
-          type="email" 
-          id="email" 
-          formControlName="email" 
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
           class="form-control"
-          [class.is-invalid]="(isLoginMode ? loginForm : registerForm).get('email')?.invalid && (isLoginMode ? loginForm : registerForm).get('email')?.touched">
-        <div class="invalid-feedback" *ngIf="(isLoginMode ? loginForm : registerForm).get('email')?.invalid && (isLoginMode ? loginForm : registerForm).get('email')?.touched">
+          [class.is-invalid]="
+            (isLoginMode ? loginForm : registerForm).get('email')?.invalid &&
+            (isLoginMode ? loginForm : registerForm).get('email')?.touched
+          "
+        />
+        <div
+          class="invalid-feedback"
+          *ngIf="
+            (isLoginMode ? loginForm : registerForm).get('email')?.invalid &&
+            (isLoginMode ? loginForm : registerForm).get('email')?.touched
+          "
+        >
           Valid email is required
         </div>
       </div>
 
+      <!-- Password (both modes) -->
       <div class="form-group">
         <label for="password">Password</label>
-        <input 
-          type="password" 
-          id="password" 
-          formControlName="password" 
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
           class="form-control"
-          [class.is-invalid]="(isLoginMode ? loginForm : registerForm).get('password')?.invalid && (isLoginMode ? loginForm : registerForm).get('password')?.touched">
-        <div class="invalid-feedback" *ngIf="(isLoginMode ? loginForm : registerForm).get('password')?.invalid && (isLoginMode ? loginForm : registerForm).get('password')?.touched">
-          Password is required {{ !isLoginMode ? '(min 6 characters)' : '' }}
+          [class.is-invalid]="
+            (isLoginMode ? loginForm : registerForm).get('password')?.invalid &&
+            (isLoginMode ? loginForm : registerForm).get('password')?.touched
+          "
+        />
+        <div
+          class="invalid-feedback"
+          *ngIf="
+            (isLoginMode ? loginForm : registerForm).get('password')?.invalid &&
+            (isLoginMode ? loginForm : registerForm).get('password')?.touched
+          "
+        >
+          Password is required {{ !isLoginMode ? "(min 6 characters)" : "" }}
+        </div>
+      </div>
+
+      <!-- REGISTER-ONLY: Confirm Password -->
+      <div class="form-group" *ngIf="!isLoginMode">
+        <label for="confirmPassword">Confirm Password</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          class="form-control"
+          [class.is-invalid]="confirmTouchedAndInvalid"
+        />
+        <div
+          class="invalid-feedback"
+          *ngIf="registerForm.get('confirmPassword')?.errors?.['required'] && registerForm.get('confirmPassword')?.touched"
+        >
+          Please confirm your password
+        </div>
+        <div class="invalid-feedback" *ngIf="passwordsDoNotMatch">
+          Passwords must match
         </div>
       </div>
 
@@ -46,19 +107,22 @@
         {{ error }}
       </div>
 
-      <button 
-        type="submit" 
-        class="btn btn-primary" 
-        [disabled]="loading || (isLoginMode ? loginForm.invalid : registerForm.invalid)">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="
+          loading || (isLoginMode ? loginForm.invalid : registerForm.invalid)
+        "
+      >
         <span *ngIf="loading" class="spinner"></span>
-        {{ isLoginMode ? 'Login' : 'Register' }}
+        {{ isLoginMode ? "Login" : "Register" }}
       </button>
     </form>
 
     <p class="toggle-mode">
       {{ isLoginMode ? "Don't have an account?" : "Already have an account?" }}
       <a href="#" (click)="toggleMode(); $event.preventDefault()">
-        {{ isLoginMode ? 'Register' : 'Login' }}
+        {{ isLoginMode ? "Register" : "Login" }}
       </a>
     </p>
   </div>

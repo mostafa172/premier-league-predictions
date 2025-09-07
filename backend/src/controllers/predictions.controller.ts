@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { Prediction } from "../models/Prediction";
 import { Fixture } from "../models/Fixture";
 import { Team } from "../models/Team";
-import { Op } from "sequelize";
+import { Op, QueryTypes } from "sequelize";
 import { sequelize } from "../config/sequelize";
 
 function isFixtureLocked(fixture: Fixture) {
@@ -245,6 +245,104 @@ export class PredictionsController {
     } catch (error) {
       console.error("Error getting user predictions by gameweek:", error);
       res.status(500).json({ success: false, message: "Internal server error" });
+    }
+  }
+
+  // Get user's total points for a specific gameweek
+  async getUserGameweekTotal(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { gameweek } = req.params;
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+      const [results] = await sequelize.query(`
+        SELECT 
+          COALESCE(SUM(p.points), 0) as "totalPoints"
+        FROM predictions p
+        INNER JOIN fixtures f ON p.fixture_id = f.id
+        WHERE p.user_id = :userId AND f.gameweek = :gameweek
+      `, {
+        replacements: { userId, gameweek: parseInt(gameweek) },
+        type: QueryTypes.SELECT
+      });
+
+      const totalPoints = results && (results as any).totalPoints ? parseInt((results as any).totalPoints, 10) : 0;
+
+      return res.status(200).json({ 
+        success: true, 
+        data: { 
+          gameweek: parseInt(gameweek),
+          totalPoints 
+        } 
+      });
+    } catch (error) {
+      console.error("Error getting user gameweek total:", error);
+      return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+  }
+
+  // Get another user's predictions for a specific gameweek
+  async getOtherUserPredictions(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { userId, gameweek } = req.params;
+      const currentUserId = req.user?.id;
+      if (!currentUserId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+      // Get the target user's info
+      const targetUser = await sequelize.models.User.findByPk(userId, {
+        attributes: ['id', 'username']
+      });
+
+      if (!targetUser) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      // Get fixtures for the gameweek
+      const fixtures = await Fixture.findAll({
+        where: { gameweek: parseInt(gameweek) },
+        include: [
+          { model: sequelize.models.Team, as: "homeTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+          { model: sequelize.models.Team, as: "awayTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+        ],
+        order: [["matchDate", "ASC"]],
+      });
+
+      // Get the target user's predictions for this gameweek
+      const predictions = await Prediction.findAll({
+        where: { userId: parseInt(userId) },
+        include: [
+          {
+            model: Fixture,
+            as: "fixture",
+            where: { gameweek: parseInt(gameweek) },
+            include: [
+              { model: sequelize.models.Team, as: "homeTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+              { model: sequelize.models.Team, as: "awayTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+            ],
+          },
+        ],
+        order: [["fixture", "matchDate", "ASC"]],
+      });
+
+      // Calculate total points for this gameweek
+      const totalPoints = predictions.reduce((sum, prediction) => sum + (prediction.points || 0), 0);
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          user: {
+            id: (targetUser as any).id,
+            username: (targetUser as any).username
+          },
+          gameweek: parseInt(gameweek),
+          fixtures,
+          predictions,
+          totalPoints
+        }
+      });
+    } catch (error) {
+      console.error("Error getting other user predictions:", error);
+      return res.status(500).json({ success: false, message: "Internal server error" });
     }
   }
 

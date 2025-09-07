@@ -1,6 +1,10 @@
 <div class="leaderboard-container">
   <div class="leaderboard-header">
     <h2>Leaderboard</h2>
+    <div class="leaderboard-hint">
+      <i class="fas fa-info-circle"></i>
+      <span>Click on any username to view their predictions</span>
+    </div>
     <!-- <button
       (click)="refreshLeaderboard()"
       class="refresh-btn"
@@ -42,7 +46,9 @@
           </td>
 
           <td class="username-cell">
-            <div class="username">
+            <div class="username" 
+                 [class.clickable]="entry.username !== currentUsername"
+                 (click)="onUserClick(entry)">
               <span class="name">{{ entry.username }}</span>
               <span *ngIf="entry.username === currentUsername" class="you-label"
                 >You</span
@@ -61,4 +67,14 @@
   <div *ngIf="!loading && leaderboard.length === 0" class="no-data">
     No leaderboard data available yet.
   </div>
+
+  <!-- User Predictions Modal -->
+  <app-user-predictions-modal 
+    [isOpen]="showUserPredictionsModal"
+    [currentGameweek]="currentGameweek"
+    [selectedUser]="selectedUser"
+    (isOpenChange)="showUserPredictionsModal = $event"
+    (closed)="closeUserPredictionsModal()"
+    (close)="closeUserPredictionsModal()">
+  </app-user-predictions-modal>
 </div>
