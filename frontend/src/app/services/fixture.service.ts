@@ -30,6 +30,12 @@ export class FixtureService {
     return this.http.get<any>(`${this.API_URL}/fixtures/gameweeks/closest`);
   }
 
+  getClosestActiveGameweek() {
+    return this.http.get<any>(
+      `${this.API_URL}/fixtures/gameweeks/closest-active`
+    );
+  }
+
   getFixturesByGameweek(gameweek: number): Observable<any> {
     return this.http.get(`${this.API_URL}/fixtures/gameweek/${gameweek}`, {
       headers: this.getHeaders(),

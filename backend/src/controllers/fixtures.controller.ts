@@ -216,12 +216,10 @@ export class FixturesController {
       return res.status(200).json({ success: true, data: withLive });
     } catch (error) {
       console.error("Get fixtures by gameweek error:", error);
-      return res
-        .status(500)
-        .json({
-          success: false,
-          message: "Error fetching fixtures by gameweek",
-        });
+      return res.status(500).json({
+        success: false,
+        message: "Error fetching fixtures by gameweek",
+      });
     }
   }
 
@@ -297,12 +295,10 @@ export class FixturesController {
           .status(400)
           .json({ success: false, message: "Invalid team IDs" });
       if (homeTeamId === awayTeamId) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Home and away teams must be different",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Home and away teams must be different",
+        });
       }
 
       const fixture = await Fixture.create({
@@ -341,13 +337,11 @@ export class FixturesController {
         ],
       });
 
-      return res
-        .status(201)
-        .json({
-          success: true,
-          message: "Fixture created successfully",
-          data: createdFixture,
-        });
+      return res.status(201).json({
+        success: true,
+        message: "Fixture created successfully",
+        data: createdFixture,
+      });
     } catch (error: any) {
       console.error("Create fixture error:", error);
       const msg = /Invalid date format/.test(error?.message)
@@ -448,13 +442,11 @@ export class FixturesController {
         ],
       });
 
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: "Fixture updated successfully",
-          data: updatedFixture,
-        });
+      return res.status(200).json({
+        success: true,
+        message: "Fixture updated successfully",
+        data: updatedFixture,
+      });
     } catch (error: any) {
       console.error("Update fixture error:", error);
       const msg = /Invalid date format/.test(error?.message)
@@ -521,6 +513,92 @@ export class FixturesController {
       return res.json({ success: true, data: { gameweek: bestGw } });
     } catch (e) {
       console.error("getClosestGameweek error", e);
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
+    }
+  }
+
+  public async getClosestActiveGameweek(req: Request, res: Response) {
+    try {
+      const now = new Date();
+      const todayStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+
+      // First, check for gameweeks with unfinished matches
+      const unfinishedGameweeks = await Fixture.findAll({
+        attributes: [
+          "gameweek",
+          [fn("COUNT", col("id")), "totalMatches"],
+          [
+            fn(
+              "SUM",
+              sequelize.literal(
+                "CASE WHEN status = 'finished' THEN 1 ELSE 0 END"
+              )
+            ),
+            "finishedMatches",
+          ],
+        ],
+        group: ["gameweek"],
+        order: [["gameweek", "ASC"]],
+        having: sequelize.literal(
+          "COUNT(id) > SUM(CASE WHEN status = 'finished' THEN 1 ELSE 0 END)"
+        ),
+      });
+
+      if (unfinishedGameweeks.length > 0) {
+        const closestUnfinished = unfinishedGameweeks[0];
+        return res.json({
+          success: true,
+          data: { gameweek: Number(closestUnfinished.get("gameweek")) },
+        });
+      }
+
+      // If no unfinished gameweeks, find the last finished gameweek
+      const lastFinishedGameweek = await Fixture.findOne({
+        attributes: ["gameweek", [fn("MAX", col("match_date")), "lastMatch"]],
+        where: {
+          status: FixtureStatus.FINISHED,
+        },
+        group: ["gameweek"],
+        order: [["gameweek", "DESC"]],
+        limit: 1,
+      });
+
+      if (lastFinishedGameweek) {
+        const lastMatchDate = new Date(
+          lastFinishedGameweek.get("lastMatch") as string
+        );
+        const lastMatchDay = new Date(
+          lastMatchDate.getFullYear(),
+          lastMatchDate.getMonth(),
+          lastMatchDate.getDate()
+        );
+
+        // If we're still on the same day as the last match, return that gameweek
+        if (todayStart.getTime() === lastMatchDay.getTime()) {
+          return res.json({
+            success: true,
+            data: { gameweek: Number(lastFinishedGameweek.get("gameweek")) },
+          });
+        }
+
+        // If the day has passed, return next gameweek
+        const nextGameweek = Number(lastFinishedGameweek.get("gameweek")) + 1;
+        return res.json({
+          success: true,
+          data: { gameweek: Math.min(nextGameweek, 38) }, // Cap at 38
+        });
+      }
+
+      // Fallback to gameweek 1 if no finished matches found
+      return res.json({ success: true, data: { gameweek: 1 } });
+    } catch (e) {
+      console.error("getClosestActiveGameweek error", e);
       return res
         .status(500)
         .json({ success: false, message: "Internal server error" });

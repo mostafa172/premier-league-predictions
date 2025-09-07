@@ -7,7 +7,9 @@ import { Op, QueryTypes } from "sequelize";
 import { sequelize } from "../config/sequelize";
 
 function isFixtureLocked(fixture: Fixture) {
-  return new Date() >= new Date(fixture.deadline) || fixture.status !== "upcoming";
+  return (
+    new Date() >= new Date(fixture.deadline) || fixture.status !== "upcoming"
+  );
 }
 
 export class PredictionsController {
@@ -17,26 +19,56 @@ export class PredictionsController {
       const { fixtureId, homeScore, awayScore, isDouble } = req.body;
       const userId = req.user?.id;
 
-      if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+      if (!userId)
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
 
       // basic validation (allow null only if you're not creating—here we are creating, so require numbers)
-      if (homeScore == null || awayScore == null || homeScore < 0 || awayScore < 0) {
-        return res.status(400).json({ success: false, message: "Scores must be non-negative numbers" });
+      if (
+        homeScore == null ||
+        awayScore == null ||
+        homeScore < 0 ||
+        awayScore < 0
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Scores must be non-negative numbers",
+          });
       }
 
-      const existing = await Prediction.findOne({ where: { userId, fixtureId } });
+      const existing = await Prediction.findOne({
+        where: { userId, fixtureId },
+      });
       if (existing) {
-        return res.status(400).json({ success: false, message: "Prediction already exists for this fixture" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Prediction already exists for this fixture",
+          });
       }
 
       const fixture = await Fixture.findByPk(fixtureId);
-      if (!fixture) return res.status(404).json({ success: false, message: "Fixture not found" });
+      if (!fixture)
+        return res
+          .status(404)
+          .json({ success: false, message: "Fixture not found" });
 
       if (new Date() > new Date(fixture.deadline)) {
-        return res.status(400).json({ success: false, message: "Prediction deadline has passed" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Prediction deadline has passed" });
       }
       if (fixture.status !== "upcoming") {
-        return res.status(400).json({ success: false, message: "Cannot predict on fixtures that have started or finished" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Cannot predict on fixtures that have started or finished",
+          });
       }
 
       // Double enforcement (one per GW, lock once any double's deadline passes)
@@ -49,7 +81,13 @@ export class PredictionsController {
 
         const existingDoubles = await Prediction.findAll({
           where: { userId, isDouble: true, fixtureId: { [Op.in]: sameGwIds } },
-          include: [{ model: Fixture, as: "fixture", attributes: ["id", "deadline", "status"] }],
+          include: [
+            {
+              model: Fixture,
+              as: "fixture",
+              attributes: ["id", "deadline", "status"],
+            },
+          ],
         });
 
         const lockedDoubleExists = existingDoubles.some(
@@ -58,14 +96,20 @@ export class PredictionsController {
         if (lockedDoubleExists) {
           return res.status(400).json({
             success: false,
-            message: "Double pick for this gameweek is locked (an existing double's deadline has passed).",
+            message:
+              "Double pick for this gameweek is locked (an existing double's deadline has passed).",
           });
         }
 
         // Clear doubles only on UNLOCKED fixtures (allow pre-deadline switching)
-        const unlockedIds = sameGwFixtures.filter((f) => !isFixtureLocked(f)).map((f) => f.id);
+        const unlockedIds = sameGwFixtures
+          .filter((f) => !isFixtureLocked(f))
+          .map((f) => f.id);
         if (unlockedIds.length > 0) {
-          await Prediction.update({ isDouble: false }, { where: { userId, fixtureId: { [Op.in]: unlockedIds } } });
+          await Prediction.update(
+            { isDouble: false },
+            { where: { userId, fixtureId: { [Op.in]: unlockedIds } } }
+          );
         }
       }
 
@@ -77,10 +121,16 @@ export class PredictionsController {
         isDouble: Boolean(isDouble),
       });
 
-      return res.json({ success: true, data: prediction, message: "Prediction created successfully" });
+      return res.json({
+        success: true,
+        data: prediction,
+        message: "Prediction created successfully",
+      });
     } catch (error) {
       console.error("Error creating prediction:", error);
-      return res.status(500).json({ success: false, message: "Internal server error" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 
@@ -91,10 +141,23 @@ export class PredictionsController {
       const { homeScore, awayScore, isDouble } = req.body;
       const userId = req.user?.id;
 
-      if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+      if (!userId)
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
 
-      if (homeScore == null || awayScore == null || homeScore < 0 || awayScore < 0) {
-        return res.status(400).json({ success: false, message: "Scores must be non-negative numbers" });
+      if (
+        homeScore == null ||
+        awayScore == null ||
+        homeScore < 0 ||
+        awayScore < 0
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Scores must be non-negative numbers",
+          });
       }
 
       const prediction = await Prediction.findOne({
@@ -102,16 +165,21 @@ export class PredictionsController {
         include: [{ model: Fixture, as: "fixture" }],
       });
       if (!prediction) {
-        return res.status(404).json({ success: false, message: "Prediction not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Prediction not found" });
       }
 
       if (new Date() > new Date(prediction.fixture.deadline)) {
-        return res.status(400).json({ success: false, message: "Prediction deadline has passed" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Prediction deadline has passed" });
       }
       if (prediction.fixture.status !== "upcoming") {
         return res.status(400).json({
           success: false,
-          message: "Cannot update predictions for fixtures that have started or finished",
+          message:
+            "Cannot update predictions for fixtures that have started or finished",
         });
       }
 
@@ -124,8 +192,19 @@ export class PredictionsController {
         const sameGwIds = sameGwFixtures.map((f) => f.id);
 
         const existingDoubles = await Prediction.findAll({
-          where: { userId, isDouble: true, fixtureId: { [Op.in]: sameGwIds }, id: { [Op.ne]: id } },
-          include: [{ model: Fixture, as: "fixture", attributes: ["id", "deadline", "status"] }],
+          where: {
+            userId,
+            isDouble: true,
+            fixtureId: { [Op.in]: sameGwIds },
+            id: { [Op.ne]: id },
+          },
+          include: [
+            {
+              model: Fixture,
+              as: "fixture",
+              attributes: ["id", "deadline", "status"],
+            },
+          ],
         });
 
         const lockedDoubleExists = existingDoubles.some(
@@ -134,15 +213,24 @@ export class PredictionsController {
         if (lockedDoubleExists) {
           return res.status(400).json({
             success: false,
-            message: "Double pick for this gameweek is locked (an existing double's deadline has passed).",
+            message:
+              "Double pick for this gameweek is locked (an existing double's deadline has passed).",
           });
         }
 
-        const unlockedIds = sameGwFixtures.filter((f) => !isFixtureLocked(f)).map((f) => f.id);
+        const unlockedIds = sameGwFixtures
+          .filter((f) => !isFixtureLocked(f))
+          .map((f) => f.id);
         if (unlockedIds.length > 0) {
           await Prediction.update(
             { isDouble: false },
-            { where: { userId, fixtureId: { [Op.in]: unlockedIds }, id: { [Op.ne]: id } } }
+            {
+              where: {
+                userId,
+                fixtureId: { [Op.in]: unlockedIds },
+                id: { [Op.ne]: id },
+              },
+            }
           );
         }
       }
@@ -153,10 +241,16 @@ export class PredictionsController {
         isDouble: Boolean(isDouble),
       });
 
-      return res.json({ success: true, data: prediction, message: "Prediction updated successfully" });
+      return res.json({
+        success: true,
+        data: prediction,
+        message: "Prediction updated successfully",
+      });
     } catch (error) {
       console.error("Error updating prediction:", error);
-      return res.status(500).json({ success: false, message: "Internal server error" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 
@@ -165,25 +259,37 @@ export class PredictionsController {
     try {
       const { id } = req.params;
       const userId = req.user?.id;
-      if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+      if (!userId)
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
 
       const prediction = await Prediction.findOne({
         where: { id, userId },
         include: [{ model: Fixture, as: "fixture" }],
       });
       if (!prediction) {
-        return res.status(404).json({ success: false, message: "Prediction not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Prediction not found" });
       }
 
       if (new Date() > new Date(prediction.fixture.deadline)) {
-        return res.status(400).json({ success: false, message: "Cannot delete prediction after deadline" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Cannot delete prediction after deadline",
+          });
       }
 
       await prediction.destroy();
       res.json({ success: true, message: "Prediction deleted successfully" });
     } catch (error) {
       console.error("Error deleting prediction:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+      res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 
@@ -191,7 +297,10 @@ export class PredictionsController {
   async getUserPredictions(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.id;
-      if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+      if (!userId)
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
 
       const predictions = await Prediction.findAll({
         where: { userId },
@@ -200,8 +309,16 @@ export class PredictionsController {
             model: Fixture,
             as: "fixture",
             include: [
-              { model: sequelize.models.Team, as: "homeTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
-              { model: sequelize.models.Team, as: "awayTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+              {
+                model: sequelize.models.Team,
+                as: "homeTeam",
+                attributes: ["id", "name", "abbreviation", "logoUrl"],
+              },
+              {
+                model: sequelize.models.Team,
+                as: "awayTeam",
+                attributes: ["id", "name", "abbreviation", "logoUrl"],
+              },
             ],
           },
         ],
@@ -214,7 +331,9 @@ export class PredictionsController {
       res.json({ success: true, data: predictions });
     } catch (error) {
       console.error("Error getting user predictions:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+      res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 
@@ -223,7 +342,10 @@ export class PredictionsController {
     try {
       const { gameweek } = req.params;
       const userId = req.user?.id;
-      if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+      if (!userId)
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
 
       const predictions = await Prediction.findAll({
         where: { userId },
@@ -233,8 +355,16 @@ export class PredictionsController {
             as: "fixture",
             where: { gameweek: parseInt(gameweek) },
             include: [
-              { model: sequelize.models.Team, as: "homeTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
-              { model: sequelize.models.Team, as: "awayTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+              {
+                model: sequelize.models.Team,
+                as: "homeTeam",
+                attributes: ["id", "name", "abbreviation", "logoUrl"],
+              },
+              {
+                model: sequelize.models.Team,
+                as: "awayTeam",
+                attributes: ["id", "name", "abbreviation", "logoUrl"],
+              },
             ],
           },
         ],
@@ -244,7 +374,9 @@ export class PredictionsController {
       res.json({ success: true, data: predictions });
     } catch (error) {
       console.error("Error getting user predictions by gameweek:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+      res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 
@@ -253,31 +385,42 @@ export class PredictionsController {
     try {
       const { gameweek } = req.params;
       const userId = req.user?.id;
-      if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+      if (!userId)
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
 
-      const [results] = await sequelize.query(`
+      const [results] = await sequelize.query(
+        `
         SELECT 
           COALESCE(SUM(p.points), 0) as "totalPoints"
         FROM predictions p
         INNER JOIN fixtures f ON p.fixture_id = f.id
         WHERE p.user_id = :userId AND f.gameweek = :gameweek
-      `, {
-        replacements: { userId, gameweek: parseInt(gameweek) },
-        type: QueryTypes.SELECT
-      });
+      `,
+        {
+          replacements: { userId, gameweek: parseInt(gameweek) },
+          type: QueryTypes.SELECT,
+        }
+      );
 
-      const totalPoints = results && (results as any).totalPoints ? parseInt((results as any).totalPoints, 10) : 0;
+      const totalPoints =
+        results && (results as any).totalPoints
+          ? parseInt((results as any).totalPoints, 10)
+          : 0;
 
-      return res.status(200).json({ 
-        success: true, 
-        data: { 
+      return res.status(200).json({
+        success: true,
+        data: {
           gameweek: parseInt(gameweek),
-          totalPoints 
-        } 
+          totalPoints,
+        },
       });
     } catch (error) {
       console.error("Error getting user gameweek total:", error);
-      return res.status(500).json({ success: false, message: "Internal server error" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 
@@ -286,23 +429,36 @@ export class PredictionsController {
     try {
       const { userId, gameweek } = req.params;
       const currentUserId = req.user?.id;
-      if (!currentUserId) return res.status(401).json({ success: false, message: "Unauthorized" });
+      if (!currentUserId)
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
 
       // Get the target user's info
       const targetUser = await sequelize.models.User.findByPk(userId, {
-        attributes: ['id', 'username']
+        attributes: ["id", "username"],
       });
 
       if (!targetUser) {
-        return res.status(404).json({ success: false, message: "User not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "User not found" });
       }
 
       // Get fixtures for the gameweek
       const fixtures = await Fixture.findAll({
         where: { gameweek: parseInt(gameweek) },
         include: [
-          { model: sequelize.models.Team, as: "homeTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
-          { model: sequelize.models.Team, as: "awayTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+          {
+            model: sequelize.models.Team,
+            as: "homeTeam",
+            attributes: ["id", "name", "abbreviation", "logoUrl"],
+          },
+          {
+            model: sequelize.models.Team,
+            as: "awayTeam",
+            attributes: ["id", "name", "abbreviation", "logoUrl"],
+          },
         ],
         order: [["matchDate", "ASC"]],
       });
@@ -316,8 +472,16 @@ export class PredictionsController {
             as: "fixture",
             where: { gameweek: parseInt(gameweek) },
             include: [
-              { model: sequelize.models.Team, as: "homeTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
-              { model: sequelize.models.Team, as: "awayTeam", attributes: ["id", "name", "abbreviation", "logoUrl"] },
+              {
+                model: sequelize.models.Team,
+                as: "homeTeam",
+                attributes: ["id", "name", "abbreviation", "logoUrl"],
+              },
+              {
+                model: sequelize.models.Team,
+                as: "awayTeam",
+                attributes: ["id", "name", "abbreviation", "logoUrl"],
+              },
             ],
           },
         ],
@@ -325,24 +489,29 @@ export class PredictionsController {
       });
 
       // Calculate total points for this gameweek
-      const totalPoints = predictions.reduce((sum, prediction) => sum + (prediction.points || 0), 0);
+      const totalPoints = predictions.reduce(
+        (sum, prediction) => sum + (prediction.points || 0),
+        0
+      );
 
       return res.status(200).json({
         success: true,
         data: {
           user: {
             id: (targetUser as any).id,
-            username: (targetUser as any).username
+            username: (targetUser as any).username,
           },
           gameweek: parseInt(gameweek),
           fixtures,
           predictions,
-          totalPoints
-        }
+          totalPoints,
+        },
       });
     } catch (error) {
       console.error("Error getting other user predictions:", error);
-      return res.status(500).json({ success: false, message: "Internal server error" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 
@@ -371,7 +540,9 @@ export class PredictionsController {
       return res.status(200).json({ success: true, data: formatted });
     } catch (error) {
       console.error("Error getting leaderboard:", error);
-      return res.status(500).json({ success: false, message: "Internal server error" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 }
