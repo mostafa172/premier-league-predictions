@@ -183,6 +183,8 @@
                     <label>{{ fixture.homeTeam?.abbreviation }}</label>
                     <input
                       type="number"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
                       formControlName="homeScore"
                       min="0"
                       max="20"
@@ -196,6 +198,8 @@
                     <label>{{ fixture.awayTeam?.abbreviation }}</label>
                     <input
                       type="number"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
                       formControlName="awayScore"
                       min="0"
                       max="20"
@@ -233,6 +237,8 @@
                   <span class="abbr">{{ fixture.homeTeam?.abbreviation }}</span>
                   <input
                     type="number"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
                     class="score-input-compact"
                     formControlName="homeScore"
                     min="0"
@@ -246,6 +252,8 @@
                 <div class="side away">
                   <input
                     type="number"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
                     class="score-input-compact"
                     formControlName="awayScore"
                     min="0"
@@ -353,8 +361,7 @@
             </button>
           </div>
         </div>
-          </div>
-  </form>
-
-</div>
+      </div>
+    </form>
+  </div>
 </div>
