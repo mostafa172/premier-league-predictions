@@ -528,6 +528,7 @@ export class PredictionsController {
         GROUP BY u.id, u.username
         HAVING COALESCE(SUM(p.points), 0) > 0
         ORDER BY "totalPoints" DESC, u.username ASC
+        LIMIT 10
       `);
 
       const formatted = (results as any[]).map((user: any, index: number) => ({
