@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { connectDatabase } from './config/sequelize';
+import { notificationScheduler } from './services/notification.scheduler';
 
 import authRoutes from './routes/auth.routes';
 import predictionsRoutes from './routes/predictions.routes';
@@ -12,6 +13,7 @@ import fixturesRoutes from './routes/fixtures.routes';
 import adminRoutes from './routes/admin.routes';
 import teamsRoutes from './routes/teams.routes';
 import leaguesRoutes from './routes/leagues.routes';
+import notificationsRoutes from './routes/notifications.routes';
 
 dotenv.config();
 
@@ -32,6 +34,7 @@ app.use('/api/fixtures', fixturesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/teams', teamsRoutes);
 app.use('/api/leagues', leaguesRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -52,6 +55,7 @@ const startServer = async () => {
             console.log(`🚀 Server running on port ${PORT}`);
             console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
             console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`📧 Notification scheduler initialized`);
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error);

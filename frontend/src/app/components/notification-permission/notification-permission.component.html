@@ -1,0 +1,57 @@
+<div class="notification-permission-card">
+  <div class="header">
+    <i class="fas fa-bell"></i>
+    <h3>Get Match Reminders</h3>
+  </div>
+
+  <div class="content">
+    <p>Stay updated with push notifications for prediction deadlines and match reminders!</p>
+
+    <!-- Not Supported -->
+    <div *ngIf="shouldShowNotSupportedMessage" class="status-message not-supported">
+      <i class="fas fa-exclamation-triangle"></i>
+      <p>Your browser doesn't support notifications</p>
+    </div>
+
+    <!-- Permission Granted -->
+    <div *ngIf="shouldShowGrantedMessage" class="status-message granted">
+      <i class="fas fa-check-circle"></i>
+      <p>Notifications enabled! You'll receive reminders before match deadlines.</p>
+      <button class="btn btn-secondary" (click)="showTestNotification()">
+        <i class="fas fa-paper-plane"></i>
+        Test Notification
+      </button>
+    </div>
+
+    <!-- Permission Denied -->
+    <div *ngIf="shouldShowDeniedMessage" class="status-message denied">
+      <i class="fas fa-times-circle"></i>
+      <p>Notifications are blocked. Enable them in your browser settings to get reminders.</p>
+      <div class="help-text">
+        <small>
+          <i class="fas fa-info-circle"></i>
+          Go to your browser settings → Privacy → Notifications → Allow notifications for this site
+        </small>
+      </div>
+    </div>
+
+    <!-- Request Permission -->
+    <div *ngIf="shouldShowRequestButton" class="request-permission">
+      <button 
+        class="btn btn-primary" 
+        (click)="requestPermission()"
+        [disabled]="requesting"
+      >
+        <i class="fas fa-bell" *ngIf="!requesting"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="requesting"></i>
+        {{ requesting ? 'Requesting...' : 'Enable Notifications' }}
+      </button>
+      <div class="help-text">
+        <small>
+          <i class="fas fa-info-circle"></i>
+          We'll send you reminders 24 hours before match deadlines
+        </small>
+      </div>
+    </div>
+  </div>
+</div>

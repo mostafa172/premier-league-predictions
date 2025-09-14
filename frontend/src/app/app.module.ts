@@ -17,6 +17,7 @@ import { FixtureFormComponent } from "./components/fixture-form/fixture-form.com
 import { UserPredictionsModalComponent } from "./components/user-predictions-modal/user-predictions-modal.component";
 import { LeaguesComponent } from "./components/leagues/leagues.component";
 import { LeagueDetailComponent } from "./components/league-detail/league-detail.component";
+import { NotificationPermissionComponent } from "./components/notification-permission/notification-permission.component";
 
 // Import your services and guards
 import { AuthService } from "./services/auth.service";
@@ -40,6 +41,7 @@ import { AuthInterceptor } from "./interceptors/auth.interceptor";
     UserPredictionsModalComponent,
     LeaguesComponent,
     LeagueDetailComponent,
+    NotificationPermissionComponent,
   ],
   imports: [
     BrowserModule,
