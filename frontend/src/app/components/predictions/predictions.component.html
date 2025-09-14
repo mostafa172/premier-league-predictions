@@ -319,7 +319,6 @@
                 class="finished-footer show-on-mobile-inline"
                 *ngIf="
                   isFixtureDisabled(fixture) &&
-                  fixture.status === 'finished' &&
                   existingPredictions.length > 0
                 "
               >
@@ -330,8 +329,8 @@
                       >{{ pred.predictedHomeScore }} –
                       {{ pred.predictedAwayScore }}</span
                     >
-                    <span class="dot">•</span>
-                    <span class="points">{{ pred.points || 0 }} pts</span>
+                    <span class="dot" *ngIf="fixture.status === 'finished'">•</span>
+                    <span class="points" *ngIf="fixture.status === 'finished'">{{ pred.points || 0 }} pts</span>
                   </div>
                 </ng-container>
               </div>
