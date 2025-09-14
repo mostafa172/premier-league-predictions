@@ -354,4 +354,19 @@
       </div>
     </form>
   </div>
+
+  <!-- Toast Message -->
+  <div
+    class="toast"
+    *ngIf="showToast"
+    [class.toast-success]="toastType === 'success'"
+    [class.toast-error]="toastType === 'error'"
+  >
+    <i
+      class="fas"
+      [class.fa-check-circle]="toastType === 'success'"
+      [class.fa-exclamation-circle]="toastType === 'error'"
+    ></i>
+    <span>{{ toastMessage }}</span>
+  </div>
 </div>

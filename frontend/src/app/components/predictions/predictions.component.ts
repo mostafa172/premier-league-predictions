@@ -29,6 +29,11 @@ export class PredictionsComponent implements OnInit, OnDestroy {
 
   showRules = false;
 
+  // Toast properties
+  showToast = false;
+  toastMessage = "";
+  toastType = "success"; // 'success' or 'error'
+
   constructor(
     private fb: FormBuilder,
     private predictionService: PredictionService,
@@ -294,14 +299,17 @@ export class PredictionsComponent implements OnInit, OnDestroy {
       this.saving = false;
 
       if (failed === 0) {
-        this.success = this.message = "Predictions saved successfully!";
-        this.messageType = "success";
+        this.showToastMessage("Predictions saved successfully!", "success");
+        this.success = this.message = "";
+        this.messageType = "";
       } else if (succeeded > 0) {
-        this.message = `Saved ${succeeded} change(s). ${failed} failed (likely past deadline or finished).`;
-        this.messageType = "warning";
+        this.showToastMessage(`Saved ${succeeded} change(s). ${failed} failed (likely past deadline or finished).`, "error");
+        this.message = "";
+        this.messageType = "";
       } else {
-        this.error = this.message = "Failed to save predictions.";
-        this.messageType = "danger";
+        this.showToastMessage("Failed to save predictions.", "error");
+        this.error = this.message = "";
+        this.messageType = "";
       }
 
       this.hasChanges = false; // reset after successful attempt
@@ -475,5 +483,16 @@ export class PredictionsComponent implements OnInit, OnDestroy {
       }
     }
     return false;
+  }
+
+  showToastMessage(message: string, type: "success" | "error"): void {
+    this.toastMessage = message;
+    this.toastType = type;
+    this.showToast = true;
+
+    // Auto-hide toast after 3 seconds
+    setTimeout(() => {
+      this.showToast = false;
+    }, 3000);
   }
 }
