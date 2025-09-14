@@ -516,9 +516,12 @@ export class PredictionsController {
   }
 
   // Basic leaderboard
-  async getLeaderboard(req: Request, res: Response) {
+  async getLeaderboard(req: AuthenticatedRequest, res: Response) {
     try {
-      const [results] = await sequelize.query(`
+      const userId = req.user?.id;
+      
+      // Get all users with their points for ranking
+      const [allResults] = await sequelize.query(`
         SELECT 
           u.id,
           u.username,
@@ -528,17 +531,27 @@ export class PredictionsController {
         GROUP BY u.id, u.username
         HAVING COALESCE(SUM(p.points), 0) > 0
         ORDER BY "totalPoints" DESC, u.username ASC
-        LIMIT 10
       `);
 
-      const formatted = (results as any[]).map((user: any, index: number) => ({
+      const allUsers = (allResults as any[]).map((user: any, index: number) => ({
         userId: user.id,
         username: user.username,
         totalPoints: parseInt(user.totalPoints || 0, 10),
         rank: index + 1,
       }));
 
-      return res.status(200).json({ success: true, data: formatted });
+      // Get top 10 users
+      const top10 = allUsers.slice(0, 10);
+      
+      // Find current user's position
+      const currentUser = allUsers.find(user => user.userId === userId);
+      
+      // If current user exists and is not in top 10, add them to the results
+      if (currentUser && currentUser.rank > 10) {
+        top10.push(currentUser);
+      }
+
+      return res.status(200).json({ success: true, data: top10 });
     } catch (error) {
       console.error("Error getting leaderboard:", error);
       return res

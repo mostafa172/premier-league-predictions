@@ -67,7 +67,7 @@ export class LeaderboardComponent implements OnInit, OnDestroy {
             userId: entry.userId,
             username: entry.username,
             totalPoints: entry.totalPoints || 0,
-            rank: index + 1
+            rank: entry.rank
           }));
           
           // Find current user's rank
