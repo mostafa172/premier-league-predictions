@@ -335,15 +335,6 @@
                 </ng-container>
               </div>
 
-              <!-- Upcoming but past deadline (desktop + mobile) -->
-              <div
-                class="deadline-passed"
-                *ngIf="
-                  isFixtureDisabled(fixture) && fixture.status === 'upcoming'
-                "
-              >
-                <p>Prediction deadline has passed</p>
-              </div>
             </div>
           </div>
         </div>
