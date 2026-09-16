@@ -16,7 +16,11 @@ services:
     plan: free
     branch: feature/app-enhancements
     rootDir: backend
-    buildCommand: npm install && npm run build
+    # NODE_ENV=production makes npm omit devDependencies, which is where
+    # typescript lives, so the build would fall back to whatever tsc the image
+    # ships and fail on options that newer versions removed. ci installs the
+    # lockfile exactly, so the build matches what was tested locally.
+    buildCommand: npm ci --include=dev && npm run build
     # start migrates before serving; the app refuses to boot with a migration
     # pending, and baseline mode also adopts a database restored from a branch.
     startCommand: npm start
