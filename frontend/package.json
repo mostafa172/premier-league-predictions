@@ -8,7 +8,9 @@
     "build:dev": "ng build --configuration development",
     "serve:prod": "npx http-server ./dist/premier-league-predictions -p 8080 -c-1",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "build:staging": "ng build --configuration staging",
+    "vercel-build": "if [ \"$VERCEL_ENV\" = \"production\" ]; then npm run build; else npm run build:staging; fi"
   },
   "private": true,
   "dependencies": {

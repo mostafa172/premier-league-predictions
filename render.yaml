@@ -1,0 +1,52 @@
+# Render Blueprint for the staging backend.
+#
+# Only staging is defined here on purpose. Production was created through the
+# dashboard, and applying a blueprint that also described it could reconcile
+# settings on a live service. Once staging has proven itself, production can be
+# added here and linked to the existing service.
+#
+# Applying this creates the service but not its secrets: DATABASE_URL,
+# JWT_SECRET and FOOTBALL_API_KEY are marked sync:false and must be set in the
+# dashboard, so no credential ever lands in the repository.
+
+services:
+  - type: web
+    name: premier-league-predictions-staging
+    runtime: node
+    plan: free
+    branch: feature/app-enhancements
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    # start migrates before serving; the app refuses to boot with a migration
+    # pending, and baseline mode also adopts a database restored from a branch.
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+
+      # Point this at a Neon branch, never at the production database.
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+
+      # Staging is the only environment running the scheduled syncs, so the
+      # two never contend for the advisory lock or the rate limit.
+      - key: FOOTBALL_SYNC_ENABLED
+        value: "true"
+      - key: FOOTBALL_API_KEY
+        sync: false
+      - key: FOOTBALL_COMPETITION
+        value: PL
+      - key: FOOTBALL_SYNC_GAMEWEEK_HORIZON
+        value: "3"
+      - key: FOOTBALL_SYNC_RESULTS_INTERVAL_SECONDS
+        value: "300"
+      - key: FOOTBALL_FINISH_WINDOW_START_MINUTES
+        value: "95"
+      - key: FOOTBALL_FINISH_WINDOW_END_MINUTES
+        value: "240"

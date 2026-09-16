@@ -234,8 +234,46 @@ And `FOOTBALL_SYNC_ENABLED` should be true in exactly one environment per
 database, since two schedulers on one database will contend for the same
 advisory lock and waste the rate limit.
 
-The frontend's API URL is baked in at build time from
-`frontend/src/environments/environment.prod.ts`.
+The frontend's API URL is baked in at build time. Vercel picks the right one
+by itself through the `vercel-build` script: production deploys build the
+`production` configuration, and every preview branch builds `staging`, which
+points at the staging API. Neither needs a dashboard setting, though a build
+command configured in the Vercel project would override it.
+
+### Staging
+
+`render.yaml` describes a staging backend only. Production was created through
+the dashboard, and a blueprint that also described it could reconcile settings
+on a live service, so it is deliberately left out until staging has proven
+itself.
+
+Setting it up once:
+
+1. Branch the production database in Neon. The branch starts as a copy, so
+   staging exercises real users, predictions and fixtures without any risk to
+   them.
+2. In Render, apply the blueprint and set the three secrets it leaves empty:
+   `DATABASE_URL` pointing at the Neon branch, `JWT_SECRET`, and
+   `FOOTBALL_API_KEY`.
+3. Confirm the host Render assigns matches
+   `frontend/src/environments/environment.staging.ts`, and correct it if not.
+4. Point an uptime pinger at `/api/health` every five minutes, otherwise the
+   free instance sleeps and the results poller misses kickoffs.
+
+On first boot the migrator adopts the branched database: it records the
+baseline without rewriting the schema, then applies the migrations the branch
+adds. Nothing has to be reset by hand.
+
+Before letting a sync write anything, read what it would do:
+
+```bash
+npm run sync:prod -- schedule --dry-run
+npm run sync:prod -- teams --dry-run
+```
+
+`FOOTBALL_SYNC_ENABLED` should stay true in exactly one environment per
+database. Staging and production also share one API token, so enabling the
+scheduled jobs in both would spend a single rate limit budget twice.
 
 ## Environment variables
 
