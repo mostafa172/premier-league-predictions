@@ -205,6 +205,38 @@ gameweeks or the points already awarded for them:
 Scheduled jobs stay off until `FOOTBALL_SYNC_ENABLED=true`. The CLI works
 either way, which makes a dry run the safe way to see what a job would do.
 
+## Deploying
+
+The backend refuses to start while a migration is pending, so deploys must
+migrate before booting. `npm start` does exactly that:
+
+```bash
+npm install && npm run build   # build command
+npm start                      # start command: migrates, then serves
+```
+
+`migrate:deploy` runs the migrator in baseline mode, which covers all three
+cases without any thinking at deploy time:
+
+- a fresh database gets every migration applied;
+- a database that already has the application tables but no migration history
+  is adopted, recording the baseline without rewriting the schema;
+- a database that is already tracked simply gets whatever is pending.
+
+These scripts run the compiled output rather than `ts-node`, which lives in
+devDependencies and is not available on a production install.
+
+Two things to know about scheduled syncs in hosted environments. Instances
+that sleep when idle only run jobs while awake, so a free tier needs something
+pinging `/api/health` every few minutes for the results poller to fire on time;
+without it the hourly reconcile job catches up whenever the service next wakes.
+And `FOOTBALL_SYNC_ENABLED` should be true in exactly one environment per
+database, since two schedulers on one database will contend for the same
+advisory lock and waste the rate limit.
+
+The frontend's API URL is baked in at build time from
+`frontend/src/environments/environment.prod.ts`.
+
 ## Environment variables
 
 - `JWT_SECRET`: required long random signing secret

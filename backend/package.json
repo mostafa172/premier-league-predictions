@@ -5,7 +5,10 @@
   "main": "dist/app.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/app.js",
+    "start": "npm run migrate:deploy && node dist/app.js",
+    "migrate:deploy": "node dist/database/migrate.cli.js baseline",
+    "migrate:status:prod": "node dist/database/migrate.cli.js status",
+    "sync:prod": "node dist/cli/sync.cli.js",
     "dev": "nodemon src/app.ts",
     "migrate": "ts-node src/database/migrate.cli.ts up",
     "migrate:baseline": "ts-node src/database/migrate.cli.ts baseline",
