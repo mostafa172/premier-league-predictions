@@ -66,6 +66,29 @@ const STATUS_MAP: Record<string, ProviderMatchStatus> = {
 
 const toIsoDate = (date: Date): string => date.toISOString().slice(0, 10);
 
+/**
+ * On a 429 football-data both sets a reset header and spells the wait out in
+ * the message ("Wait 27 seconds"), so read whichever is present. A second of
+ * padding keeps us from retrying exactly on the boundary.
+ */
+export const retryAfterMs = (
+  error: AxiosError,
+  detail: string
+): number | undefined => {
+  const header =
+    error.response?.headers?.['x-requestcounter-reset'] ??
+    error.response?.headers?.['retry-after'];
+  const fromHeader = Number.parseInt(String(header ?? ''), 10);
+  if (Number.isFinite(fromHeader) && fromHeader > 0) {
+    return (fromHeader + 1) * 1000;
+  }
+
+  const spelled = /wait\s+(\d+)\s*second/i.exec(detail);
+  if (spelled) return (Number.parseInt(spelled[1], 10) + 1) * 1000;
+
+  return undefined;
+};
+
 export const mapRawTeam = (raw: RawTeam): ProviderTeam => ({
   externalId: raw.id,
   name: raw.name,
@@ -169,6 +192,25 @@ export class FootballDataProvider implements FootballProvider {
     );
   }
 
+  /**
+   * The payload also carries an `aggregates` block, which we ignore: it has
+   * been observed disagreeing with the match list it ships alongside, so the
+   * record is computed from the meetings themselves.
+   */
+  async listHeadToHead(
+    matchExternalId: number,
+    limit: number
+  ): Promise<ProviderMatch[]> {
+    const payload = await this.get<{ matches?: RawMatch[] }>(
+      `/matches/${matchExternalId}/head2head`,
+      { limit: String(limit) }
+    );
+
+    return (payload.matches ?? []).map((match) =>
+      mapRawMatch(match, match.competition?.code || '')
+    );
+  }
+
   private async get<T>(
     path: string,
     params: Record<string, string | undefined> = {}
@@ -186,11 +228,13 @@ export class FootballDataProvider implements FootballProvider {
           return response.data;
         });
       } catch (error) {
-        const wrapped = this.toProviderError(error, path);
+            const wrapped = this.toProviderError(error, path);
         if (!wrapped.retryable || attempt >= this.maxRetries) throw wrapped;
 
         attempt += 1;
-        await sleep(attempt * 5000);
+        // When the provider tells us how long to wait, believe it. Guessing
+        // shorter just burns another request against the same budget.
+        await sleep(wrapped.retryAfterMs ?? attempt * 5000);
       }
     }
   }
@@ -229,7 +273,8 @@ export class FootballDataProvider implements FootballProvider {
     return new FootballProviderError(
       `football-data request to ${path} failed (${status ?? 'network'}): ${detail}`,
       status,
-      retryable
+      retryable,
+      retryAfterMs(axiosError, detail)
     );
   }
 }

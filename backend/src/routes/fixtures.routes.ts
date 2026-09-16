@@ -22,6 +22,12 @@ router.get(
   authenticateToken,
   fixturesController.getUpcomingFixtures.bind(fixturesController)
 );
+// Declared before "/:id" so the literal path is not swallowed by the parameter.
+router.get(
+  "/head-to-head/gameweek/:gameweek",
+  authenticateToken,
+  fixturesController.getHeadToHeadByGameweek.bind(fixturesController)
+);
 router.get(
   "/:id",
   authenticateToken,

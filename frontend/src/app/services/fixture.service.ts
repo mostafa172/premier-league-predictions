@@ -48,6 +48,17 @@ export class FixtureService {
     });
   }
 
+  /**
+   * Previous meetings for every open fixture of a gameweek, in one request.
+   * Served from the backend cache, so this never waits on the football API.
+   */
+  getHeadToHeadByGameweek(gameweek: number): Observable<any> {
+    return this.http.get(
+      `${this.API_URL}/fixtures/head-to-head/gameweek/${gameweek}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
   getFixtureById(id: number): Observable<any> {
     return this.http.get(`${this.API_URL}/fixtures/${id}`, {
       headers: this.getHeaders(),

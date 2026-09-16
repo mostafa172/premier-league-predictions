@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { mapRawMatch } from '../../src/integrations/football/football-data.provider';
+import {
+  mapRawMatch,
+  retryAfterMs,
+} from '../../src/integrations/football/football-data.provider';
 
 const rawMatch = (overrides: Record<string, unknown> = {}) => ({
   id: 560591,
@@ -108,5 +111,30 @@ describe('football-data match mapping', () => {
   it('falls back to the requested competition when the payload omits it', () => {
     const match = mapRawMatch(rawMatch({ competition: {} }) as never, 'CL');
     expect(match.competitionCode).toBe('CL');
+  });
+});
+
+describe('honouring the rate limit reset', () => {
+  it('reads the wait from the reset header', () => {
+    const error = {
+      response: { headers: { 'x-requestcounter-reset': '27' } },
+    } as never;
+
+    // One second of padding so we do not retry on the boundary.
+    expect(retryAfterMs(error, 'irrelevant')).toBe(28000);
+  });
+
+  it('reads the wait out of the message when there is no header', () => {
+    const error = { response: { headers: {} } } as never;
+
+    expect(
+      retryAfterMs(error, 'You reached your request limit. Wait 11 seconds.')
+    ).toBe(12000);
+  });
+
+  it('returns nothing when the provider gives no hint', () => {
+    const error = { response: { headers: {} } } as never;
+
+    expect(retryAfterMs(error, 'Internal server error')).toBeUndefined();
   });
 });

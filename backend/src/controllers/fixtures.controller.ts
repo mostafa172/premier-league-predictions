@@ -4,6 +4,7 @@ import { Fixture, FixtureStatus } from "../models/Fixture";
 import { Team } from "../models/Team";
 import { col, fn, Op } from "sequelize";
 import { Prediction } from "../models/Prediction";
+import { headToHeadForGameweek } from "../services/football/h2h.service";
 import sequelize from "sequelize";
 
 // UPCOMING → LIVE when kickoff time arrives and no scores yet
@@ -178,6 +179,38 @@ export class FixturesController {
   }
 
   // Get fixtures by gameweek
+  /**
+   * Previous meetings for every fixture of a gameweek that is still open for
+   * predictions. Served entirely from the cache, so a page view never waits on
+   * the football API or spends any of its quota.
+   */
+  public async getHeadToHeadByGameweek(
+    req: Request,
+    res: Response
+  ): Promise<Response> {
+    try {
+      const gameweek = Number.parseInt(req.params.gameweek, 10);
+
+      if (!Number.isFinite(gameweek)) {
+        return res.status(400).json({
+          success: false,
+          message: "A numeric gameweek is required",
+        });
+      }
+
+      const data = await headToHeadForGameweek(gameweek);
+
+      return res.status(200).json({ success: true, data });
+    } catch (error) {
+      console.error("❌ Head to head error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Error loading head to head",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
   public async getFixturesByGameweek(
     req: Request,
     res: Response

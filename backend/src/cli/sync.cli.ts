@@ -10,6 +10,7 @@ const JOBS: Record<string, SyncJob> = {
   results: SyncJob.RESULTS,
   live: SyncJob.RESULTS,
   reconcile: SyncJob.RECONCILE,
+  h2h: SyncJob.H2H,
 };
 
 const USAGE = `
@@ -20,6 +21,7 @@ Jobs
   schedule    Upsert fixtures for the current gameweek window
   results     Mark kicked-off fixtures live, then settle finished matches
   reconcile   Settle matches the results poller never saw finish
+  h2h         Cache previous meetings for fixtures open for predictions
 
 Options
   --dry-run              Report what would change without writing

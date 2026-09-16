@@ -1,0 +1,141 @@
+/* The overlay, panel, header and close button come from the shared dialog
+   styles; only the head to head content is styled here. */
+
+.modal-content {
+  width: min(100%, 28rem);
+}
+
+.h2h-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6);
+}
+
+/* Record, read from the perspective of this fixture's home team */
+.record {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.record-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+
+  &.is-draw {
+    padding: 0 var(--space-3);
+    border-right: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
+  }
+}
+
+.record-logo {
+  width: 1.75rem;
+  height: 1.75rem;
+  object-fit: contain;
+}
+
+.record-code {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.record-count {
+  color: var(--text-primary);
+  font-size: var(--text-2xl);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.record-label {
+  color: var(--text-tertiary, var(--text-secondary));
+  font-size: var(--text-xs);
+  text-transform: lowercase;
+}
+
+.meetings-title {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.meetings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.meeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  /* A coloured edge carries the outcome so the row itself stays quiet. */
+  border-left: 3px solid var(--border-color-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+
+  &.outcome-home {
+    border-left-color: var(--success-color);
+  }
+
+  &.outcome-away {
+    border-left-color: #f87171;
+  }
+
+  &.outcome-draw {
+    border-left-color: var(--text-secondary);
+  }
+}
+
+.meeting-date {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.meeting-result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.meeting-team {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.meeting-score {
+  color: var(--text-primary);
+  font-size: var(--text-md);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .h2h-body {
+    gap: var(--space-4);
+    padding: var(--space-4);
+  }
+}

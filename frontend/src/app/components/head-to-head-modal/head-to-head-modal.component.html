@@ -1,0 +1,71 @@
+<div
+  class="modal-overlay"
+  *ngIf="headToHead as h2h"
+  (click)="close()"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Head to head</h2>
+      <button class="close-btn" (click)="close()" aria-label="Close head to head">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="h2h-body">
+      <!-- Record, from the perspective of this fixture's home team -->
+      <div class="record">
+        <div class="record-side">
+          <img
+            *ngIf="homeTeam?.logoUrl"
+            [src]="homeTeam?.logoUrl"
+            [alt]="homeTeam?.name"
+            class="record-logo"
+          />
+          <span class="record-code">{{ homeTeam?.abbreviation }}</span>
+          <span class="record-count">{{ h2h.homeWins }}</span>
+          <span class="record-label">wins</span>
+        </div>
+
+        <div class="record-side is-draw">
+          <span class="record-count">{{ h2h.draws }}</span>
+          <span class="record-label">draws</span>
+        </div>
+
+        <div class="record-side">
+          <img
+            *ngIf="awayTeam?.logoUrl"
+            [src]="awayTeam?.logoUrl"
+            [alt]="awayTeam?.name"
+            class="record-logo"
+          />
+          <span class="record-code">{{ awayTeam?.abbreviation }}</span>
+          <span class="record-count">{{ h2h.awayWins }}</span>
+          <span class="record-label">wins</span>
+        </div>
+      </div>
+
+      <div class="meetings-title">Last {{ h2h.meetings.length }} meetings</div>
+
+      <ul class="meetings">
+        <li
+          *ngFor="let meeting of h2h.meetings"
+          class="meeting"
+          [class.outcome-home]="meeting.outcome === 'home'"
+          [class.outcome-away]="meeting.outcome === 'away'"
+          [class.outcome-draw]="meeting.outcome === 'draw'"
+        >
+          <span class="meeting-date">{{ meeting.date | date : "d MMM yyyy" }}</span>
+          <span class="meeting-result">
+            <span class="meeting-team">{{ homeCode(meeting.homeTeamId) }}</span>
+            <strong class="meeting-score">
+              {{ meeting.homeScore }}&ndash;{{ meeting.awayScore }}
+            </strong>
+            <span class="meeting-team">{{ homeCode(meeting.awayTeamId) }}</span>
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

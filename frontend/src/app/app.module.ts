@@ -15,6 +15,7 @@ import { PredictionsComponent } from "./components/predictions/predictions.compo
 import { LeaderboardComponent } from "./components/leaderboard/leaderboard.component";
 import { FixtureFormComponent } from "./components/fixture-form/fixture-form.component";
 import { UserPredictionsModalComponent } from "./components/user-predictions-modal/user-predictions-modal.component";
+import { HeadToHeadModalComponent } from "./components/head-to-head-modal/head-to-head-modal.component";
 import { LeaguesComponent } from "./components/leagues/leagues.component";
 import { LeagueDetailComponent } from "./components/league-detail/league-detail.component";
 
@@ -38,6 +39,7 @@ import { AuthInterceptor } from "./interceptors/auth.interceptor";
     FixtureFormComponent,
     LoadingComponent,
     UserPredictionsModalComponent,
+    HeadToHeadModalComponent,
     LeaguesComponent,
     LeagueDetailComponent,
   ],

@@ -4,6 +4,7 @@ import { Prediction } from '../../models/Prediction';
 import { FootballProvider, ProviderMatch } from '../../integrations/football';
 import { SyncReport, record, warn } from './sync-report';
 import { isFrozen, matchLabel } from './schedule-sync.service';
+import { invalidateHeadToHead } from './h2h.service';
 
 export interface ResultSyncOptions {
   dryRun: boolean;
@@ -186,6 +187,10 @@ export const applyMatchResult = async (
   record(report, 'update', label, detail);
 
   report.predictionsScored += await scorePredictions(fixture.id, report, label);
+
+  // These two clubs have just met, so their cached history is a match out of
+  // date. Dropping it lets the h2h job refetch before their next meeting.
+  await invalidateHeadToHead(fixture.homeTeamId, fixture.awayTeamId);
 };
 
 /** Reuses the same scoring path the admin result endpoint uses. */

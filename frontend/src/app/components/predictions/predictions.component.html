@@ -140,8 +140,28 @@
           >
             <div class="fixture-content">
               <div class="fixture-details">
-                <div class="match-date">
-                  {{ fixture.matchDate | date : "d MMM, HH:mm" }}
+                <div class="meta-lead">
+                  <div class="match-date">
+                    {{ fixture.matchDate | date : "d MMM, HH:mm" }}
+                  </div>
+                  <!-- Form dots for the last meetings, oldest to newest.
+                       Only rendered when we have history to show. -->
+                  <button
+                    *ngIf="headToHeadFor(fixture) as h2h"
+                    type="button"
+                    class="h2h-dots"
+                    (click)="openH2H(fixture, $event)"
+                    [title]="h2hSummaryLabel(h2h)"
+                    [attr.aria-label]="h2hSummaryLabel(h2h)"
+                  >
+                    <span
+                      *ngFor="let meeting of h2h.dots"
+                      class="h2h-dot"
+                      [class.is-home]="meeting.outcome === 'home'"
+                      [class.is-away]="meeting.outcome === 'away'"
+                      [class.is-draw]="meeting.outcome === 'draw'"
+                    ></span>
+                  </button>
                 </div>
                 <span
                   class="status-badge"
@@ -402,4 +422,11 @@
     ></i>
     <span>{{ toastMessage }}</span>
   </div>
+
+  <app-head-to-head-modal
+    [headToHead]="openHeadToHead"
+    [homeTeam]="openH2HFixture?.homeTeam"
+    [awayTeam]="openH2HFixture?.awayTeam"
+    (closed)="closeH2H()"
+  ></app-head-to-head-modal>
 </div>

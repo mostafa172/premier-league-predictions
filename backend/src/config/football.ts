@@ -55,7 +55,15 @@ export const FOOTBALL_CONFIG = {
   /** Reconciliation looks this far back for fixtures that never finished. */
   reconcileLookbackHours: int(process.env.FOOTBALL_RECONCILE_LOOKBACK_HOURS, 48),
 
-  requestsPerMinute: int(process.env.FOOTBALL_API_REQUESTS_PER_MINUTE, 10),
+  h2hCron: (process.env.FOOTBALL_SYNC_H2H_CRON || "40 5 * * *").trim(),
+  /** Pairings fetched per h2h run, so a cold cache spreads over a few runs. */
+  h2hMaxRequestsPerRun: int(process.env.FOOTBALL_H2H_MAX_REQUESTS_PER_RUN, 15),
+
+  /**
+   * One below the free tier's ten per minute. The provider's accounting and
+   * ours disagree at the boundary, and a 429 costs a request of its own.
+   */
+  requestsPerMinute: int(process.env.FOOTBALL_API_REQUESTS_PER_MINUTE, 9),
   requestTimeoutMs: int(process.env.FOOTBALL_API_TIMEOUT_MS, 15000),
 };
 

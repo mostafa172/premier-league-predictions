@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, FormArray, Validators } from "@angular/forms";
 import { PredictionService } from "../../services/prediction.service";
 import { FixtureService } from "../../services/fixture.service";
 import { Subscription } from "rxjs";
+import { HeadToHead } from "../../models/head-to-head.model";
 
 @Component({
   selector: "app-predictions",
@@ -28,6 +29,10 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   hasChanges = false;
 
   showRules = false;
+
+  /** Previous meetings by fixture id, loaded once per gameweek. */
+  headToHead = new Map<number, HeadToHead>();
+  openHeadToHead: HeadToHead | null = null;
 
   // Toast properties
   showToast = false;
@@ -79,6 +84,7 @@ export class PredictionsComponent implements OnInit, OnDestroy {
         next: (fixturesResponse: any) => {
           if (fixturesResponse.success) {
             this.fixtures = fixturesResponse.data;
+            this.loadHeadToHead();
 
             const predictionsSub = this.predictionService
               .getUserPredictionsByGameweek(this.gameweek)
@@ -112,6 +118,61 @@ export class PredictionsComponent implements OnInit, OnDestroy {
       });
 
     this.subscriptions.push(fixturesSub);
+  }
+
+  /**
+   * One request covers the whole gameweek. Head to head is a hint rather than
+   * core data, so a failure here leaves the cards untouched and silent.
+   */
+  private loadHeadToHead(): void {
+    this.headToHead.clear();
+    this.openHeadToHead = null;
+
+    const sub = this.fixtureService
+      .getHeadToHeadByGameweek(this.gameweek)
+      .subscribe({
+        next: (response: any) => {
+          if (!response?.success) return;
+          (response.data as HeadToHead[]).forEach((entry) => {
+            entry.dots = [...entry.meetings].reverse();
+            this.headToHead.set(entry.fixtureId, entry);
+          });
+        },
+        error: () => undefined,
+      });
+
+    this.subscriptions.push(sub);
+  }
+
+  /** Only shown while a fixture is still open for predictions. */
+  headToHeadFor(fixture: any): HeadToHead | undefined {
+    if (this.isFixtureDisabled(fixture)) return undefined;
+    return this.headToHead.get(fixture.id);
+  }
+
+  openH2H(fixture: any, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.openHeadToHead = this.headToHeadFor(fixture) ?? null;
+  }
+
+  closeH2H(): void {
+    this.openHeadToHead = null;
+  }
+
+  /** The fixture the open modal belongs to, so it can label the two clubs. */
+  get openH2HFixture(): any | undefined {
+    if (!this.openHeadToHead) return undefined;
+    return this.fixtures.find(
+      (fixture) => fixture.id === this.openHeadToHead?.fixtureId
+    );
+  }
+
+  h2hSummaryLabel(entry: HeadToHead): string {
+    return (
+      `Last ${entry.meetings.length} meetings: ` +
+      `${entry.homeWins}W ${entry.draws}D ${entry.awayWins}L`
+    );
   }
 
   buildPredictionsForm(): void {

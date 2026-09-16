@@ -118,6 +118,7 @@ new adapter and nothing else:
 | `schedule` | Keeps the current gameweek plus `FOOTBALL_SYNC_GAMEWEEK_HORIZON` ahead in step with the provider | Weekly, and shortly after boot |
 | `results` | Marks kicked-off fixtures live from the clock, then records final scores and scores predictions | Every `FOOTBALL_SYNC_RESULTS_INTERVAL_SECONDS` |
 | `reconcile` | Settles matches the results poller never saw finish, for instance while the app was down | Hourly |
+| `h2h` | Caches previous meetings for fixtures still open for predictions | Daily, and shortly after boot |
 
 ### Scores are only written at full time
 
@@ -159,6 +160,31 @@ GET  /api/admin/sync/runs
 Every run, manual or scheduled, is recorded in the `sync_runs` table with
 counts, warnings and any error.
 
+### Head to head
+
+Prediction cards that are still open show five small dots, one per previous
+meeting between the two clubs, oldest on the left. Tapping them opens the
+record and the five dated results.
+
+The data is cached rather than fetched per view, which matters because a
+pairing is read by every user who opens the gameweek but only changes when the
+two clubs meet again:
+
+- The `h2h` job fills the cache for open fixtures, one request per pairing.
+- Finishing a fixture drops that pairing's row, so it is refetched before the
+  clubs next meet.
+- The page reads `GET /api/fixtures/head-to-head/gameweek/:gameweek`, one
+  request for the whole gameweek, always served from the database.
+
+Two provider quirks are worth knowing. Its `limit` parameter is a lookback
+over recent matches rather than a count of meetings, so asking for five can
+return fewer than exist; we ask wide and keep the newest five. And its
+`aggregates` block has been seen disagreeing with the matches it ships
+alongside, so the record is computed from the meetings themselves.
+
+Some pairings legitimately have no history: the archive reaches back about five
+years, so newly promoted clubs return nothing. Those cards simply show no dots.
+
 ### What the sync will not do
 
 Played football is never rewritten, so a synced season cannot disturb finished
@@ -196,6 +222,10 @@ either way, which makes a dry run the safe way to see what a job would do.
   for a final result, defaults to `95`
 - `FOOTBALL_FINISH_WINDOW_END_MINUTES`: minutes after kickoff to give up and
   leave it to reconcile, defaults to `240`
+- `FOOTBALL_SYNC_H2H_CRON`: when the head to head cache tops up, defaults to
+  `40 5 * * *`
+- `FOOTBALL_H2H_MAX_REQUESTS_PER_RUN`: pairings fetched per run so a cold cache
+  spreads over several runs, defaults to `15`
 
 If your machine routes traffic through a TLS-inspecting proxy, containers need
 its root CA or every API call fails with `unable to get local issuer

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
     candidates: [] as any[],
     kickedOff: [] as any[],
     predictions: [] as any[],
+    invalidated: [] as any[],
   },
 }));
 
@@ -38,6 +39,17 @@ vi.mock('../../src/models/Prediction', () => ({
   },
 }));
 
+vi.mock('../../src/models/HeadToHead', () => ({
+  HeadToHead: {
+    destroy: vi.fn(async (query: any) => {
+      mocks.store.invalidated.push(query.where);
+      return 1;
+    }),
+  },
+  pairKey: (one: number, two: number) =>
+    one < two ? { teamAId: one, teamBId: two } : { teamAId: two, teamBId: one },
+}));
+
 import {
   applyMatchResult,
   promoteKickedOffFixtures,
@@ -53,6 +65,8 @@ const fixtureRow = (row: Record<string, unknown> = {}) => ({
   homeScore: null,
   awayScore: null,
   gameweek: 5,
+  homeTeamId: 12,
+  awayTeamId: 4,
   matchDate: new Date('2026-09-18T19:00:00Z'),
   updates: [] as Record<string, unknown>[],
   async update(patch: Record<string, unknown>) {
@@ -101,6 +115,7 @@ beforeEach(() => {
   mocks.store.candidates = [];
   mocks.store.kickedOff = [];
   mocks.store.predictions = [];
+  mocks.store.invalidated = [];
 });
 
 describe('recording a final result', () => {
@@ -119,6 +134,30 @@ describe('recording a final result', () => {
     });
     expect(predictions.every((row) => row.scored)).toBe(true);
     expect(result.predictionsScored).toBe(2);
+  });
+
+  it('drops the pairing head to head cache at full time', async () => {
+    const fixture = fixtureRow();
+
+    await applyMatchResult(fixture as never, match(), report(), {
+      dryRun: false,
+    });
+
+    // Keyed lowest id first, so both legs of the pairing share one row.
+    expect(mocks.store.invalidated).toEqual([{ teamAId: 4, teamBId: 12 }]);
+  });
+
+  it('keeps the head to head cache while a match is in progress', async () => {
+    const fixture = fixtureRow();
+
+    await applyMatchResult(
+      fixture as never,
+      match({ status: 'live', rawStatus: 'IN_PLAY' }),
+      report(),
+      { dryRun: false }
+    );
+
+    expect(mocks.store.invalidated).toHaveLength(0);
   });
 
   it('leaves a match in progress completely alone', async () => {

@@ -298,11 +298,57 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+/* Kickoff time and the head to head hint share the ribbon's first column, so
+   the dots cost no extra height. */
+.meta-lead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .match-date {
   color: var(--text-primary);
   font-size: var(--text-md);
   font-weight: 850;
   font-variant-numeric: tabular-nums;
+}
+
+.h2h-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-2);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(34, 211, 238, 0.12);
+  }
+}
+
+.h2h-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--text-secondary);
+
+  &.is-home {
+    background: var(--success-color);
+  }
+
+  &.is-away {
+    background: #f87171;
+  }
+
+  &.is-draw {
+    background: rgba(166, 180, 222, 0.5);
+  }
 }
 
 .meta-double,

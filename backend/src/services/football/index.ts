@@ -1,5 +1,4 @@
-import { QueryTypes } from 'sequelize';
-import { sequelize } from '../../config/sequelize';
+import { pool } from '../../config/database';
 import { FOOTBALL_CONFIG } from '../../config/football';
 import { SyncJob } from '../../models/SyncRun';
 import { FootballProvider, createFootballProvider } from '../../integrations/football';
@@ -7,6 +6,7 @@ import { SyncReport, createReport, withSyncRun } from './sync-report';
 import { syncSchedule } from './schedule-sync.service';
 import { syncResults, syncReconcile } from './result-sync.service';
 import { syncTeams } from './team-mapping.service';
+import { H2H_LIMIT, warmHeadToHead } from './h2h.service';
 
 export * from './sync-report';
 export { syncSchedule, isFrozen, matchLabel } from './schedule-sync.service';
@@ -22,6 +22,15 @@ export {
   normalizeTeamName,
   displayTeamName,
 } from './team-mapping.service';
+export {
+  warmHeadToHead,
+  invalidateHeadToHead,
+  headToHeadForGameweek,
+  summarizeMeetings,
+  toMeetings,
+  H2H_LIMIT,
+} from './h2h.service';
+export type { H2HSummary, H2HMeetingView, H2HOutcome } from './h2h.service';
 
 export interface RunJobOptions {
   dryRun?: boolean;
@@ -35,33 +44,41 @@ export interface RunJobOptions {
 }
 
 /**
- * Only one process should run a given job at a time, otherwise two pollers can
- * both write a result and double-score predictions.
+ * Only one process may run a given job at a time, otherwise two runs write the
+ * same rows and spend the same rate limit budget twice.
+ *
+ * The lock is taken on a single dedicated client rather than through the
+ * Sequelize pool: advisory locks belong to a session, so acquiring on one
+ * pooled connection and releasing on another leaks the lock and stops every
+ * later run.
  */
 const withJobLock = async <T>(
   job: SyncJob,
   action: () => Promise<T>
 ): Promise<T | null> => {
   const key = `football-sync:${job}`;
-  const [{ locked }] = await sequelize.query<{ locked: boolean }>(
-    'SELECT pg_try_advisory_lock(hashtext($1)::bigint) AS locked',
-    { bind: [key], type: QueryTypes.SELECT }
-  );
-
-  if (!locked) {
-    console.log(`⏭️  ${job} sync already running elsewhere, skipping this tick`);
-    return null;
-  }
+  const client = await pool.connect();
 
   try {
-    return await action();
+    const { rows } = await client.query<{ locked: boolean }>(
+      'SELECT pg_try_advisory_lock(hashtext($1)::bigint) AS locked',
+      [key]
+    );
+
+    if (!rows[0]?.locked) {
+      console.log(`⏭️  ${job} sync already running elsewhere, skipping this tick`);
+      return null;
+    }
+
+    try {
+      return await action();
+    } finally {
+      await client
+        .query('SELECT pg_advisory_unlock(hashtext($1)::bigint)', [key])
+        .catch(() => undefined);
+    }
   } finally {
-    await sequelize
-      .query('SELECT pg_advisory_unlock(hashtext($1)::bigint)', {
-        bind: [key],
-        type: QueryTypes.SELECT,
-      })
-      .catch(() => undefined);
+    client.release();
   }
 };
 
@@ -98,6 +115,14 @@ export const runSyncJob = async (
             season,
             finishWindowStartMinutes: FOOTBALL_CONFIG.finishWindowStartMinutes,
             finishWindowEndMinutes: FOOTBALL_CONFIG.finishWindowEndMinutes,
+          });
+          break;
+
+        case SyncJob.H2H:
+          await warmHeadToHead(provider, report, {
+            dryRun,
+            limit: H2H_LIMIT,
+            maxRequests: FOOTBALL_CONFIG.h2hMaxRequestsPerRun,
           });
           break;
 

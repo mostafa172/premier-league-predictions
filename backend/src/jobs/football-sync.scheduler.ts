@@ -45,6 +45,7 @@ export const startFootballSync = (): void => {
 
   cron.schedule(FOOTBALL_CONFIG.scheduleCron, () => void safeRun(SyncJob.SCHEDULE));
   cron.schedule(FOOTBALL_CONFIG.reconcileCron, () => void safeRun(SyncJob.RECONCILE));
+  cron.schedule(FOOTBALL_CONFIG.h2hCron, () => void safeRun(SyncJob.H2H));
 
   // The results poller gates itself on the finish window, so ticks outside a
   // match's closing minutes cost nothing but a local query.
@@ -53,8 +54,10 @@ export const startFootballSync = (): void => {
     Math.max(FOOTBALL_CONFIG.resultsIntervalSeconds, 30) * 1000
   ).unref();
 
-  // Catch up shortly after boot so a restart refreshes the schedule.
+  // Catch up shortly after boot so a restart refreshes the schedule, then
+  // top up any head to head pairings the new fixtures need.
   setTimeout(() => void safeRun(SyncJob.SCHEDULE), 10_000).unref();
+  setTimeout(() => void safeRun(SyncJob.H2H), 45_000).unref();
 
   console.log(
     `⚽ Football sync started for ${FOOTBALL_CONFIG.competition}: ` +

@@ -7,6 +7,8 @@ export enum SyncJob {
   RESULTS = 'results',
   RECONCILE = 'reconcile',
   TEAMS = 'teams',
+  /** Fills the head to head cache for fixtures open for predictions. */
+  H2H = 'h2h',
 }
 
 export enum SyncRunStatus {

@@ -55,6 +55,12 @@ export interface FootballProvider {
   readonly name: string;
   getCompetition(code: string, season?: string): Promise<ProviderCompetition>;
   listMatches(query: MatchQuery): Promise<ProviderMatch[]>;
+  /**
+   * Previous meetings between the two clubs in the given match, newest first.
+   * Keyed by match rather than by pair because that is how providers expose
+   * it; the caller decides how to cache it.
+   */
+  listHeadToHead(matchExternalId: number, limit: number): Promise<ProviderMatch[]>;
   /** Number of HTTP requests this instance has made, for quota reporting. */
   readonly requestCount: number;
 }
@@ -63,7 +69,9 @@ export class FootballProviderError extends Error {
   constructor(
     message: string,
     readonly status?: number,
-    readonly retryable = false
+    readonly retryable = false,
+    /** How long the provider asked us to wait, when it says so. */
+    readonly retryAfterMs?: number
   ) {
     super(message);
     this.name = 'FootballProviderError';
