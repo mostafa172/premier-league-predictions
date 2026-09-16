@@ -264,12 +264,19 @@ On first boot the migrator adopts the branched database: it records the
 baseline without rewriting the schema, then applies the migrations the branch
 adds. Nothing has to be reset by hand.
 
-Before letting a sync write anything, read what it would do:
+Before letting a sync write anything, read what it would do. Instances without
+shell access, which includes Render's free tier, cannot run the CLI, so trigger
+the dry run over HTTP with an admin token instead:
 
 ```bash
-npm run sync:prod -- schedule --dry-run
-npm run sync:prod -- teams --dry-run
+curl -s -X POST "$HOST/api/admin/sync/schedule" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"dryRun":true}'
 ```
+
+The same call without `dryRun` writes, and `GET /api/admin/sync/runs` reads the
+audit trail. Where a shell is available, `npm run sync:prod -- schedule
+--dry-run` does the same thing.
 
 `FOOTBALL_SYNC_ENABLED` should stay true in exactly one environment per
 database. Staging and production also share one API token, so enabling the
