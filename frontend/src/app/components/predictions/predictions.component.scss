@@ -298,15 +298,6 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-/* Kickoff time and the head to head hint share the ribbon's first column, so
-   the dots cost no extra height. */
-.meta-lead {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
 .match-date {
   color: var(--text-primary);
   font-size: var(--text-md);
@@ -314,12 +305,22 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Holds the VS pill with the head to head dots beneath it. The matchup row is
+   taller than the pill, so the dots drop into space the card already has. */
+.vs-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  justify-self: center;
+}
+
 .h2h-dots {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   flex-shrink: 0;
-  padding: var(--space-2) var(--space-2);
+  padding: var(--space-1) var(--space-2);
   background: transparent;
   border: 0;
   border-radius: 999px;
@@ -398,7 +399,9 @@
 
 .fixture-info {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 1rem minmax(0, 1fr);
+  /* The middle column sizes to its content so the VS pill and the head to
+     head dots below it are never clipped. */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: var(--space-3);
   min-height: 4.5rem;
@@ -421,7 +424,7 @@
     font-size: var(--text-md);
   }
 
-  .vs-pill {
+  .vs-stack {
     justify-self: center;
   }
 }
@@ -799,5 +802,11 @@ input[type="checkbox"] {
     min-width: 1.75rem;
     min-height: 1.75rem;
     padding: 0;
+  }
+
+  /* Tighter here so the pill and dots together stay inside the matchup row's
+     existing height rather than growing the card. */
+  .vs-stack {
+    gap: var(--space-1);
   }
 }

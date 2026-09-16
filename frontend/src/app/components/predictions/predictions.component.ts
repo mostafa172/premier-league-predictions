@@ -170,7 +170,7 @@ export class PredictionsComponent implements OnInit, OnDestroy {
 
   h2hSummaryLabel(entry: HeadToHead): string {
     return (
-      `Last ${entry.meetings.length} meetings: ` +
+      `Previous meetings: ` +
       `${entry.homeWins}W ${entry.draws}D ${entry.awayWins}L`
     );
   }

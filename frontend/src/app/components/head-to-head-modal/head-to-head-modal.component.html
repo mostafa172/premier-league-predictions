@@ -14,9 +14,11 @@
     </div>
 
     <div class="h2h-body">
-      <!-- Record, from the perspective of this fixture's home team -->
+      <!-- Record from the perspective of this fixture's home team. One grid
+           owns all three rows so the counts line up across the columns
+           instead of each side stacking independently. -->
       <div class="record">
-        <div class="record-side">
+        <div class="cell cell-team">
           <img
             *ngIf="homeTeam?.logoUrl"
             [src]="homeTeam?.logoUrl"
@@ -24,16 +26,11 @@
             class="record-logo"
           />
           <span class="record-code">{{ homeTeam?.abbreviation }}</span>
-          <span class="record-count">{{ h2h.homeWins }}</span>
-          <span class="record-label">wins</span>
         </div>
-
-        <div class="record-side is-draw">
-          <span class="record-count">{{ h2h.draws }}</span>
-          <span class="record-label">draws</span>
+        <div class="cell cell-team is-mid">
+          <span class="record-vs">VS</span>
         </div>
-
-        <div class="record-side">
+        <div class="cell cell-team">
           <img
             *ngIf="awayTeam?.logoUrl"
             [src]="awayTeam?.logoUrl"
@@ -41,12 +38,18 @@
             class="record-logo"
           />
           <span class="record-code">{{ awayTeam?.abbreviation }}</span>
-          <span class="record-count">{{ h2h.awayWins }}</span>
-          <span class="record-label">wins</span>
         </div>
+
+        <div class="cell record-count">{{ h2h.homeWins }}</div>
+        <div class="cell record-count is-mid">{{ h2h.draws }}</div>
+        <div class="cell record-count">{{ h2h.awayWins }}</div>
+
+        <div class="cell record-label">wins</div>
+        <div class="cell record-label is-mid">draws</div>
+        <div class="cell record-label">wins</div>
       </div>
 
-      <div class="meetings-title">Last {{ h2h.meetings.length }} meetings</div>
+      <div class="meetings-title">Previous meetings</div>
 
       <ul class="meetings">
         <li

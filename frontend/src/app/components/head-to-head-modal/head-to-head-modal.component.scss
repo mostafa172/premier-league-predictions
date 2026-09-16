@@ -5,6 +5,20 @@
   width: min(100%, 28rem);
 }
 
+.modal-header {
+  /* Shallower than the shared dialog header; the close button's touch target
+     already sets the row height. */
+  padding: var(--space-2) var(--space-6);
+
+  h2 {
+    /* The global heading rule only clears margin-block-start, so the default
+       bottom margin survives and knocks the title off centre against the
+       close button. */
+    margin: 0;
+    font-size: var(--text-lg);
+  }
+}
+
 .h2h-body {
   display: flex;
   flex-direction: column;
@@ -12,36 +26,62 @@
   padding: var(--space-5) var(--space-6);
 }
 
-/* Record, read from the perspective of this fixture's home team */
+/* Record, read from the perspective of this fixture's home team. Row gap is
+   zero so the middle column's edges draw as two unbroken lines. */
 .record {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4);
+  column-gap: var(--space-3);
+  row-gap: 0;
+  padding: var(--space-4) var(--space-3);
   background: var(--surface-muted);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
 }
 
-.record-side {
+.cell {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--space-1);
+  justify-content: center;
   min-width: 0;
 
-  &.is-draw {
-    padding: 0 var(--space-3);
-    border-right: 1px solid var(--border-color);
-    border-left: 1px solid var(--border-color);
+  /* Every middle cell keeps the same inline padding so the draws column has
+     one consistent width, but only the result rows are ruled off. */
+  &.is-mid {
+    padding-inline: var(--space-4);
   }
+}
+
+/* The divider brackets the counts and their labels; the crest row above it is
+   left open so the two badges and VS read as one line. */
+.record-count.is-mid,
+.record-label.is-mid {
+  border-right: 1px solid var(--border-color);
+  border-left: 1px solid var(--border-color);
+}
+
+.cell-team {
+  flex-direction: column;
+  gap: var(--space-1);
+  /* Reserves the crest row even for the draws column, which has no crest, so
+     the counts below stay on one line. */
+  min-height: 2.75rem;
 }
 
 .record-logo {
   width: 1.75rem;
   height: 1.75rem;
   object-fit: contain;
+}
+
+/* Sits on the crest row between the two badges, reading as a divider rather
+   than competing with the codes either side of it. */
+.record-vs {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
 }
 
 .record-code {
@@ -53,6 +93,7 @@
 }
 
 .record-count {
+  padding-top: var(--space-2);
   color: var(--text-primary);
   font-size: var(--text-2xl);
   font-weight: 900;
@@ -61,6 +102,7 @@
 }
 
 .record-label {
+  padding-top: var(--space-1);
   color: var(--text-tertiary, var(--text-secondary));
   font-size: var(--text-xs);
   text-transform: lowercase;
@@ -134,6 +176,10 @@
 }
 
 @media (max-width: 480px) {
+  .modal-header {
+    padding: var(--space-2) var(--space-4);
+  }
+
   .h2h-body {
     gap: var(--space-4);
     padding: var(--space-4);
