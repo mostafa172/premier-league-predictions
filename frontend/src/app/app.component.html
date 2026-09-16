@@ -1,55 +1,74 @@
 <div class="app-container">
   <nav class="navbar" role="navigation" aria-label="Main navigation">
-    <!-- Row 1: brand (left) + user/logout (right) -->
-    <div class="topbar">
-      <div class="nav-brand">
-        <h1>PL Predictions</h1>
-      </div>
-
-      <div class="nav-user">
-        <ng-container *ngIf="isLoggedIn; else loggedOut">
-          <span class="username" *ngIf="currentUser">
-            {{ currentUser.username }}
+    <div class="navbar__inner">
+      <div class="topbar">
+        <a class="nav-brand" [routerLink]="isLoggedIn ? '/predictions' : '/auth'" aria-label="PL Predictions home">
+          <span class="brand-mark" aria-hidden="true">
+            <i class="fa-solid fa-bolt"></i>
           </span>
-          <button
-            class="icon-btn logout"
-            (click)="logout()"
-            aria-label="Logout"
-            title="Logout"
-          >
-            <i class="fa-solid fa-right-from-bracket"></i>
-          </button>
-        </ng-container>
+          <span class="brand-copy">
+            <span class="brand-kicker">Match Day</span>
+            <span class="brand-name">PL Predictions</span>
+          </span>
+        </a>
 
-        <ng-template #loggedOut>
-          <!-- text only (no icon) per your request -->
-          <a routerLink="/auth" class="login-link">Login</a>
-        </ng-template>
+        <div class="nav-user">
+          <ng-container *ngIf="isLoggedIn; else loggedOut">
+            <span class="account" *ngIf="currentUser">
+              <span class="account-icon" aria-hidden="true">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <span class="account-copy">
+                <span class="account-label">Signed in as</span>
+                <span class="username">{{ currentUser.username }}</span>
+              </span>
+            </span>
+            <button
+              type="button"
+              class="icon-btn logout"
+              (click)="logout()"
+              aria-label="Log out"
+              title="Log out"
+            >
+              <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+            </button>
+          </ng-container>
+
+          <ng-template #loggedOut>
+            <a routerLink="/auth" routerLinkActive="active" class="login-link">Sign in</a>
+          </ng-template>
+        </div>
       </div>
-    </div>
 
-    <!-- Row 2: tabs -->
-    <div class="bar-tabs" *ngIf="isLoggedIn">
-      <a routerLink="/predictions" routerLinkActive="active">
-        <i class="fa-solid fa-chart-line"></i>
-        <span>Predictions</span>
-      </a>
-      <a routerLink="/leagues" routerLinkActive="active">
-        <i class="fa-solid fa-users"></i>
-        <span>Leagues</span>
-      </a>
-      <a routerLink="/leaderboard" routerLinkActive="active">
-        <i class="fa-solid fa-trophy"></i>
-        <span>Leaderboard</span>
-      </a>
-      <a routerLink="/fixtures" routerLinkActive="active">
-        <i class="fa-solid fa-futbol"></i>
-        <span>Fixtures</span>
-      </a>
-      <a *ngIf="isAdmin" routerLink="/admin" routerLinkActive="active">
-        <i class="fa-solid fa-gear"></i>
-        <span>Admin</span>
-      </a>
+      <div class="nav-scroll" *ngIf="isLoggedIn">
+        <div class="bar-tabs" aria-label="Primary">
+          <a routerLink="/predictions" routerLinkActive="active" ariaCurrentWhenActive="page">
+            <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+            <span>Predictions</span>
+          </a>
+          <a routerLink="/leagues" routerLinkActive="active" ariaCurrentWhenActive="page">
+            <i class="fa-solid fa-users" aria-hidden="true"></i>
+            <span>Leagues</span>
+          </a>
+          <a routerLink="/leaderboard" routerLinkActive="active" ariaCurrentWhenActive="page">
+            <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+            <span>Leaderboard</span>
+          </a>
+          <a routerLink="/fixtures" routerLinkActive="active" ariaCurrentWhenActive="page">
+            <i class="fa-solid fa-futbol" aria-hidden="true"></i>
+            <span>Fixtures</span>
+          </a>
+          <a
+            *ngIf="isAdmin"
+            routerLink="/admin/fixtures"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+          >
+            <i class="fa-solid fa-gear" aria-hidden="true"></i>
+            <span>Admin</span>
+          </a>
+        </div>
+      </div>
     </div>
   </nav>
 

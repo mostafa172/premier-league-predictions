@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs'; // Changed from 'bcrypt' to 'bcryptjs'
 import jwt from 'jsonwebtoken';
 import { pool } from '../config/database';
+import { JWT_SECRET } from '../config/jwt';
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -57,7 +58,7 @@ export const register = async (req: Request, res: Response) => {
         isAdmin: newUser.rows[0].is_admin,
         is_admin: newUser.rows[0].is_admin,
       },
-      process.env.JWT_SECRET || "your-secret-key",
+      JWT_SECRET,
       { expiresIn: "30d" }
     );
 
@@ -126,7 +127,7 @@ export const login = async (req: Request, res: Response) => {
         isAdmin: user.rows[0].is_admin,
         is_admin: user.rows[0].is_admin,
       },
-      process.env.JWT_SECRET || "your-secret-key",
+      JWT_SECRET,
       { expiresIn: "30d" }
     );
 

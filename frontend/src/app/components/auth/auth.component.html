@@ -1,6 +1,21 @@
 <div class="auth-container">
+  <section class="auth-intro" aria-labelledby="auth-title">
+    <span class="eyebrow">Premier League predictions</span>
+    <h1 id="auth-title">Own every matchday.</h1>
+    <p>Call the scores, climb the table and compete with your league.</p>
+    <div class="feature-list" aria-label="Platform highlights">
+      <span><i class="fas fa-bolt" aria-hidden="true"></i> Live gameweek scoring</span>
+      <span><i class="fas fa-users" aria-hidden="true"></i> Private leagues</span>
+      <span><i class="fas fa-trophy" aria-hidden="true"></i> Global rankings</span>
+    </div>
+  </section>
+
   <div class="auth-card">
-    <h2>{{ isLoginMode ? "Login" : "Register" }}</h2>
+    <div class="card-heading">
+      <span class="eyebrow">{{ isLoginMode ? "Welcome back" : "Join the competition" }}</span>
+      <h2>{{ isLoginMode ? "Sign in" : "Create account" }}</h2>
+      <p>{{ isLoginMode ? "Continue your run up the table." : "Start making your matchday calls." }}</p>
+    </div>
 
     <div class="success-message" *ngIf="successMessage">
       {{ successMessage }}
@@ -10,7 +25,6 @@
       [formGroup]="isLoginMode ? loginForm : registerForm"
       (ngSubmit)="onSubmit()"
     >
-      <!-- REGISTER-ONLY: Username -->
       <div class="form-group" *ngIf="!isLoginMode">
         <label for="username">Username</label>
         <input
@@ -34,7 +48,6 @@
         </div>
       </div>
 
-      <!-- Email (both modes) -->
       <div class="form-group">
         <label for="email">Email</label>
         <input
@@ -58,7 +71,6 @@
         </div>
       </div>
 
-      <!-- Password (both modes) -->
       <div class="form-group">
         <label for="password">Password</label>
         <input
@@ -82,7 +94,6 @@
         </div>
       </div>
 
-      <!-- REGISTER-ONLY: Confirm Password -->
       <div class="form-group" *ngIf="!isLoginMode">
         <label for="confirmPassword">Confirm Password</label>
         <input
@@ -114,8 +125,8 @@
           loading || (isLoginMode ? loginForm.invalid : registerForm.invalid)
         "
       >
-        <span *ngIf="loading" class="spinner"></span>
-        {{ isLoginMode ? "Login" : "Register" }}
+        <span *ngIf="loading" class="spinner" aria-hidden="true"></span>
+        {{ isLoginMode ? "Sign in" : "Create account" }}
       </button>
     </form>
 

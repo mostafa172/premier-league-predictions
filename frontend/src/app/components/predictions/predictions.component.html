@@ -1,31 +1,38 @@
 <div class="predictions-container">
   <div class="predictions-header">
     <div class="header-left">
-      <h2>Predictions</h2>
-    </div>
+      <div class="heading-copy">
+        <span class="eyebrow">Make your picks</span>
+        <h2>Predictions</h2>
+        <p>Set your scores before kickoff.</p>
+      </div>
 
-    <div class="header-right">
-      <!-- Scoring Rules Toggle -->
       <button
+        type="button"
         class="rules-toggle"
         (click)="showRules = !showRules"
         [class.active]="showRules"
       >
-        <i class="fas fa-info-circle"></i>
-        {{ showRules ? "Hide" : "Show" }} Scoring Rules
+        <i class="fas fa-circle-info" aria-hidden="true"></i>
+        <span>{{ showRules ? "Hide rules" : "Rules" }}</span>
       </button>
+    </div>
 
+    <div class="header-right">
       <div class="gameweek-selector">
-        <label for="gameweek">Gameweek:</label>
-        <select
-          id="gameweek"
-          [(ngModel)]="gameweek"
-          (change)="onGameweekChange(gameweek)"
-        >
-          <option *ngFor="let gw of gameweeks" [value]="gw">
-            Gameweek {{ gw }}
-          </option>
-        </select>
+        <label for="gameweek">Select gameweek</label>
+        <div class="select-wrap">
+          <select
+            id="gameweek"
+            [(ngModel)]="gameweek"
+            (change)="onGameweekChange(gameweek)"
+          >
+            <option *ngFor="let gw of gameweeks" [value]="gw">
+              Gameweek {{ gw }}
+            </option>
+          </select>
+          <i class="fas fa-chevron-down" aria-hidden="true"></i>
+        </div>
       </div>
     </div>
   </div>
@@ -72,7 +79,7 @@
           <div class="rule-icon">⚡</div>
           <div class="rule-content">
             <div class="rule-title">Double</div>
-            <div class="warning-note">Only one double fixutre per gameweek</div>
+            <div class="warning-note">Only one double fixture per gameweek</div>
           </div>
           <div class="rule-points multiplier">×2</div>
         </div>
@@ -87,7 +94,6 @@
           </li>
           <li>Double points apply to your total score for that fixture</li>
           <li>Only one double per gameweek</li>
-          <li>Predictions lock at deadline (1 hour before kickoff)</li>
         </ul>
       </div>
     </div>
@@ -119,8 +125,7 @@
         </div>
 
         <div *ngIf="doubleLocked" class="alert alert-info">
-          Your Double is locked for this gameweek (deadline passed on your
-          chosen match).
+          Your Double is locked for this gameweek.
         </div>
 
         <div class="predictions-list" formArrayName="predictions">
@@ -129,27 +134,49 @@
             class="fixture-row"
             [class.disabled]="isFixtureDisabled(fixture)"
             [class.has-prediction]="hasValidPrediction(i)"
+            [class.is-missed]="isMissedPrediction(fixture)"
             [class.is-double]="predictionsArray.at(i).get('isDouble')?.value"
             [formGroupName]="i"
           >
             <div class="fixture-content">
-              <!-- Meta line (date/deadline) -->
               <div class="fixture-details">
                 <div class="match-date">
                   {{ fixture.matchDate | date : "d MMM, HH:mm" }}
                 </div>
-                <div
-                  class="deadline"
-                  [class.expired]="isFixtureDisabled(fixture)"
-                  *ngIf="fixture.status !== 'finished'"
+                <span
+                  class="status-badge"
+                  [class]="'status-' + fixture.status"
                 >
-                  Deadline: {{ fixture.deadline | date : "d MMM, HH:mm" }}
-                </div>
+                  {{ fixture.status }}
+                </span>
+                <label
+                  class="meta-double"
+                  *ngIf="!isFixtureDisabled(fixture)"
+                >
+                  <input
+                    type="checkbox"
+                    formControlName="isDouble"
+                    aria-label="Double points"
+                    [disabled]="doubleLocked"
+                    (change)="onDoubleChange(i)"
+                  />
+                  <span>2×</span>
+                </label>
+                <span
+                  class="meta-double-locked"
+                  *ngIf="isDoubleLockedIn(fixture)"
+                  title="Double points locked in"
+                >
+                  <i class="fas fa-bolt" aria-hidden="true"></i>
+                  <span>2×</span>
+                </span>
+                <span class="meta-missed" *ngIf="isMissedPrediction(fixture)">
+                  <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                  <span>No pick</span>
+                </span>
               </div>
 
-              <!-- ===== DESKTOP LAYOUT (kept as-is) ===== -->
               <div class="fixture-info hide-on-mobile">
-                <!-- Home Team -->
                 <div class="home-team">
                   <img
                     [src]="fixture.homeTeam?.logoUrl"
@@ -159,10 +186,8 @@
                   <span class="team-name">{{ fixture.homeTeam?.name }}</span>
                 </div>
 
-                <!-- Center (nothing else here on desktop) -->
-                <div></div>
+                <div class="vs-pill">VS</div>
 
-                <!-- Away Team (right aligned) -->
                 <div class="away-team">
                   <img
                     [src]="fixture.awayTeam?.logoUrl"
@@ -208,17 +233,42 @@
                   </div>
                 </div>
 
-                <!-- Double Points Option -->
-                <div class="double-points">
-                  <label>
-                    <input
-                      type="checkbox"
-                      formControlName="isDouble"
-                      [disabled]="doubleLocked"
-                      (change)="onDoubleChange(i)"
-                    />
-                    <span>Double<br />Points</span>
-                  </label>
+              </div>
+
+              <div
+                class="locked-result hide-on-mobile"
+                *ngIf="isFixtureDisabled(fixture)"
+              >
+                <div
+                  class="actual-result"
+                  *ngIf="fixture.status === 'finished'"
+                >
+                  <span>Final score</span>
+                  <strong>
+                    {{ fixture.homeScore }} – {{ fixture.awayScore }}
+                  </strong>
+                </div>
+                <ng-container *ngFor="let pred of existingPredictions">
+                  <div
+                    *ngIf="pred.fixtureId === fixture.id"
+                    class="saved-result"
+                  >
+                    <span>Your prediction</span>
+                    <strong>
+                      {{ pred.predictedHomeScore }} –
+                      {{ pred.predictedAwayScore }}
+                    </strong>
+                    <span
+                      class="earned-points"
+                      *ngIf="fixture.status === 'finished'"
+                    >
+                      {{ pred.points || 0 }} pts
+                    </span>
+                  </div>
+                </ng-container>
+                <div class="missed-result" *ngIf="isMissedPrediction(fixture)">
+                  <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                  <strong>Missed</strong>
                 </div>
               </div>
 
@@ -269,22 +319,6 @@
                 </div>
               </div>
 
-              <!-- Mobile double toggle (separate row, small) -->
-              <div
-                class="double-row show-on-mobile-inline"
-                *ngIf="!isFixtureDisabled(fixture)"
-              >
-                <label class="double-toggle">
-                  <input
-                    type="checkbox"
-                    formControlName="isDouble"
-                    [disabled]="doubleLocked"
-                    (change)="onDoubleChange(i)"
-                  />
-                  <span>Double Points</span>
-                </label>
-              </div>
-
               <!-- FINISHED row (final score inline + centered “Your … pts”) -->
               <div
                 class="finished-inline show-on-mobile-inline"
@@ -318,8 +352,7 @@
               <div
                 class="finished-footer show-on-mobile-inline"
                 *ngIf="
-                  isFixtureDisabled(fixture) &&
-                  existingPredictions.length > 0
+                  isFixtureDisabled(fixture) && hasSubmittedPrediction(fixture)
                 "
               >
                 <ng-container *ngFor="let pred of existingPredictions">
@@ -345,9 +378,9 @@
             <button
               type="submit"
               class="btn btn-primary"
-              [disabled]="!predictionsForm.valid || loading"
+              [disabled]="!predictionsForm.valid || saving"
             >
-              {{ loading ? "Saving..." : "Save Predictions" }}
+              {{ saving ? "Saving..." : "Save Predictions" }}
             </button>
           </div>
         </div>

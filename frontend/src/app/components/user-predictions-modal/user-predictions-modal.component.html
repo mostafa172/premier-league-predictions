@@ -3,7 +3,7 @@
     <!-- Modal Header -->
     <div class="modal-header">
       <h2>{{ selectedUser?.username }}'s Predictions</h2>
-      <button class="close-btn" (click)="closeModal()">
+      <button class="close-btn" (click)="closeModal()" aria-label="Close predictions">
         <i class="fas fa-times"></i>
       </button>
     </div>
@@ -11,17 +11,20 @@
     <!-- Gameweek Selection -->
     <div class="selection-section">
       <div class="form-group">
-        <label for="gameweekSelect">Gameweek:</label>
-        <select 
-          id="gameweekSelect" 
-          [(ngModel)]="selectedGameweek" 
-          (change)="onGameweekChange(selectedGameweek)"
-          class="form-control"
-        >
-          <option *ngFor="let gw of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38]" [value]="gw">
-            Gameweek {{ gw }}
-          </option>
-        </select>
+        <label for="gameweekSelect">Select gameweek</label>
+        <div class="select-wrap">
+          <select
+            id="gameweekSelect"
+            [(ngModel)]="selectedGameweek"
+            (change)="onGameweekChange(selectedGameweek)"
+            class="form-control"
+          >
+            <option *ngFor="let gw of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38]" [value]="gw">
+              Gameweek {{ gw }}
+            </option>
+          </select>
+          <i class="fas fa-chevron-down" aria-hidden="true"></i>
+        </div>
       </div>
     </div>
 
@@ -57,17 +60,35 @@
           *ngFor="let fixture of userPredictionData.fixtures; let i = index"
           class="fixture-row readonly"
           [class.disabled]="isFixtureDisabled(fixture)"
+          [class.is-missed]="isMissedPrediction(fixture)"
           [class.is-double]="getPredictionForFixture(fixture.id)?.isDouble"
         >
           <div class="fixture-content">
-            <!-- Meta line (date/deadline) -->
             <div class="fixture-details">
               <div class="match-date">
-                {{ getFormattedDate(fixture.matchDate) }}
+                {{ fixture.matchDate | date : "d MMM, HH:mm" }}
               </div>
-              <div class="deadline" *ngIf="fixture.status !== 'finished'">
-                Deadline: {{ getFormattedDate(fixture.deadline) }}
-              </div>
+              <span class="status-badge" [class]="'status-' + fixture.status">
+                {{ fixture.status }}
+              </span>
+              <span
+                class="modal-double"
+                *ngIf="getPredictionForFixture(fixture.id)?.isDouble"
+              >
+                2×
+              </span>
+              <span class="meta-missed" *ngIf="isMissedPrediction(fixture)">
+                <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                <span>No pick</span>
+              </span>
+              <span
+                class="meta-spacer"
+                *ngIf="
+                  !getPredictionForFixture(fixture.id)?.isDouble &&
+                  !isMissedPrediction(fixture)
+                "
+                aria-hidden="true"
+              ></span>
             </div>
 
             <!-- Desktop Layout -->
@@ -84,10 +105,26 @@
                   <span class="predicted-score">{{ prediction.predictedHomeScore }}</span>
                   <span class="vs">-</span>
                   <span class="predicted-score">{{ prediction.predictedAwayScore }}</span>
-                  <div class="double-badge" *ngIf="prediction.isDouble">DOUBLE</div>
                 </div>
-                <div class="no-prediction" *ngIf="!getPredictionForFixture(fixture.id)">
+                <div
+                  class="no-prediction"
+                  *ngIf="
+                    !getPredictionForFixture(fixture.id) &&
+                    !isMissedPrediction(fixture)
+                  "
+                >
                   No prediction
+                </div>
+                <div class="desktop-result" *ngIf="fixture.status === 'finished'">
+                  <span class="actual-score">
+                    Final {{ fixture.homeScore }} – {{ fixture.awayScore }}
+                  </span>
+                  <span
+                    class="points-earned"
+                    *ngIf="getPredictionForFixture(fixture.id)"
+                  >
+                    {{ getPredictionPoints(fixture) }} pts
+                  </span>
                 </div>
               </div>
 
@@ -142,7 +179,13 @@
                 </div>
               </div>
 
-              <div class="no-prediction-row" *ngIf="!getPredictionForFixture(fixture.id)">
+              <div
+                class="no-prediction-row"
+                *ngIf="
+                  !getPredictionForFixture(fixture.id) &&
+                  !isMissedPrediction(fixture)
+                "
+              >
                 <span class="no-prediction">No prediction made</span>
               </div>
             </div>

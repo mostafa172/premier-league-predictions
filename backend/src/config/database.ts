@@ -1,21 +1,16 @@
 // backend/src/config/database.ts
 import { Pool } from 'pg';
-import dotenv from 'dotenv';
-dotenv.config();
+import { DATABASE_CONFIG, DATABASE_URL } from './database-env';
 
-const useUrl = !!process.env.DATABASE_URL;
+const useUrl = Boolean(DATABASE_URL);
 
 export const pool = useUrl
   ? new Pool({
-      connectionString: process.env.DATABASE_URL, // Neon
+      connectionString: DATABASE_URL, // Neon
       ssl: { rejectUnauthorized: false },         // required by Neon
     })
   : new Pool({
-      user: process.env.DB_USER || 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      database: process.env.DB_NAME || 'premier_league_predictions',
-      password: process.env.DB_PASSWORD || 'password',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
+      ...DATABASE_CONFIG,
     });
 
 export const connectDatabase = async (): Promise<void> => {

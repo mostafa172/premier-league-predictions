@@ -1,16 +1,15 @@
 /* filepath: backend/src/config/sequelize.ts */
 import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import { assertDatabaseMigrated } from '../database/migrator';
+import { DATABASE_CONFIG, DATABASE_URL } from './database-env';
 
 const isProd = process.env.NODE_ENV === 'production';
 
 let sequelize: Sequelize;
 
 // Prefer DATABASE_URL in prod (Neon/Render), fall back to discrete vars in dev
-if (process.env.DATABASE_URL) {
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
+if (DATABASE_URL) {
+  sequelize = new Sequelize(DATABASE_URL, {
     dialect: 'postgres',
     logging: false,
     dialectOptions: {
@@ -21,11 +20,11 @@ if (process.env.DATABASE_URL) {
   });
 } else {
   sequelize = new Sequelize({
-    database: process.env.DB_NAME || 'premier_league_predictions',
-    username: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || '171397',
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432', 10),
+    database: DATABASE_CONFIG.database,
+    username: DATABASE_CONFIG.user,
+    password: DATABASE_CONFIG.password,
+    host: DATABASE_CONFIG.host,
+    port: DATABASE_CONFIG.port,
     dialect: 'postgres',
     logging: isProd ? false : console.log,
     pool: { max: 5, min: 0, acquire: 30000, idle: 10000 },
@@ -51,12 +50,8 @@ export const connectDatabase = async (): Promise<void> => {
     const { setupAssociations } = require('../models/associations');
     setupAssociations();
 
-    await sequelize.sync({
-      force: false,
-      alter: process.env.NODE_ENV === 'development',
-    });
-
-    console.log('✅ Models synchronized');
+    await assertDatabaseMigrated();
+    console.log('✅ Database migrations are current');
   } catch (err) {
     console.error('❌ DB connection error:', err);
     throw err;

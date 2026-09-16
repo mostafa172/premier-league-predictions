@@ -7,8 +7,11 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
-    "migrate": "node database/migrations/run_migrations.js",
-    "migrate:fresh": "npm run migrate",
+    "migrate": "ts-node src/database/migrate.cli.ts up",
+    "migrate:baseline": "ts-node src/database/migrate.cli.ts baseline",
+    "migrate:status": "ts-node src/database/migrate.cli.ts status",
+    "db:seed": "ts-node src/database/migrate.cli.ts seed",
+    "db:reset": "ts-node src/database/migrate.cli.ts reset",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -23,7 +26,6 @@
     "morgan": "^1.10.0",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
-    "pg-promise": "^11.15.0",
     "sequelize": "^6.37.7"
   },
   "devDependencies": {

@@ -5,7 +5,6 @@ export interface FixtureCreationAttributes {
   homeTeam: string;
   awayTeam: string;
   matchDate: Date;
-  deadline: Date;
   gameweek: number;
   status?: FixtureStatus;
   homeScore?: number;
@@ -16,7 +15,6 @@ export interface FixtureUpdateAttributes {
   homeTeam?: string;
   awayTeam?: string;
   matchDate?: Date;
-  deadline?: Date;
   gameweek?: number;
   status?: FixtureStatus;
   homeScore?: number;

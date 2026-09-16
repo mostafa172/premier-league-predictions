@@ -156,7 +156,7 @@ export class PredictionsComponent implements OnInit, OnDestroy {
         predictionId: [existing?.id || null],
       });
 
-      // Only disable double if double is locked (deadline passed on existing double)
+      // Only disable double if an existing double is locked after kickoff.
       // Allow users to select double even without scores entered yet
       if (this.doubleLocked) {
         group.get("isDouble")?.disable({ emitEvent: false });
@@ -303,7 +303,10 @@ export class PredictionsComponent implements OnInit, OnDestroy {
         this.success = this.message = "";
         this.messageType = "";
       } else if (succeeded > 0) {
-        this.showToastMessage(`Saved ${succeeded} change(s). ${failed} failed (likely past deadline or finished).`, "error");
+        this.showToastMessage(
+          `Saved ${succeeded} change(s). ${failed} failed (likely already started or finished).`,
+          "error"
+        );
         this.message = "";
         this.messageType = "";
       } else {
@@ -370,12 +373,40 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   }
 
   isFixtureDisabled(fixture: any): boolean {
-    const deadline = new Date(fixture.deadline);
+    const matchDate = new Date(fixture.matchDate);
     const now = new Date();
     return (
-      now >= deadline ||
+      now >= matchDate ||
       fixture.status === "finished" ||
       fixture.status === "live"
+    );
+  }
+
+  hasSubmittedPrediction(fixture: any): boolean {
+    const existing = this.existingPredictions.find(
+      (p) => p.fixtureId === fixture.id
+    );
+    if (!existing) return false;
+
+    const home =
+      existing.predictedHomeScore ?? existing.predicted_home_score ?? null;
+    const away =
+      existing.predictedAwayScore ?? existing.predicted_away_score ?? null;
+
+    return home !== null && away !== null;
+  }
+
+  // Double was applied and the fixture can no longer be edited.
+  isDoubleLockedIn(fixture: any): boolean {
+    return (
+      this.isFixtureDisabled(fixture) && this.hasExistingDouble(fixture.id)
+    );
+  }
+
+  // Deadline has passed (live/finished) and no prediction was ever submitted.
+  isMissedPrediction(fixture: any): boolean {
+    return (
+      this.isFixtureDisabled(fixture) && !this.hasSubmittedPrediction(fixture)
     );
   }
 
@@ -429,39 +460,13 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  getFormattedDeadline(deadline: string): string {
-    const utcDate = new Date(deadline);
-    const localDate = new Date(
-      utcDate.getUTCFullYear(),
-      utcDate.getUTCMonth(),
-      utcDate.getUTCDate(),
-      utcDate.getUTCHours(),
-      utcDate.getUTCMinutes(),
-      utcDate.getUTCSeconds()
-    );
-
-    const now = new Date();
-    const diffInMinutes = Math.floor(
-      (localDate.getTime() - now.getTime()) / (1000 * 60)
-    );
-
-    if (diffInMinutes < 0) return "Deadline passed";
-    if (diffInMinutes < 60) return `${diffInMinutes} minutes left`;
-    if (diffInMinutes < 1440) {
-      const hours = Math.floor(diffInMinutes / 60);
-      return `${hours} hour${hours > 1 ? "s" : ""} left`;
-    }
-    const days = Math.floor(diffInMinutes / 1440);
-    return `${days} day${days > 1 ? "s" : ""} left`;
-  }
-
   private computeDoubleLock(): boolean {
     const now = new Date();
     return this.existingPredictions.some((p) => {
       if (!p.isDouble && !p.is_double) return false;
       const fx = this.fixtures.find((f) => f.id === p.fixtureId);
       if (!fx) return false;
-      return now >= new Date(fx.deadline) || fx.status !== "upcoming";
+      return now >= new Date(fx.matchDate) || fx.status !== "upcoming";
     });
   }
 

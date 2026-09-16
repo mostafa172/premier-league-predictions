@@ -1,0 +1,84 @@
+:root {
+  color-scheme: dark;
+
+  /* Brand and semantic color */
+  --color-navy-950: #050816;
+  --color-navy-900: #080d20;
+  --color-navy-850: #0c1229;
+  --color-navy-800: #111936;
+  --color-navy-700: #1a2548;
+  --color-purple-500: #8b5cf6;
+  --color-purple-400: #a78bfa;
+  --color-cyan-500: #06b6d4;
+  --color-cyan-400: #22d3ee;
+  --color-green-500: #22c55e;
+  --color-amber-500: #f59e0b;
+  --color-red-500: #ef4444;
+  --color-blue-500: #3b82f6;
+  --color-white: #ffffff;
+
+  --background: var(--color-navy-950);
+  --background-subtle: var(--color-navy-900);
+  --card-background: var(--color-navy-850);
+  --surface-raised: var(--color-navy-800);
+  --surface-muted: rgba(255, 255, 255, 0.045);
+  --text-primary: #f4f7ff;
+  --text-secondary: #aab4d0;
+  --text-muted: #7783a5;
+  --border-color: rgba(166, 180, 222, 0.16);
+  --border-color-strong: rgba(166, 180, 222, 0.28);
+
+  /* Backwards-compatible aliases */
+  --primary-color: var(--color-purple-500);
+  --primary-color-hover: var(--color-purple-400);
+  --secondary-color: var(--color-cyan-400);
+  --accent-color: var(--color-cyan-500);
+  --success-color: var(--color-green-500);
+  --warning-color: var(--color-amber-500);
+  --error-color: var(--color-red-500);
+  --info-color: var(--color-blue-500);
+
+  /* Typography */
+  --font-sans: "Inter Variable", Inter, "SF Pro Display", "SF Pro Text", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: clamp(1.25rem, 2vw, 1.5rem);
+  --text-2xl: clamp(1.65rem, 4vw, 2.25rem);
+  --leading-tight: 1.2;
+  --leading-normal: 1.55;
+
+  /* Spacing and layout */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --page-width: 75rem;
+  --page-gutter: clamp(1rem, 3vw, 2rem);
+  --touch-target: 2.75rem;
+
+  /* Shape, depth, and motion */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
+  --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.2);
+  --shadow-glow: 0 0 0 1px rgba(139, 92, 246, 0.12),
+    0 14px 44px rgba(64, 40, 150, 0.2);
+  --focus-ring: 0 0 0 3px rgba(34, 211, 238, 0.35);
+  --duration-fast: 140ms;
+  --duration-normal: 220ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}

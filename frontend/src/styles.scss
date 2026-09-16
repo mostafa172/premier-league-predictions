@@ -1,40 +1,5 @@
-/* filepath: frontend/src/styles.scss */
-/* Reset and base styles */
-@import "~@fortawesome/fontawesome-free/css/all.min.css";
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  line-height: 1.6;
-  color: #333;
-  background-color: #f8f9fa;
-  height: 100%;
-}
-
-:root {
-  --primary-color: #38003c;
-  --secondary-color: #00b949;
-  --accent-color: #e90052;
-  --success-color: #28a745;
-  --warning-color: #ffc107;
-  --error-color: #dc3545;
-  --text-primary: #212529;
-  --text-secondary: #6c757d;
-  --background: #ffffff;
-  --card-background: #ffffff;
-  --border-color: #dee2e6;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Only target navbar brand specifically */
-.navbar .nav-brand h1 {
-  color: var(--secondary-color) !important;
-}
+@use "styles/tokens";
+@use "styles/base";
+@use "styles/components";
+@use "styles/fixtures";
+@use "styles/utilities";

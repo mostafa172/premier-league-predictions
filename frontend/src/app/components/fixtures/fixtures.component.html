@@ -3,16 +3,19 @@
     <h2>Fixtures</h2>
 
     <div class="gameweek-selector">
-      <label for="gameweek">Gameweek:</label>
-      <select
-        id="gameweek"
-        [(ngModel)]="gameweek"
-        (change)="onGameweekChange(gameweek)"
-      >
-        <option *ngFor="let gw of gameweeks" [value]="gw">
-          Gameweek {{ gw }}
-        </option>
-      </select>
+      <label for="gameweek">Select gameweek</label>
+      <div class="select-wrap">
+        <select
+          id="gameweek"
+          [(ngModel)]="gameweek"
+          (change)="onGameweekChange(gameweek)"
+        >
+          <option *ngFor="let gw of gameweeks" [value]="gw">
+            Gameweek {{ gw }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+      </div>
     </div>
 
     <div class="admin-controls" *ngIf="isAdmin">
@@ -42,9 +45,11 @@
         [class]="'status-' + fixture.status"
       >
         <div class="fixture-header">
-          <span class="match-date">
-            {{ fixture.matchDate | date : "MMM d, HH:mm"}}
-          </span>
+          <div class="fixture-timing">
+            <span class="match-date">
+              {{ fixture.matchDate | date : "MMM d, HH:mm"}}
+            </span>
+          </div>
           <span class="status-badge" [class]="'status-' + fixture.status">{{
             fixture.status
           }}</span>

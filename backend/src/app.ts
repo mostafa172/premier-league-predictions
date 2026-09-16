@@ -3,7 +3,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import { connectDatabase } from './config/sequelize';
 
 import authRoutes from './routes/auth.routes';
@@ -12,8 +11,6 @@ import fixturesRoutes from './routes/fixtures.routes';
 import adminRoutes from './routes/admin.routes';
 import teamsRoutes from './routes/teams.routes';
 import leaguesRoutes from './routes/leagues.routes';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

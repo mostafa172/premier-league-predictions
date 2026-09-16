@@ -50,7 +50,10 @@
     <div class="league-info-card">
       <div class="league-header">
         <div class="league-title">
-          <h2>{{ leagueDetails.league.name }}</h2>
+          <div>
+            <span class="eyebrow">Private league</span>
+            <h2>{{ leagueDetails.league.name }}</h2>
+          </div>
           <div class="league-badges">
             <span class="member-count">
               <i class="fas fa-users"></i>
@@ -217,7 +220,7 @@
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Leave League</h3>
-      <button class="close-btn" (click)="closeLeaveModal()">
+      <button class="close-btn" (click)="closeLeaveModal()" aria-label="Close leave league dialog">
         <i class="fas fa-times"></i>
       </button>
     </div>
@@ -256,7 +259,7 @@
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Delete League</h3>
-      <button class="close-btn" (click)="closeDeleteModal()">
+      <button class="close-btn" (click)="closeDeleteModal()" aria-label="Close delete league dialog">
         <i class="fas fa-times"></i>
       </button>
     </div>

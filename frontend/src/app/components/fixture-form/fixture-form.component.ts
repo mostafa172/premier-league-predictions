@@ -30,7 +30,6 @@ export class FixtureFormComponent implements OnInit {
       homeTeamId: ["", [Validators.required]],
       awayTeamId: ["", [Validators.required]],
       matchDate: ["", [Validators.required]],
-      deadline: ["", [Validators.required]],
       gameweek: [
         "",
         [Validators.required, Validators.min(1), Validators.max(38)],
@@ -75,7 +74,6 @@ export class FixtureFormComponent implements OnInit {
             homeTeamId: fixture.homeTeamId,
             awayTeamId: fixture.awayTeamId,
             matchDate: this.formatUTCToDateTimeLocal(fixture.matchDate),
-            deadline: this.formatUTCToDateTimeLocal(fixture.deadline),
             gameweek: fixture.gameweek,
             homeScore: fixture.homeScore,
             awayScore: fixture.awayScore,
@@ -107,10 +105,10 @@ export class FixtureFormComponent implements OnInit {
         return;
       }
 
+      const matchDate = this.formatDateTimeLocalToUTC(formData.matchDate);
       const payload = {
         ...formData,
-        matchDate: this.formatDateTimeLocalToUTC(formData.matchDate),
-        deadline: this.formatDateTimeLocalToUTC(formData.deadline),
+        matchDate,
       };
 
       this.loading = true;

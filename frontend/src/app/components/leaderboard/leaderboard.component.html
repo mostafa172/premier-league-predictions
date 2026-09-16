@@ -1,27 +1,54 @@
 <div class="leaderboard-container">
   <div class="leaderboard-header">
-    <h2>Leaderboard</h2>
+    <div>
+      <span class="eyebrow">Global standings</span>
+      <h2>Leaderboard</h2>
+      <p>Every point counts. See who is setting the pace.</p>
+    </div>
     <div class="leaderboard-hint">
       <i class="fas fa-info-circle"></i>
       <span>Click on any username to view their predictions</span>
     </div>
-    <!-- <button
-      (click)="refreshLeaderboard()"
-      class="refresh-btn"
-      [disabled]="loading"
-    >
-      Refresh
-    </button> -->
   </div>
 
   <div *ngIf="error" class="error-message">{{ error }}</div>
   <div *ngIf="loading" class="loading-message">Loading leaderboard...</div>
 
   <div *ngIf="currentUsername && currentUserRank > 0" class="current-user-rank">
-    <h3>Your Position: #{{ currentUserRank }}</h3>
+    <span>Your position</span>
+    <strong>#{{ currentUserRank }}</strong>
+    <small>Keep climbing the global table</small>
   </div>
 
-  <div *ngIf="!loading && leaderboard.length > 0" class="leaderboard-table">
+  <section *ngIf="!loading && leaderboard.length > 0" class="podium desktop-only" aria-label="Top three players">
+    <article *ngIf="leaderboard[1]" class="podium-card second">
+      <span class="medal" aria-label="Second place">🥈</span>
+      <button type="button" (click)="onUserClick(leaderboard[1])" [disabled]="leaderboard[1].username === currentUsername">
+        {{ leaderboard[1].username }}
+      </button>
+      <strong>{{ leaderboard[1].totalPoints || 0 }}</strong>
+      <small>points</small>
+    </article>
+    <article *ngIf="leaderboard[0]" class="podium-card first">
+      <span class="medal" aria-label="First place">🥇</span>
+      <span class="crown"><i class="fas fa-crown" aria-hidden="true"></i></span>
+      <button type="button" (click)="onUserClick(leaderboard[0])" [disabled]="leaderboard[0].username === currentUsername">
+        {{ leaderboard[0].username }}
+      </button>
+      <strong>{{ leaderboard[0].totalPoints || 0 }}</strong>
+      <small>points</small>
+    </article>
+    <article *ngIf="leaderboard[2]" class="podium-card third">
+      <span class="medal" aria-label="Third place">🥉</span>
+      <button type="button" (click)="onUserClick(leaderboard[2])" [disabled]="leaderboard[2].username === currentUsername">
+        {{ leaderboard[2].username }}
+      </button>
+      <strong>{{ leaderboard[2].totalPoints || 0 }}</strong>
+      <small>points</small>
+    </article>
+  </section>
+
+  <div *ngIf="!loading && leaderboard.length > 0" class="leaderboard-table desktop-only">
     <table>
       <thead>
         <tr>
@@ -46,14 +73,15 @@
           </td>
 
           <td class="username-cell">
-            <div class="username" 
+            <button type="button" class="username"
                  [class.clickable]="entry.username !== currentUsername"
+                 [disabled]="entry.username === currentUsername"
                  (click)="onUserClick(entry)">
               <span class="name">{{ entry.username }}</span>
               <span *ngIf="entry.username === currentUsername" class="you-label"
                 >You</span
               >
-            </div>
+            </button>
           </td>
 
           <td class="points">
@@ -62,6 +90,26 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div *ngIf="!loading && leaderboard.length > 0" class="leaderboard-list mobile-only">
+    <article
+      *ngFor="let entry of leaderboard; trackBy: trackByUserId"
+      class="leaderboard-item"
+      [class.current-user]="entry.username === currentUsername"
+    >
+      <div class="mobile-rank">
+        <span *ngIf="entry.rank <= 3" class="trophy" [attr.aria-label]="'Rank ' + entry.rank">
+          {{ entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉' }}
+        </span>
+        <span *ngIf="entry.rank > 3" class="rank-number">{{ entry.rank }}</span>
+      </div>
+      <button type="button" class="mobile-user" (click)="onUserClick(entry)" [disabled]="entry.username === currentUsername">
+        <span>{{ entry.username }}</span>
+        <small *ngIf="entry.username === currentUsername">You</small>
+      </button>
+      <div class="mobile-points"><strong>{{ entry.totalPoints || 0 }}</strong><small>pts</small></div>
+    </article>
   </div>
 
   <div *ngIf="!loading && leaderboard.length === 0" class="no-data">

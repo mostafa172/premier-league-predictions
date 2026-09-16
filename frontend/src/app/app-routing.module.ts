@@ -35,6 +35,11 @@ const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
+    path: "admin",
+    redirectTo: "admin/fixtures",
+    pathMatch: "full",
+  },
+  {
     path: "admin/fixtures",
     component: FixtureFormComponent,
     canActivate: [AuthGuard],

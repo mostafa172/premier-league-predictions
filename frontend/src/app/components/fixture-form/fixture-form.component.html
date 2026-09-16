@@ -1,9 +1,12 @@
 <div class="fixture-form-container">
   <div class="form-header">
+    <span class="eyebrow">Fixture control</span>
     <h2>{{ isEdit ? 'Edit' : 'Create' }} Fixture</h2>
+    <p>Configure teams, schedule and match result.</p>
   </div>
 
   <form [formGroup]="fixtureForm" (ngSubmit)="onSubmit()" class="fixture-form">
+    <h3 class="section-title">Teams</h3>
     <div class="teams-section">
       <div class="form-group">
         <label for="homeTeam">Home Team *</label>
@@ -31,7 +34,7 @@
         </div>
       </div>
 
-      <div class="vs-divider">VS</div>
+      <div class="vs-divider" aria-hidden="true">VS</div>
 
       <div class="form-group">
         <label for="awayTeam">Away Team *</label>
@@ -72,20 +75,6 @@
         >
         <div class="invalid-feedback" *ngIf="isFieldInvalid('matchDate')">
           {{ getFieldError('matchDate') }}
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="deadline">Prediction Deadline *</label>
-        <input 
-          type="datetime-local" 
-          id="deadline"
-          formControlName="deadline" 
-          class="form-control"
-          [class.is-invalid]="isFieldInvalid('deadline')"
-        >
-        <div class="invalid-feedback" *ngIf="isFieldInvalid('deadline')">
-          {{ getFieldError('deadline') }}
         </div>
       </div>
 
@@ -153,12 +142,12 @@
       <h3>Match Preview</h3>
       <div class="match-display">
         <div class="team">
-          <img [src]="getTeamById(fixtureForm.get('homeTeamId')?.value)?.logoUrl" class="logo">
+          <img [src]="getTeamById(fixtureForm.get('homeTeamId')?.value)?.logoUrl" alt="" class="logo">
           <span>{{ getTeamById(fixtureForm.get('homeTeamId')?.value)?.abbreviation }}</span>
         </div>
         <span class="vs">VS</span>
         <div class="team">
-          <img [src]="getTeamById(fixtureForm.get('awayTeamId')?.value)?.logoUrl" class="logo">
+          <img [src]="getTeamById(fixtureForm.get('awayTeamId')?.value)?.logoUrl" alt="" class="logo">
           <span>{{ getTeamById(fixtureForm.get('awayTeamId')?.value)?.abbreviation }}</span>
         </div>
       </div>

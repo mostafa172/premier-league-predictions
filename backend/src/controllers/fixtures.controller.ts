@@ -279,10 +279,9 @@ export class FixturesController {
     res: Response
   ): Promise<Response> {
     try {
-      const { homeTeamId, awayTeamId, matchDate, deadline, gameweek } =
-        req.body;
+      const { homeTeamId, awayTeamId, matchDate, gameweek } = req.body;
 
-      if (!homeTeamId || !awayTeamId || !matchDate || !deadline || !gameweek) {
+      if (!homeTeamId || !awayTeamId || !matchDate || !gameweek) {
         return res
           .status(400)
           .json({ success: false, message: "Missing required fields" });
@@ -301,11 +300,12 @@ export class FixturesController {
         });
       }
 
+      const fixtureMatchDate = new Date(matchDate);
       const fixture = await Fixture.create({
         homeTeamId,
         awayTeamId,
-        matchDate: new Date(matchDate),
-        deadline: new Date(deadline),
+        matchDate: fixtureMatchDate,
+        deadline: fixtureMatchDate,
         gameweek,
         status: FixtureStatus.UPCOMING,
       });
@@ -362,7 +362,6 @@ export class FixturesController {
         homeTeamId,
         awayTeamId,
         matchDate,
-        deadline,
         gameweek,
         homeScore,
         awayScore,
@@ -378,8 +377,11 @@ export class FixturesController {
       const updateData: any = {};
       if (homeTeamId) updateData.homeTeamId = homeTeamId;
       if (awayTeamId) updateData.awayTeamId = awayTeamId;
-      if (matchDate) updateData.matchDate = new Date(matchDate);
-      if (deadline) updateData.deadline = new Date(deadline);
+      if (matchDate) {
+        const fixtureMatchDate = new Date(matchDate);
+        updateData.matchDate = fixtureMatchDate;
+        updateData.deadline = fixtureMatchDate;
+      }
       if (gameweek) updateData.gameweek = gameweek;
       if (homeScore !== undefined) updateData.homeScore = homeScore;
       if (awayScore !== undefined) updateData.awayScore = awayScore;

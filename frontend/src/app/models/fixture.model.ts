@@ -21,6 +21,5 @@ export interface CreateFixtureRequest {
   homeTeamId: number;
   awayTeamId: number;
   matchDate: string;
-  deadline: string;
   gameweek: number;
 }

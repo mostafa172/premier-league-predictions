@@ -1,0 +1,102 @@
+.sr-only,
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.text-primary {
+  color: var(--text-primary) !important;
+}
+
+.text-secondary,
+.text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.text-accent {
+  color: var(--color-cyan-400) !important;
+}
+
+.safe-area {
+  padding-top: max(var(--space-4), var(--safe-top));
+  padding-right: max(var(--space-4), var(--safe-right));
+  padding-bottom: max(var(--space-4), var(--safe-bottom));
+  padding-left: max(var(--space-4), var(--safe-left));
+}
+
+.safe-area-bottom {
+  padding-bottom: max(var(--space-4), var(--safe-bottom));
+}
+
+.desktop-only,
+.desktop-view,
+.hide-on-mobile {
+  display: revert;
+}
+
+.mobile-only,
+.mobile-view,
+.show-on-mobile,
+.show-on-mobile-inline {
+  display: none !important;
+}
+
+@media (max-width: 48rem) {
+  .desktop-only,
+  .desktop-view,
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  .mobile-only,
+  .mobile-view,
+  .show-on-mobile {
+    display: block !important;
+  }
+
+  .show-on-mobile-inline {
+    display: flex !important;
+  }
+
+  .page-container,
+  .app-page,
+  .fixtures-container,
+  .predictions-container,
+  .leagues-container,
+  .league-detail-container,
+  .leaderboard-container {
+    padding-inline: max(var(--space-3), var(--safe-left));
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+  }
+}
+
+@media (min-width: 48.0625rem) {
+  .tablet-down {
+    display: none !important;
+  }
+}
+
+@media (max-width: 64rem) {
+  .desktop-up {
+    display: none !important;
+  }
+}
+
+@media (min-width: 64.0625rem) {
+  .desktop-up {
+    display: revert;
+  }
+}

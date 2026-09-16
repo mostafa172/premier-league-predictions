@@ -124,6 +124,24 @@ export class UserPredictionsModalComponent implements OnInit, OnDestroy, OnChang
     return this.userPredictionData.predictions.find(p => p.fixtureId === fixtureId);
   }
 
+  hasSubmittedPrediction(fixtureId: number): boolean {
+    const prediction = this.getPredictionForFixture(fixtureId);
+    return (
+      !!prediction &&
+      prediction.predictedHomeScore !== null &&
+      prediction.predictedHomeScore !== undefined &&
+      prediction.predictedAwayScore !== null &&
+      prediction.predictedAwayScore !== undefined
+    );
+  }
+
+  // Deadline has passed (live/finished) and no prediction was ever submitted.
+  isMissedPrediction(fixture: any): boolean {
+    return (
+      this.isFixtureDisabled(fixture) && !this.hasSubmittedPrediction(fixture.id)
+    );
+  }
+
   getPredictionPoints(fixture: any): number {
     const prediction = this.getPredictionForFixture(fixture.id);
     return prediction?.points || 0;

@@ -1,6 +1,7 @@
 /* filepath: backend/src/middleware/auth.middleware.ts */
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../config/jwt';
 
 // Make sure this interface is exported and consistent
 export interface AuthenticatedRequest extends Request {
@@ -24,7 +25,7 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
     });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret', (err: any, decoded: any) => {
+  jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
     if (err) {
       return res.status(403).json({
         success: false,
