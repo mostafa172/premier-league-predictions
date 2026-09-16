@@ -5,6 +5,8 @@ import { User } from '../models/User';
 import { Fixture, FixtureStatus } from '../models/Fixture'; // Import FixtureStatus enum
 import { Prediction } from '../models/Prediction';
 import { Team } from '../models/Team';
+import { SyncJob, SyncRun } from '../models/SyncRun';
+import { runSyncJob, summarize } from '../services/football';
 import { Op } from 'sequelize';
 
 export class AdminController {
@@ -238,6 +240,74 @@ export class AdminController {
         success: false,
         message: "Error recalculating points",
         error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  // List recent football sync runs (admin only)
+  public async getSyncRuns(req: AuthenticatedRequest, res: Response): Promise<Response> {
+    try {
+      if (!this.checkAdminAccess(req, res)) {
+        return res;
+      }
+
+      const limit = Math.min(Number.parseInt(String(req.query.limit ?? '20'), 10) || 20, 100);
+      const runs = await SyncRun.findAll({
+        order: [['startedAt', 'DESC']],
+        limit,
+      });
+
+      return res.status(200).json({ success: true, data: runs });
+    } catch (error) {
+      console.error('❌ Get sync runs error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error loading sync runs',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  // Trigger a football sync job on demand (admin only)
+  public async triggerSync(req: AuthenticatedRequest, res: Response): Promise<Response> {
+    try {
+      if (!this.checkAdminAccess(req, res)) {
+        return res;
+      }
+
+      const job = String(req.params.job || '').toLowerCase() as SyncJob;
+      if (!Object.values(SyncJob).includes(job)) {
+        return res.status(400).json({
+          success: false,
+          message: `Unknown sync job "${req.params.job}". Expected one of: ${Object.values(SyncJob).join(', ')}`,
+        });
+      }
+
+      const report = await runSyncJob(job, {
+        dryRun: req.body?.dryRun === true,
+        competition: req.body?.competition,
+        season: req.body?.season,
+        backfillFinished: req.body?.backfillFinished === true,
+      });
+
+      if (!report) {
+        return res.status(409).json({
+          success: false,
+          message: 'That sync job is already running; try again shortly.',
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: summarize(report),
+        data: report,
+      });
+    } catch (error) {
+      console.error('❌ Trigger sync error:', error);
+      return res.status(502).json({
+        success: false,
+        message: 'Sync failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }

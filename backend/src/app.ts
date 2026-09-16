@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { connectDatabase } from './config/sequelize';
+import { startFootballSync } from './jobs/football-sync.scheduler';
 
 import authRoutes from './routes/auth.routes';
 import predictionsRoutes from './routes/predictions.routes';
@@ -44,7 +45,9 @@ const startServer = async () => {
     try {
         // Connect to database (this will set up associations automatically)
         await connectDatabase();
-        
+
+        startFootballSync();
+
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
             console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);

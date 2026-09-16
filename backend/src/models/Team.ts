@@ -11,11 +11,13 @@ interface TeamAttributes {
   colorSecondary?: string;
   foundedYear?: number;
   stadium?: string;
+  externalId?: number | null;
+  externalSource?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-interface TeamCreationAttributes extends Optional<TeamAttributes, 'id' | 'logoUrl' | 'colorPrimary' | 'colorSecondary' | 'foundedYear' | 'stadium' | 'createdAt' | 'updatedAt'> {}
+interface TeamCreationAttributes extends Optional<TeamAttributes, 'id' | 'logoUrl' | 'colorPrimary' | 'colorSecondary' | 'foundedYear' | 'stadium' | 'externalId' | 'externalSource' | 'createdAt' | 'updatedAt'> {}
 
 export class Team extends Model<TeamAttributes, TeamCreationAttributes> implements TeamAttributes {
   public id!: number;
@@ -26,6 +28,8 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
   public colorSecondary?: string;
   public foundedYear?: number;
   public stadium?: string;
+  public externalId?: number | null;
+  public externalSource?: string | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -77,6 +81,16 @@ Team.init(
     stadium: {
       type: DataTypes.STRING(100),
       allowNull: true,
+    },
+    externalId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'external_id',
+    },
+    externalSource: {
+      type: DataTypes.STRING(32),
+      allowNull: true,
+      field: 'external_source',
     },
     createdAt: {
       type: DataTypes.DATE,

@@ -103,6 +103,82 @@ NODE_ENV=development DB_NAME=premier_league_predictions_dev npm run db:reset
 Reset is rejected unless `NODE_ENV=development` and the database name ends in
 `_dev` or `_test`. It must never be used against hosted data.
 
+## Football data sync
+
+Fixtures, kickoff times and scores can be pulled from
+[football-data.org](https://www.football-data.org). Register for a free token
+and put it in `.env` as `FOOTBALL_API_KEY`.
+
+Four jobs share one provider adapter, so swapping data sources means writing a
+new adapter and nothing else:
+
+| Job | What it does | When it runs |
+| --- | --- | --- |
+| `teams` | Links competition clubs to our team rows, creating promoted sides | On demand |
+| `schedule` | Keeps the current gameweek plus `FOOTBALL_SYNC_GAMEWEEK_HORIZON` ahead in step with the provider | Weekly, and shortly after boot |
+| `results` | Marks kicked-off fixtures live from the clock, then records final scores and scores predictions | Every `FOOTBALL_SYNC_RESULTS_INTERVAL_SECONDS` |
+| `reconcile` | Settles matches the results poller never saw finish, for instance while the app was down | Hourly |
+
+### Scores are only written at full time
+
+A score in this app means the match is over, so nothing records a running
+score. That shapes the polling:
+
+- **Kickoff** moves a fixture to live using the clock alone. No API call is
+  involved, so predictions lock and the UI shows the match in progress for
+  free.
+- **While the match is played** the provider is not contacted at all.
+- **From `FOOTBALL_FINISH_WINDOW_START_MINUTES` after kickoff** the poller
+  starts looking for a final result, and stops once the match is final or
+  `FOOTBALL_FINISH_WINDOW_END_MINUTES` passes.
+- **Full time** writes the score, flips the fixture to finished and scores its
+  predictions in one step.
+
+One request covers every match that kicked off in the same window, because the
+provider returns a competition's matches by date. A ten-match Saturday
+therefore costs the same as a single match, and a typical matchweek settles in
+well under fifty requests against a limit of ten per minute.
+
+Run any job by hand, against any competition the token covers:
+
+```bash
+npm run sync -- schedule --dry-run          # preview, writes nothing
+npm run sync -- teams
+npm run sync -- schedule
+npm run sync -- results
+npm run sync -- schedule --competition CL --dry-run   # Champions League
+```
+
+Admins can also trigger a job over HTTP and read the audit trail:
+
+```
+POST /api/admin/sync/:job    body: { "dryRun": true }
+GET  /api/admin/sync/runs
+```
+
+Every run, manual or scheduled, is recorded in the `sync_runs` table with
+counts, warnings and any error.
+
+### What the sync will not do
+
+Played football is never rewritten, so a synced season cannot disturb finished
+gameweeks or the points already awarded for them:
+
+- A fixture with a final score is never modified, and its predictions are never
+  rescored.
+- No score is ever written before full time, not even a half time score.
+- Gameweeks behind the provider's current one are left alone.
+- Matches already played are not imported at all unless you pass `--backfill`.
+- A fixture you entered by hand is adopted rather than duplicated, matched on
+  its two clubs, after which the provider keeps its kickoff time accurate.
+- Postponements and cancellations are reported as warnings for you to act on
+  rather than applied automatically.
+- Clubs keep our names, three-letter codes and local logo files; the sync only
+  stamps the provider's id onto them.
+
+Scheduled jobs stay off until `FOOTBALL_SYNC_ENABLED=true`. The CLI works
+either way, which makes a dry run the safe way to see what a job would do.
+
 ## Environment variables
 
 - `JWT_SECRET`: required long random signing secret
@@ -110,3 +186,17 @@ Reset is rejected unless `NODE_ENV=development` and the database name ends in
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
 - `PORT`: backend port, defaults to `3000`
 - `NODE_ENV`: `development` or `production`
+- `FOOTBALL_API_KEY`: football-data.org token, required for any sync
+- `FOOTBALL_SYNC_ENABLED`: run the scheduled jobs, defaults to `false`
+- `FOOTBALL_COMPETITION`: competition code the jobs use, defaults to `PL`
+- `FOOTBALL_SEASON`: season start year, blank means the provider's active season
+- `FOOTBALL_SYNC_GAMEWEEK_HORIZON`: gameweeks kept ahead, defaults to `3`
+- `FOOTBALL_SYNC_RESULTS_INTERVAL_SECONDS`: results poll interval, defaults to `300`
+- `FOOTBALL_FINISH_WINDOW_START_MINUTES`: minutes after kickoff before polling
+  for a final result, defaults to `95`
+- `FOOTBALL_FINISH_WINDOW_END_MINUTES`: minutes after kickoff to give up and
+  leave it to reconcile, defaults to `240`
+
+If your machine routes traffic through a TLS-inspecting proxy, containers need
+its root CA or every API call fails with `unable to get local issuer
+certificate`. Put the mount in a `compose.override.yaml`, which is gitignored.

@@ -11,6 +11,9 @@ router.get('/fixtures', authenticateToken, requireAdmin, adminController.getAllF
 router.get('/users', authenticateToken, requireAdmin, adminController.getUsers.bind(adminController));
 router.get('/stats', authenticateToken, requireAdmin, adminController.getSystemStats.bind(adminController));
 
+router.get('/sync/runs', authenticateToken, requireAdmin, adminController.getSyncRuns.bind(adminController));
+router.post('/sync/:job', authenticateToken, requireAdmin, adminController.triggerSync.bind(adminController));
+
 router.post('/recalculate-points', authenticateToken, requireAdmin, adminController.recalculatePoints.bind(adminController));
 router.put('/fixtures/statuses', authenticateToken, requireAdmin, adminController.updateAllFixtureStatuses.bind(adminController));
 router.put('/fixtures/:fixtureId/result', authenticateToken, requireAdmin, adminController.updateFixtureResult.bind(adminController));

@@ -20,11 +20,14 @@ interface FixtureAttributes {
   homeScore?: number;
   awayScore?: number;
   deadline: Date;
+  externalId?: number | null;
+  syncSource?: string | null;
+  lastSyncedAt?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-interface FixtureCreationAttributes extends Optional<FixtureAttributes, 'id' | 'homeScore' | 'awayScore' | 'createdAt' | 'updatedAt'> {}
+interface FixtureCreationAttributes extends Optional<FixtureAttributes, 'id' | 'homeScore' | 'awayScore' | 'externalId' | 'syncSource' | 'lastSyncedAt' | 'createdAt' | 'updatedAt'> {}
 
 export class Fixture extends Model<FixtureAttributes, FixtureCreationAttributes> implements FixtureAttributes {
   public id!: number;
@@ -36,6 +39,9 @@ export class Fixture extends Model<FixtureAttributes, FixtureCreationAttributes>
   public homeScore?: number;
   public awayScore?: number;
   public deadline!: Date;
+  public externalId?: number | null;
+  public syncSource?: string | null;
+  public lastSyncedAt?: Date | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -133,6 +139,21 @@ Fixture.init(
     deadline: {
       type: DataTypes.DATE,
       allowNull: false,
+    },
+    externalId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'external_id',
+    },
+    syncSource: {
+      type: DataTypes.STRING(32),
+      allowNull: true,
+      field: 'sync_source',
+    },
+    lastSyncedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'last_synced_at',
     },
   },
   {
