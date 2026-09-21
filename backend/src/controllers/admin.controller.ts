@@ -136,7 +136,10 @@ export class AdminController {
       await fixture.update({
         homeScore,
         awayScore,
-        status: validStatus || FixtureStatus.FINISHED
+        status: validStatus || FixtureStatus.FINISHED,
+        // An explicit admin result is authoritative and must not be replaced
+        // by a pending automatic verification from an older provider read.
+        resultVerifiedAt: new Date(),
       });
 
       // Recalculate points for all predictions for this fixture

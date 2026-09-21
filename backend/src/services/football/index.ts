@@ -4,7 +4,12 @@ import { SyncJob } from '../../models/SyncRun';
 import { FootballProvider, createFootballProvider } from '../../integrations/football';
 import { SyncReport, createReport, withSyncRun } from './sync-report';
 import { syncSchedule } from './schedule-sync.service';
-import { syncResults, syncReconcile } from './result-sync.service';
+import {
+  syncResults,
+  syncReconcile,
+  syncResultVerification,
+  findResultVerificationCandidates,
+} from './result-sync.service';
 import { syncTeams } from './team-mapping.service';
 import { H2H_LIMIT, warmHeadToHead } from './h2h.service';
 
@@ -13,7 +18,9 @@ export { syncSchedule, isFrozen, matchLabel } from './schedule-sync.service';
 export {
   syncResults,
   syncReconcile,
+  syncResultVerification,
   applyMatchResult,
+  applyVerifiedMatchResult,
   promoteKickedOffFixtures,
 } from './result-sync.service';
 export {
@@ -93,6 +100,22 @@ export const runSyncJob = async (
 
   const report = createReport(job, provider.name, competition, dryRun);
 
+  // This job wakes frequently to stay inside the 1–2 minute confirmation
+  // window. Do not create an empty audit row on every idle tick.
+  if (job === SyncJob.VERIFY_RESULTS) {
+    const due = await findResultVerificationCandidates(
+      provider.name,
+      new Date(),
+      {
+        dryRun,
+        season,
+        delaySeconds: FOOTBALL_CONFIG.resultVerificationDelaySeconds,
+        lookbackHours: FOOTBALL_CONFIG.reconcileLookbackHours,
+      }
+    );
+    if (due.length === 0) return report;
+  }
+
   return withJobLock(job, () =>
     withSyncRun(report, async () => {
       switch (job) {
@@ -115,6 +138,15 @@ export const runSyncJob = async (
             season,
             finishWindowStartMinutes: FOOTBALL_CONFIG.finishWindowStartMinutes,
             finishWindowEndMinutes: FOOTBALL_CONFIG.finishWindowEndMinutes,
+          });
+          break;
+
+        case SyncJob.VERIFY_RESULTS:
+          await syncResultVerification(provider, competition, report, {
+            dryRun,
+            season,
+            delaySeconds: FOOTBALL_CONFIG.resultVerificationDelaySeconds,
+            lookbackHours: FOOTBALL_CONFIG.reconcileLookbackHours,
           });
           break;
 

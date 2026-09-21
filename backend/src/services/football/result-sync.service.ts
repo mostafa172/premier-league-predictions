@@ -23,8 +23,18 @@ export interface ReconcileOptions extends ResultSyncOptions {
   lookbackHours: number;
 }
 
+export interface ResultVerificationOptions {
+  dryRun: boolean;
+  /** Wait this long after first settlement before trusting a second read. */
+  delaySeconds: number;
+  /** Ignore old imported/manual history that predates this safety check. */
+  lookbackHours: number;
+  season?: string;
+}
+
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
+const SECOND = 1_000;
 
 const utcDay = (date: Date, dayOffset = 0): Date => {
   const shifted = new Date(date.getTime() + dayOffset * 24 * HOUR);
@@ -78,6 +88,27 @@ export const findStaleCandidates = async (
         [Op.between]: [
           new Date(now.getTime() - options.lookbackHours * HOUR),
           new Date(now.getTime() - options.finishWindowEndMinutes * MINUTE),
+        ],
+      },
+    },
+    order: [['matchDate', 'ASC']],
+  });
+
+/** Newly settled provider fixtures whose delayed confirmation is now due. */
+export const findResultVerificationCandidates = async (
+  source: string,
+  now: Date,
+  options: ResultVerificationOptions
+): Promise<Fixture[]> =>
+  Fixture.findAll({
+    where: {
+      syncSource: source,
+      status: FixtureStatus.FINISHED,
+      resultVerifiedAt: { [Op.is]: null },
+      lastSyncedAt: {
+        [Op.between]: [
+          new Date(now.getTime() - options.lookbackHours * HOUR),
+          new Date(now.getTime() - options.delaySeconds * SECOND),
         ],
       },
     },
@@ -183,6 +214,7 @@ export const applyMatchResult = async (
     homeScore: match.homeScore,
     awayScore: match.awayScore,
     lastSyncedAt: new Date(),
+    resultVerifiedAt: null,
   });
   record(report, 'update', label, detail);
 
@@ -191,6 +223,66 @@ export const applyMatchResult = async (
   // These two clubs have just met, so their cached history is a match out of
   // date. Dropping it lets the h2h job refetch before their next meeting.
   await invalidateHeadToHead(fixture.homeTeamId, fixture.awayTeamId);
+};
+
+/**
+ * Confirms a score after the provider has had time to apply late corrections.
+ * Unlike normal result settlement this deliberately may update a finished
+ * fixture, then uses the same scoring path to keep every prediction correct.
+ */
+export const applyVerifiedMatchResult = async (
+  fixture: Fixture,
+  match: ProviderMatch,
+  report: SyncReport,
+  options: { dryRun: boolean }
+): Promise<void> => {
+  const label = matchLabel(match);
+
+  if (match.status !== 'finished') {
+    warn(
+      report,
+      `${label} could not be verified because the provider now reports ${match.rawStatus}.`
+    );
+    report.skipped += 1;
+    return;
+  }
+
+  if (match.homeScore == null || match.awayScore == null) {
+    warn(report, `${label} could not be verified because its final score is empty.`);
+    report.skipped += 1;
+    return;
+  }
+
+  const previousHome = fixture.homeScore;
+  const previousAway = fixture.awayScore;
+  const changed =
+    previousHome !== match.homeScore || previousAway !== match.awayScore;
+  const detail = changed
+    ? `provider corrected ${previousHome}-${previousAway} to ${match.homeScore}-${match.awayScore}`
+    : `confirmed ${match.homeScore}-${match.awayScore}`;
+
+  if (options.dryRun) {
+    record(report, changed ? 'update' : 'skip', label, `would mark verified: ${detail}`);
+    return;
+  }
+
+  await fixture.update({
+    homeScore: match.homeScore,
+    awayScore: match.awayScore,
+    lastSyncedAt: new Date(),
+    resultVerifiedAt: new Date(),
+  });
+
+  if (!changed) {
+    record(report, 'skip', label, `score verified: ${detail}`);
+    return;
+  }
+
+  record(report, 'update', label, detail);
+  // Warnings are persisted in sync_runs, giving corrections a durable audit
+  // entry even before a dedicated per-fixture event log is introduced.
+  warn(report, `${label}: ${detail}.`);
+  report.predictionsScored += await scorePredictions(fixture.id, report, label);
 };
 
 /** Reuses the same scoring path the admin result endpoint uses. */
@@ -264,6 +356,44 @@ const applyToCandidates = async (
   }
 };
 
+const verifyCandidates = async (
+  provider: FootballProvider,
+  competition: string,
+  candidates: Fixture[],
+  report: SyncReport,
+  options: ResultVerificationOptions
+): Promise<void> => {
+  const kickoffs = candidates.map((fixture) => fixture.matchDate.getTime());
+  const matches = await provider.listMatches({
+    competition,
+    season: options.season,
+    dateFrom: utcDay(new Date(Math.min(...kickoffs))),
+    dateTo: utcDay(new Date(Math.max(...kickoffs)), 1),
+  });
+  report.apiRequests = provider.requestCount;
+
+  const byExternalId = new Map(
+    matches.map((match) => [match.externalId, match])
+  );
+
+  for (const fixture of candidates) {
+    const match = fixture.externalId
+      ? byExternalId.get(fixture.externalId)
+      : undefined;
+
+    if (!match) {
+      warn(
+        report,
+        `Fixture #${fixture.id} (provider id ${fixture.externalId}) was not available for result verification.`
+      );
+      report.skipped += 1;
+      continue;
+    }
+
+    await applyVerifiedMatchResult(fixture, match, report, options);
+  }
+};
+
 /**
  * Marks kicked-off fixtures live for free, then looks for final results among
  * the matches old enough to have ended. A tick with nothing to settle makes no
@@ -296,4 +426,22 @@ export const syncReconcile = async (
   if (candidates.length === 0) return;
 
   await applyToCandidates(provider, competition, candidates, report, options);
+};
+
+/** Durable delayed score confirmation, normally checked once per minute. */
+export const syncResultVerification = async (
+  provider: FootballProvider,
+  competition: string,
+  report: SyncReport,
+  options: ResultVerificationOptions,
+  now = new Date()
+): Promise<void> => {
+  const candidates = await findResultVerificationCandidates(
+    provider.name,
+    now,
+    options
+  );
+  if (candidates.length === 0) return;
+
+  await verifyCandidates(provider, competition, candidates, report, options);
 };

@@ -5,6 +5,8 @@ export enum SyncJob {
   SCHEDULE = 'schedule',
   /** Settles finished matches. Named for results, not live play. */
   RESULTS = 'results',
+  /** Confirms a newly recorded final score after the provider has settled. */
+  VERIFY_RESULTS = 'verify-results',
   RECONCILE = 'reconcile',
   TEAMS = 'teams',
   /** Fills the head to head cache for fixtures open for predictions. */

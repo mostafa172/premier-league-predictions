@@ -1,5 +1,6 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { Router } from "@angular/router";
+import { Subscription } from "rxjs";
 import { FixtureService } from "../../services/fixture.service";
 import { AuthService } from "../../services/auth.service";
 
@@ -8,12 +9,14 @@ import { AuthService } from "../../services/auth.service";
   templateUrl: "./fixtures.component.html",
   styleUrls: ["./fixtures.component.scss"],
 })
-export class FixturesComponent implements OnInit {
+export class FixturesComponent implements OnInit, OnDestroy {
   fixtures: any[] = [];
   gameweek = 1;
   gameweeks = Array.from({ length: 38 }, (_, i) => i + 1);
   loading = false;
   error = "";
+  private initialGameweekSubscription?: Subscription;
+  private fixturesLoadSubscription?: Subscription;
 
   constructor(
     private fixtureService: FixtureService,
@@ -22,35 +25,49 @@ export class FixturesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.fixtureService.getClosestGameweek().subscribe({
-      next: (r) => {
-        if (r?.success && r.data?.gameweek)
-          this.gameweek = Number(r.data.gameweek);
-        this.loadFixtures();
-      },
-      error: () => this.loadFixtures(),
-    });
+    this.initialGameweekSubscription = this.fixtureService
+      .getClosestGameweek()
+      .subscribe({
+        next: (r) => {
+          if (r?.success && r.data?.gameweek)
+            this.gameweek = Number(r.data.gameweek);
+          this.loadFixtures();
+        },
+        error: () => this.loadFixtures(),
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.initialGameweekSubscription?.unsubscribe();
+    this.fixturesLoadSubscription?.unsubscribe();
   }
 
   loadFixtures(): void {
+    this.fixturesLoadSubscription?.unsubscribe();
+    const requestedGameweek = this.gameweek;
     this.loading = true;
     this.error = "";
-    this.fixtureService.getFixturesByGameweek(this.gameweek).subscribe({
-      next: (response: any) => {
-        this.loading = false;
-        if (response.success) {
-          this.fixtures = response.data;
-        }
-      },
-      error: (err: any) => {
-        this.loading = false;
-        this.error = "Error loading fixtures";
-        console.error("Error loading fixtures:", err);
-      },
-    });
+    this.fixturesLoadSubscription = this.fixtureService
+      .getFixturesByGameweek(requestedGameweek)
+      .subscribe({
+        next: (response: any) => {
+          if (this.gameweek !== requestedGameweek) return;
+          this.loading = false;
+          if (response.success) {
+            this.fixtures = response.data;
+          }
+        },
+        error: (err: any) => {
+          if (this.gameweek !== requestedGameweek) return;
+          this.loading = false;
+          this.error = "Error loading fixtures";
+          console.error("Error loading fixtures:", err);
+        },
+      });
   }
 
   onGameweekChange(gameweek: number): void {
+    this.initialGameweekSubscription?.unsubscribe();
     this.gameweek = gameweek;
     this.loadFixtures();
   }

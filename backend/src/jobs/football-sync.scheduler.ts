@@ -54,6 +54,13 @@ export const startFootballSync = (): void => {
     Math.max(FOOTBALL_CONFIG.resultsIntervalSeconds, 30) * 1000
   ).unref();
 
+  // A separate lightweight tick confirms newly final scores after a short
+  // delay. It only calls the provider when a durable pending row is due.
+  setInterval(
+    () => void safeRun(SyncJob.VERIFY_RESULTS),
+    Math.max(FOOTBALL_CONFIG.resultVerificationIntervalSeconds, 30) * 1000
+  ).unref();
+
   // Catch up shortly after boot so a restart refreshes the schedule, then
   // top up any head to head pairings the new fixtures need.
   setTimeout(() => void safeRun(SyncJob.SCHEDULE), 10_000).unref();
@@ -65,6 +72,7 @@ export const startFootballSync = (): void => {
       `reconcile "${FOOTBALL_CONFIG.reconcileCron}", ` +
       `results every ${FOOTBALL_CONFIG.resultsIntervalSeconds}s ` +
       `(only ${FOOTBALL_CONFIG.finishWindowStartMinutes}-` +
-      `${FOOTBALL_CONFIG.finishWindowEndMinutes} min after a kickoff)`
+      `${FOOTBALL_CONFIG.finishWindowEndMinutes} min after a kickoff), ` +
+      `verification ${FOOTBALL_CONFIG.resultVerificationDelaySeconds}s after settlement`
   );
 };

@@ -23,11 +23,12 @@ interface FixtureAttributes {
   externalId?: number | null;
   syncSource?: string | null;
   lastSyncedAt?: Date | null;
+  resultVerifiedAt?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-interface FixtureCreationAttributes extends Optional<FixtureAttributes, 'id' | 'homeScore' | 'awayScore' | 'externalId' | 'syncSource' | 'lastSyncedAt' | 'createdAt' | 'updatedAt'> {}
+interface FixtureCreationAttributes extends Optional<FixtureAttributes, 'id' | 'homeScore' | 'awayScore' | 'externalId' | 'syncSource' | 'lastSyncedAt' | 'resultVerifiedAt' | 'createdAt' | 'updatedAt'> {}
 
 export class Fixture extends Model<FixtureAttributes, FixtureCreationAttributes> implements FixtureAttributes {
   public id!: number;
@@ -42,6 +43,7 @@ export class Fixture extends Model<FixtureAttributes, FixtureCreationAttributes>
   public externalId?: number | null;
   public syncSource?: string | null;
   public lastSyncedAt?: Date | null;
+  public resultVerifiedAt?: Date | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -154,6 +156,11 @@ Fixture.init(
       type: DataTypes.DATE,
       allowNull: true,
       field: 'last_synced_at',
+    },
+    resultVerifiedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'result_verified_at',
     },
   },
   {

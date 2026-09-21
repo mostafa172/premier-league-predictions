@@ -50,6 +50,10 @@ services:
         value: "3"
       - key: FOOTBALL_SYNC_RESULTS_INTERVAL_SECONDS
         value: "300"
+      - key: FOOTBALL_RESULT_VERIFICATION_INTERVAL_SECONDS
+        value: "30"
+      - key: FOOTBALL_RESULT_VERIFICATION_DELAY_SECONDS
+        value: "90"
       - key: FOOTBALL_FINISH_WINDOW_START_MINUTES
         value: "95"
       - key: FOOTBALL_FINISH_WINDOW_END_MINUTES

@@ -117,6 +117,7 @@ new adapter and nothing else:
 | `teams` | Links competition clubs to our team rows, creating promoted sides | On demand |
 | `schedule` | Keeps the current gameweek plus `FOOTBALL_SYNC_GAMEWEEK_HORIZON` ahead in step with the provider | Weekly, and shortly after boot |
 | `results` | Marks kicked-off fixtures live from the clock, then records final scores and scores predictions | Every `FOOTBALL_SYNC_RESULTS_INTERVAL_SECONDS` |
+| `verify-results` | Rechecks a newly final score after a short delay, applies corrections, and rescores predictions | Every `FOOTBALL_RESULT_VERIFICATION_INTERVAL_SECONDS` |
 | `reconcile` | Settles matches the results poller never saw finish, for instance while the app was down | Hourly |
 | `h2h` | Caches previous meetings for fixtures still open for predictions | Daily, and shortly after boot |
 
@@ -134,6 +135,11 @@ score. That shapes the polling:
   `FOOTBALL_FINISH_WINDOW_END_MINUTES` passes.
 - **Full time** writes the score, flips the fixture to finished and scores its
   predictions in one step.
+- **Delayed verification** reads that final score again after
+  `FOOTBALL_RESULT_VERIFICATION_DELAY_SECONDS` (about one to two minutes by
+  default). If the provider amended it, the fixture and all awarded prediction points are
+  corrected. The pending verification is stored on the fixture, so a restart
+  cannot lose it.
 
 One request covers every match that kicked off in the same window, because the
 provider returns a competition's matches by date. A ten-match Saturday
@@ -147,6 +153,7 @@ npm run sync -- schedule --dry-run          # preview, writes nothing
 npm run sync -- teams
 npm run sync -- schedule
 npm run sync -- results
+npm run sync -- verify
 npm run sync -- schedule --competition CL --dry-run   # Champions League
 ```
 

@@ -36,6 +36,14 @@ export const FOOTBALL_CONFIG = {
     process.env.FOOTBALL_SYNC_RESULTS_INTERVAL_SECONDS,
     300
   ),
+  resultVerificationIntervalSeconds: int(
+    process.env.FOOTBALL_RESULT_VERIFICATION_INTERVAL_SECONDS,
+    30
+  ),
+  resultVerificationDelaySeconds: int(
+    process.env.FOOTBALL_RESULT_VERIFICATION_DELAY_SECONDS,
+    90
+  ),
 
   /**
    * Results are polled only between these minutes after kickoff. A match in

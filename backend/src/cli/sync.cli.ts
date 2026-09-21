@@ -9,6 +9,8 @@ const JOBS: Record<string, SyncJob> = {
   schedule: SyncJob.SCHEDULE,
   results: SyncJob.RESULTS,
   live: SyncJob.RESULTS,
+  verify: SyncJob.VERIFY_RESULTS,
+  'verify-results': SyncJob.VERIFY_RESULTS,
   reconcile: SyncJob.RECONCILE,
   h2h: SyncJob.H2H,
 };
@@ -20,6 +22,7 @@ Jobs
   teams       Link competition clubs to local teams, creating missing ones
   schedule    Upsert fixtures for the current gameweek window
   results     Mark kicked-off fixtures live, then settle finished matches
+  verify      Confirm newly settled scores and apply provider corrections
   reconcile   Settle matches the results poller never saw finish
   h2h         Cache previous meetings for fixtures open for predictions
 

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormBuilder, FormGroup, FormArray, Validators } from "@angular/forms";
 import { PredictionService } from "../../services/prediction.service";
 import { FixtureService } from "../../services/fixture.service";
-import { Subscription } from "rxjs";
+import { catchError, forkJoin, of, Subscription } from "rxjs";
 import { HeadToHead } from "../../models/head-to-head.model";
 
 @Component({
@@ -24,7 +24,9 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   message = "";
   messageType = "";
   selectedDoubleIndex = -1;
-  private subscriptions: Subscription[] = [];
+  private initialGameweekSubscription?: Subscription;
+  private gameweekLoadSubscription?: Subscription;
+  private formChangesSubscription?: Subscription;
   doubleLocked = false;
   hasChanges = false;
 
@@ -50,18 +52,22 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.fixtureService.getClosestActiveGameweek().subscribe({
-      next: (r) => {
-        if (r?.success && r.data?.gameweek)
-          this.gameweek = Number(r.data.gameweek);
-        this.loadFixturesAndPredictions();
-      },
-      error: () => this.loadFixturesAndPredictions(),
-    });
+    this.initialGameweekSubscription = this.fixtureService
+      .getClosestActiveGameweek()
+      .subscribe({
+        next: (r) => {
+          if (r?.success && r.data?.gameweek)
+            this.gameweek = Number(r.data.gameweek);
+          this.loadFixturesAndPredictions();
+        },
+        error: () => this.loadFixturesAndPredictions(),
+      });
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach((sub) => sub.unsubscribe());
+    this.initialGameweekSubscription?.unsubscribe();
+    this.gameweekLoadSubscription?.unsubscribe();
+    this.formChangesSubscription?.unsubscribe();
   }
 
   get predictionsArray(): FormArray {
@@ -69,79 +75,68 @@ export class PredictionsComponent implements OnInit, OnDestroy {
   }
 
   onGameweekChange(gameweek?: number): void {
+    // A manual choice wins over the initial closest-gameweek lookup, even if
+    // that slower request finishes afterwards.
+    this.initialGameweekSubscription?.unsubscribe();
     if (gameweek) this.gameweek = gameweek;
     this.hasChanges = false; // reset before reload
     this.loadFixturesAndPredictions();
   }
 
   loadFixturesAndPredictions(): void {
+    // Cancel the previous gameweek's HTTP requests so late responses cannot
+    // replace the currently selected gameweek's fixtures or predictions.
+    this.gameweekLoadSubscription?.unsubscribe();
+
+    const requestedGameweek = this.gameweek;
     this.loading = true;
     this.error = this.success = this.message = "";
-
-    const fixturesSub = this.fixtureService
-      .getFixturesByGameweek(this.gameweek)
-      .subscribe({
-        next: (fixturesResponse: any) => {
-          if (fixturesResponse.success) {
-            this.fixtures = fixturesResponse.data;
-            this.loadHeadToHead();
-
-            const predictionsSub = this.predictionService
-              .getUserPredictionsByGameweek(this.gameweek)
-              .subscribe({
-                next: (predictionsResponse: any) => {
-                  this.loading = false;
-                  if (predictionsResponse.success) {
-                    this.predictions = predictionsResponse.data;
-                    this.existingPredictions = [...this.predictions];
-                    this.doubleLocked = this.computeDoubleLock();
-                    this.buildPredictionsForm();
-                  }
-                },
-                error: (err) => {
-                  this.loading = false;
-                  this.error = this.message = "Error loading predictions";
-                  this.messageType = "danger";
-                  console.error("Error loading predictions:", err);
-                },
-              });
-
-            this.subscriptions.push(predictionsSub);
-          }
-        },
-        error: (err) => {
-          this.loading = false;
-          this.error = this.message = "Error loading fixtures";
-          this.messageType = "danger";
-          console.error("Error loading fixtures:", err);
-        },
-      });
-
-    this.subscriptions.push(fixturesSub);
-  }
-
-  /**
-   * One request covers the whole gameweek. Head to head is a hint rather than
-   * core data, so a failure here leaves the cards untouched and silent.
-   */
-  private loadHeadToHead(): void {
     this.headToHead.clear();
     this.openHeadToHead = null;
 
-    const sub = this.fixtureService
-      .getHeadToHeadByGameweek(this.gameweek)
-      .subscribe({
-        next: (response: any) => {
-          if (!response?.success) return;
-          (response.data as HeadToHead[]).forEach((entry) => {
+    // These requests are independent. Running them together removes one full
+    // backend round trip from the page's critical loading path.
+    this.gameweekLoadSubscription = forkJoin({
+      fixtures: this.fixtureService.getFixturesByGameweek(requestedGameweek),
+      predictions:
+        this.predictionService.getUserPredictionsByGameweek(requestedGameweek),
+      // H2H is optional UI context, so its failure must not fail the page.
+      headToHead: this.fixtureService
+        .getHeadToHeadByGameweek(requestedGameweek)
+        .pipe(catchError(() => of({ success: false, data: [] }))),
+    }).subscribe({
+      next: ({ fixtures, predictions, headToHead }: any) => {
+        if (this.gameweek !== requestedGameweek) return;
+
+        this.loading = false;
+        if (!fixtures?.success || !predictions?.success) {
+          this.error = this.message = "Error loading predictions";
+          this.messageType = "danger";
+          return;
+        }
+
+        this.fixtures = fixtures.data;
+        this.predictions = predictions.data;
+        this.existingPredictions = [...this.predictions];
+
+        if (headToHead?.success) {
+          (headToHead.data as HeadToHead[]).forEach((entry) => {
             entry.dots = [...entry.meetings].reverse();
             this.headToHead.set(entry.fixtureId, entry);
           });
-        },
-        error: () => undefined,
-      });
+        }
 
-    this.subscriptions.push(sub);
+        this.doubleLocked = this.computeDoubleLock();
+        this.buildPredictionsForm();
+      },
+      error: (err) => {
+        if (this.gameweek !== requestedGameweek) return;
+        this.loading = false;
+        this.error = this.message = "Error loading predictions";
+        this.messageType = "danger";
+        console.error("Error loading gameweek:", err);
+      },
+    });
   }
 
   /** Only shown while a fixture is still open for predictions. */
@@ -229,12 +224,14 @@ export class PredictionsComponent implements OnInit, OnDestroy {
     // reset & compute initial state
     this.hasChanges = this.computeHasChanges();
 
-    // subscribe once per rebuild
-    // (unsubscribe isn't needed because the whole form is rebuilt between gameweeks)
-    this.predictionsForm.valueChanges.subscribe(() => {
-      this.hasChanges = this.computeHasChanges();
-      this.updateDoubleCheckboxStates();
-    });
+    // Rebuilding a gameweek must replace, rather than accumulate, listeners.
+    this.formChangesSubscription?.unsubscribe();
+    this.formChangesSubscription = this.predictionsForm.valueChanges.subscribe(
+      () => {
+        this.hasChanges = this.computeHasChanges();
+        this.updateDoubleCheckboxStates();
+      }
+    );
   }
 
   hasExistingDouble(fixtureId: number): boolean {

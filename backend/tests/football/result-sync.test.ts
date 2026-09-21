@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   store: {
     candidates: [] as any[],
     kickedOff: [] as any[],
+    verificationCandidates: [] as any[],
     predictions: [] as any[],
     invalidated: [] as any[],
   },
@@ -19,10 +20,13 @@ vi.mock('../../src/models/Fixture', () => {
 
   class Fixture {
     static async findAll(query: any) {
-      // The promotion query asks for one status; the finish window asks for
-      // several, so the shape of that clause tells the two queries apart.
-      const isPromotion = typeof query?.where?.status === 'string';
-      return isPromotion ? mocks.store.kickedOff : mocks.store.candidates;
+      if (query?.where?.status === FixtureStatus.UPCOMING) {
+        return mocks.store.kickedOff;
+      }
+      if (query?.where?.status === FixtureStatus.FINISHED) {
+        return mocks.store.verificationCandidates;
+      }
+      return mocks.store.candidates;
     }
     static async findOne() {
       return null;
@@ -52,7 +56,9 @@ vi.mock('../../src/models/HeadToHead', () => ({
 
 import {
   applyMatchResult,
+  applyVerifiedMatchResult,
   promoteKickedOffFixtures,
+  syncResultVerification,
   syncResults,
 } from '../../src/services/football/result-sync.service';
 import { createReport } from '../../src/services/football/sync-report';
@@ -68,6 +74,7 @@ const fixtureRow = (row: Record<string, unknown> = {}) => ({
   homeTeamId: 12,
   awayTeamId: 4,
   matchDate: new Date('2026-09-18T19:00:00Z'),
+  resultVerifiedAt: null,
   updates: [] as Record<string, unknown>[],
   async update(patch: Record<string, unknown>) {
     (this as any).updates.push(patch);
@@ -114,6 +121,7 @@ const options = {
 beforeEach(() => {
   mocks.store.candidates = [];
   mocks.store.kickedOff = [];
+  mocks.store.verificationCandidates = [];
   mocks.store.predictions = [];
   mocks.store.invalidated = [];
 });
@@ -350,5 +358,91 @@ describe('results poller gating', () => {
 
     expect(result.warnings.join(' ')).toContain('not in');
     expect(result.skipped).toBe(1);
+  });
+});
+
+describe('delayed final-score verification', () => {
+  it('marks an unchanged final score as verified without rescoring', async () => {
+    const fixture = fixtureRow({
+      status: 'finished',
+      homeScore: 2,
+      awayScore: 1,
+    });
+    mocks.store.predictions = [prediction()];
+    const result = report();
+
+    await applyVerifiedMatchResult(fixture as never, match(), result, {
+      dryRun: false,
+    });
+
+    expect(fixture.updates[0]).toMatchObject({ homeScore: 2, awayScore: 1 });
+    expect(fixture.resultVerifiedAt).toBeInstanceOf(Date);
+    expect(mocks.store.predictions[0].scored).toBe(false);
+    expect(result.changes[0].detail).toContain('confirmed 2-1');
+  });
+
+  it('corrects a changed score, rescoring predictions and auditing it', async () => {
+    const fixture = fixtureRow({
+      status: 'finished',
+      homeScore: 2,
+      awayScore: 0,
+    });
+    mocks.store.predictions = [prediction(), prediction()];
+    const result = report();
+
+    await applyVerifiedMatchResult(fixture as never, match(), result, {
+      dryRun: false,
+    });
+
+    expect(fixture.updates[0]).toMatchObject({ homeScore: 2, awayScore: 1 });
+    expect(mocks.store.predictions.every((row) => row.scored)).toBe(true);
+    expect(result.predictionsScored).toBe(2);
+    expect(result.warnings.join(' ')).toContain('corrected 2-0 to 2-1');
+  });
+
+  it('leaves verification pending when the provider no longer says final', async () => {
+    const fixture = fixtureRow({
+      status: 'finished',
+      homeScore: 2,
+      awayScore: 1,
+    });
+    const result = report();
+
+    await applyVerifiedMatchResult(
+      fixture as never,
+      match({ status: 'live', rawStatus: 'IN_PLAY' }),
+      result,
+      { dryRun: false }
+    );
+
+    expect(fixture.updates).toHaveLength(0);
+    expect(fixture.resultVerifiedAt).toBeNull();
+    expect(result.warnings.join(' ')).toContain('could not be verified');
+  });
+
+  it('uses one provider request for all due verifications', async () => {
+    mocks.store.verificationCandidates = [
+      fixtureRow({ status: 'finished', homeScore: 2, awayScore: 1 }),
+      fixtureRow({
+        id: 6,
+        externalId: 900002,
+        status: 'finished',
+        homeScore: 0,
+        awayScore: 0,
+      }),
+    ];
+    const listMatches = vi.fn(async () => [
+      match(),
+      match({ externalId: 900002, homeScore: 0, awayScore: 0 }),
+    ]);
+
+    await syncResultVerification(
+      { name: 'football-data', requestCount: 1, listMatches } as never,
+      'PL',
+      report(),
+      { dryRun: false, delaySeconds: 120, lookbackHours: 48 }
+    );
+
+    expect(listMatches).toHaveBeenCalledTimes(1);
   });
 });
